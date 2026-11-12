@@ -55,12 +55,18 @@ def as_expect(calls):
             out.append(("move", c["degrees"], c["steering"], c["velocity"]))
         elif c["call"] == "start":
             out.append(("start", c["steering"], c["velocity"]))
+        elif c["call"] == "show":
+            out.append(("show", c["text"]))
+        elif c["call"] == "beep":
+            out.append(("beep", c["freq"], c["duration"]))
+        elif c["call"] == "wait":
+            out.append(("wait", c["ms"]))
         else:
             out.append((c["call"],))
     return out
 
 
-def check_program(tag, code, expect, script=None, prints=None):
+def check_program(tag, code, expect, script=None, prints=None, speeds=(250,)):
     calls, printed = run_program(tag, code, script)
     if calls is None:
         return
@@ -75,8 +81,8 @@ def check_program(tag, code, expect, script=None, prints=None):
         if c[0] == "pair" and (c[1], c[2]) != (robot.DRIVE_LEFT, robot.DRIVE_RIGHT):
             FAIL.append("%s: pairs ports %s+%s, the port map says %s+%s"
                         % (tag, c[1], c[2], robot.DRIVE_LEFT, robot.DRIVE_RIGHT))
-        if c[0] in ("move", "start") and abs(c[-1]) != 250:
-            FAIL.append("%s: a speed other than velocity=250" % tag)
+        if c[0] in ("move", "start") and abs(c[-1]) not in speeds:
+            FAIL.append("%s: a speed the constraints page does not allow: %s" % (tag, c[-1]))
 
 
 def main():
@@ -86,15 +92,16 @@ def main():
         n = s["num"]
         page = open(os.path.join(render.OUT, s["slug"] + ".html")).read()
         print("session %d programs:" % n)
+        speeds = (250,) if s.get("part", 1) == 1 else (100, 150, 250)
         for ch in s["chunks"]:
             check_program("s%d-%s" % (n, ch["key"]), ch["code"], ch["expect"],
-                          ch.get("script"), ch.get("prints"))
+                          ch.get("script"), ch.get("prints"), speeds)
             if ch.get("start"):
                 compile(ch["start"], "start", "exec")
         br = s["brief"]
-        check_program("s%d-mission" % n, br["code"], br["expect"], br.get("script"))
+        check_program("s%d-mission" % n, br["code"], br["expect"], br.get("script"), None, speeds)
         for name, code, expect, script in s.get("checks", []):
-            check_program("s%d-%s" % (n, name), code, expect, script)
+            check_program("s%d-%s" % (n, name), code, expect, script, None, speeds)
 
         for name, on_page, needle, deg in s.get("arith", []):
             exact = wheel.cm(deg)

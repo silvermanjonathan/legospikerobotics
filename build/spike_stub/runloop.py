@@ -25,6 +25,11 @@ async def until(function):
     raise _Never()
 
 
+async def sleep_ms(duration):
+    assert duration > 0
+    motor_pair.CALLS.append({"call": "wait", "ms": duration})
+
+
 def run(*functions):
     for f in functions:
         assert asyncio.iscoroutine(f), "runloop.run needs main(), with the brackets"

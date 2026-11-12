@@ -113,6 +113,13 @@ def check(name, text, all_names):
         if rows and not re.search(r'<li>\d+:\d\d [^<]*' + need + r'[^<]*, \d+ min', text, re.I):
             fail.append("teacher panel has no %s row" % need)
 
+    # the mission's minutes on the student side match its row in the teacher panel
+    m_page = re.search(r'Mission &middot; (\d+) minutes', text)
+    m_row = re.search(r'<li>\d+:\d\d Mission, (\d+) min', text)
+    if m_page and m_row and m_page.group(1) != m_row.group(1):
+        fail.append("the mission says %s minutes, its timing row says %s"
+                    % (m_page.group(1), m_row.group(1)))
+
     # a result box sits inside a hidden reveal and says where its result came from
     bx = Boxes()
     bx.feed(text)

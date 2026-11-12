@@ -304,5 +304,87 @@ def delivery_figure(leg_cm, caption=""):
 
 
 
+# ------------------------------------------------------------------ part 2 figures
+SHELF_GAP_CM = 20         # the shelf lines are this far apart
+SHELVES = 4
+TRACK_CM = 70             # the line to follow runs this far to the stop bar
+
+
+def shelves_figure(caption=""):
+    """The shelf lines from above, to scale: 7 pixels to 1 cm."""
+    k = 7
+    w, h = 30 * k + SHELVES * SHELF_GAP_CM * k + 110, 300
+    p = _open(w, h, caption)
+    x0 = 30 * k
+    p.append('<rect x="%d" y="100" width="%d" height="90" fill="none" stroke="%s" stroke-width="3"/>'
+             % (x0 - 150, 145, INK))
+    p.append(_text(x0 - 78, 142, "robot", anchor="middle"))
+    p.append(_text(x0 - 78, 160, "(not to scale)", size=13, weight=500, fill=SOFT, anchor="middle"))
+    p.append('<rect x="%d" y="70" width="10" height="150" fill="%s" stroke="%s" stroke-width="2"/>'
+             % (x0 - 5, TAPE, INK))
+    p.append(_text(x0, 44, "start line", anchor="middle"))
+    p.append(_text(x0, 60, "0 cm", size=13, weight=500, fill=SOFT, anchor="middle"))
+    for i in range(1, SHELVES + 1):
+        x = x0 + i * SHELF_GAP_CM * k
+        p.append('<rect x="%d" y="70" width="10" height="150" fill="%s" stroke="%s" stroke-width="2"/>'
+                 % (x - 5, TAPE, INK))
+        p.append(_text(x, 44, "shelf %d" % i, anchor="middle"))
+        p.append(_text(x, 60, "%d cm" % (i * SHELF_GAP_CM), size=13, weight=500, fill=SOFT,
+                       anchor="middle"))
+    p.append(_arrow(x0 + 16, 145, x0 + 110, 145))
+    p.append(_text(x0 + 18, 132, "forward", fill=TEAL))
+    sx, sy = 30, h - 30
+    p.append('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="4"/>'
+             % (sx, sy, sx + 10 * k, sy, INK))
+    for t in (sx, sx + 10 * k):
+        p.append('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="4"/>'
+                 % (t, sy - 8, t, sy + 8, INK))
+    p.append(_text(sx + 10 * k + 10, sy + 5, "10 cm", size=14))
+    p.append(_text(sx + 150, sy + 5, "Every line is black tape. The lines are %d cm apart."
+                   % SHELF_GAP_CM, size=13, weight=500, fill=SOFT))
+    return _close(p, caption)
+
+
+def track_figure(bend=False, caption=""):
+    """The line to follow and its stop bar, from above, to scale: 7 pixels to 1 cm."""
+    k = 7
+    w, h = 30 * k + TRACK_CM * k + 200, (440 if bend else 340)
+    p = _open(w, h, caption)
+    x0, y0 = 30 * k, 150
+    xe = x0 + TRACK_CM * k
+    ye = y0 + (15 * k if bend else 0)
+    if bend:
+        xm = x0 + 35 * k
+        pts = "%d,%d %d,%d %d,%d" % (x0 - 60, y0, xm, y0, xe, ye)
+    else:
+        pts = "%d,%d %d,%d" % (x0 - 60, y0, xe, ye)
+    p.append('<polyline points="%s" fill="none" stroke="%s" stroke-width="14" stroke-linejoin="round"/>'
+             % (pts, TAPE))
+    p.append('<rect x="%d" y="%d" width="14" height="%d" fill="%s" stroke="%s" stroke-width="2"/>'
+             % (xe - 7, ye - 100, 200, TAPE, INK))
+    p.append(_text(xe + 16, ye - 70, "stop bar"))
+    p.append(_text(xe + 16, ye - 52, "black tape, 30 cm long", size=13, weight=500, fill=SOFT))
+    p.append(_text(x0 - 40, y0 - 22, "the line to follow, black tape"))
+    p.append('<rect x="%d" y="%d" width="140" height="90" fill="%s" fill-opacity="0.85" stroke="%s" '
+             'stroke-width="3"/>' % (x0 - 200, y0 - 45, CARD, INK))
+    p.append(_text(x0 - 130, y0 - 4, "robot", anchor="middle"))
+    p.append(_text(x0 - 130, y0 + 14, "(not to scale)", size=13, weight=500, fill=SOFT, anchor="middle"))
+    p.append(_arrow(x0 - 50, y0 + 40, x0 + 50, y0 + 40))
+    p.append(_text(x0 - 48, y0 + 66, "forward", fill=TEAL))
+    if bend:
+        p.append(_text(x0 + 35 * k + 10, y0 - 22, "the bend", size=14, fill=SOFT))
+    sx, sy = 30, h - 30
+    p.append('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="4"/>'
+             % (sx, sy, sx + 10 * k, sy, INK))
+    for t in (sx, sx + 10 * k):
+        p.append('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="4"/>'
+                 % (t, sy - 8, t, sy + 8, INK))
+    p.append(_text(sx + 10 * k + 10, sy + 5, "10 cm", size=14))
+    p.append(_text(sx + 150, sy + 5, "At the start the line sensor is over the tape.",
+                   size=13, weight=500, fill=SOFT))
+    return _close(p, caption)
+
+
+
 WHEEL_NOTE = ("One full turn of the wheel moves the robot %.2f cm. LEGO's Python programs "
               "for this robot give that figure in a comment." % WHEEL_CM)

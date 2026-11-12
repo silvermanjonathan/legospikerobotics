@@ -54,7 +54,8 @@ BUILTIN_CLASSES = {
 # Modules the course imports. A name here is colored as a module when it is used
 # like one (followed by a dot, or in an import line) and the code never assigns it.
 # These are SPIKE App 3 modules; port is a module inside hub.
-MODULES = {"hub", "port", "motor_pair", "motor", "runloop", "color_sensor"}
+MODULES = {"hub", "port", "motor_pair", "motor", "runloop", "color_sensor",
+           "light_matrix", "sound", "motion_sensor"}
 SUBMODULES = {"port"}
 
 _TOKEN = re.compile(

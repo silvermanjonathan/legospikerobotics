@@ -24,16 +24,23 @@ from session01 import SESSION01
 from session02 import SESSION02
 from session03 import SESSION03
 from session04 import SESSION04
+from session05 import SESSION05
+from session06 import SESSION06
+from session07 import SESSION07
+from session08 import SESSION08
 import robot
 import wheel
 
-SESSIONS = [SESSION01, SESSION02, SESSION03, SESSION04]
+SESSIONS = [SESSION01, SESSION02, SESSION03, SESSION04,
+            SESSION05, SESSION06, SESSION07, SESSION08]
+PART1 = [x for x in SESSIONS if x.get("part", 1) == 1]
+PART2 = [x for x in SESSIONS if x.get("part", 1) == 2]
 
 # Paths are relative to this file, so the repo builds from any clone.
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.environ.get("SPIKE_OUT", ROOT)
-VERSION = "2"
+VERSION = "3"
 COURSE = "SPIKE Prime with Python"
 HUB = "spike_course_hub"
 ROBOT = "robot_advanced_driving_base"
@@ -683,7 +690,8 @@ def standards_table(codes):
 
 def footer():
     return ('<footer><div class="wrap">'
-            '<p>' + COURSE + ', grades 4 and 5, four sessions. The class robot is LEGO\'s '
+            '<p>' + COURSE + ', grades 4 and 5. Part 1 is sessions 1 to 4. Part 2 is sessions 5 '
+            'to 8, for a class that continues. The class robot is LEGO\'s '
             'Advanced Driving Base. LEGO\'s building instructions are linked, not copied.</p>'
             '<p>Mapped to the New York State P-12 Science Learning Standards and the New York '
             'Next Generation Mathematics Learning Standards. Codes retrieved through the '
@@ -704,7 +712,7 @@ def sheet_table(head, rows, tag):
         out.append('<tr>')
         for c, cell in enumerate(cells):
             if cell:
-                out.append('<td' + (' class="mono"' if c == 0 or cell.isdigit() else '') + '>' + cell + '</td>')
+                out.append('<td' + (' class="mono"' if cell.isdigit() or len(cell) == 1 else '') + '>' + cell + '</td>')
             else:
                 out.append(blank(re.sub(r"<[^>]+>", "", head[c]) + ", row " + str(r + 1)))
         out.append('</tr>')
@@ -721,8 +729,10 @@ def render_session(s, prev_s, next_s):
     n = s["num"]
     first_code = s["chunks"][0]["code"]
     b = ['<header class="top"><div class="wrap">']
-    b.append('<p class="eyebrow">' + COURSE + ' &middot; Grades 4 and 5 &middot; Session '
-             + str(n) + ' of ' + str(len(SESSIONS)) + '</p>')
+    part2 = s.get("part", 1) == 2
+    b.append('<p class="eyebrow">' + COURSE + ' &middot; Grades 4 and 5 &middot; '
+             + ('Part 2 &middot; Session ' + str(n) + ' of ' + str(len(SESSIONS)) if part2
+                else 'Part 1 &middot; Session ' + str(n) + ' of ' + str(len(PART1))) + '</p>')
     b.append('<h1>' + html.escape(s["title"]) + '</h1>')
     b.append('<p class="sub">' + html.escape(s["subtitle"]) + '</p>')
     b.append('<div class="dates">')
@@ -835,7 +845,8 @@ def render_session(s, prev_s, next_s):
     b.append('<table>' + "".join('<tr><th>' + k + '</th><td>' + v + '</td></tr>'
                                 for k, v in br["values"]) + '</table>')
     if br.get("plan_head"):
-        b.append('<h3>Two plans</h3><p>Write both plans before you type anything.</p>'
+        b.append('<h3>' + br.get("plan_title", "Two plans") + '</h3><p>'
+                 + br.get("plan_intro", "Write both plans before you type anything.") + '</p>'
                  + sheet_table(br["plan_head"], br["plan_rows"], "plan"))
     b.append('<p>' + br["code_note"] + '</p>')
     b.append(code_block(br["code"]))
@@ -935,24 +946,35 @@ def simple_page(eyebrow, title, sub, body, teacher=""):
 # -------------------------------------------------------------------- hub page
 
 def render_hub():
+    def listing(group):
+        out = ['<ul class="sessionlist">']
+        for s in group:
+            new = (", ".join(s["new"]) if s["new"] else "nothing new")
+            out.append('<li><span class="n">' + str(s["num"]) + '</span><span><a href="'
+                       + link(s["slug"]) + '">' + html.escape(s["title"]) + '</a><span class="meta">'
+                       '90 minutes &middot; date to be set &middot; new: ' + html.escape(new)
+                       + '</span></span></li>')
+        out.append('</ul>')
+        return "".join(out)
+
     b = ['<header class="top"><div class="wrap">']
     b.append('<p class="eyebrow">LEGO SPIKE Prime &middot; Python &middot; Grades 4 and 5</p>')
     b.append('<h1>' + COURSE + '</h1>')
-    b.append('<p class="sub">Four sessions of ninety minutes. You read a robot program, say '
+    b.append('<p class="sub">Sessions of ninety minutes. You read a robot program, say '
              'what the robot will do, and then run it.</p>')
-    b.append('<div class="dates"><span class="pill"><b>Sessions</b> 4</span>'
+    b.append('<div class="dates"><span class="pill"><b>Part 1</b> sessions 1 to 4</span>'
+             '<span class="pill"><b>Part 2</b> sessions 5 to 8</span>'
              '<span class="pill"><b>Dates</b> to be set</span>'
              '<span class="pill"><b>Teams</b> 4 builders, 1 robot</span>'
-             '<span class="pill"><b>Demo day</b> session 4</span></div>')
+             '<span class="pill"><b>Demo days</b> sessions 4 and 8</span></div>')
     b.append('</div></header><main><div class="wrap">')
-    b.append('<section><h2>Sessions</h2><ul class="sessionlist">')
-    for s in SESSIONS:
-        new = (", ".join(s["new"]) if s["new"] else "nothing new")
-        b.append('<li><span class="n">' + str(s["num"]) + '</span><span><a href="'
-                 + link(s["slug"]) + '">' + html.escape(s["title"]) + '</a><span class="meta">'
-                 '90 minutes &middot; date to be set &middot; new: ' + html.escape(new)
-                 + '</span></span></li>')
-    b.append('</ul></section>')
+    b.append('<section><h2>Part 1: sessions 1 to 4</h2><p>Build the robot, move it, turn it, '
+             'stop it at a line, and make a delivery. Session 4 ends with a demo for '
+             'families.</p>' + listing(PART1) + '</section>')
+    b.append('<section><h2>Part 2: sessions 5 to 8</h2><p>For a class that finishes part 1 '
+             'early or keeps going. The hub beeps and shows numbers, the robot measures its '
+             'own turns and follows a line, and each team writes its own mission. Session 8 '
+             'ends with a second demo.</p>' + listing(PART2) + '</section>')
     b.append('<section><h2>How a session runs</h2><div class="grid2">'
              '<div class="card"><h3>Robot check, then opener</h3><p>A week passes between '
              'sessions. Each session starts by checking the robot against the robot page, '
@@ -1065,6 +1087,18 @@ def render_field():
              + ' cm on each side, to the right of the far line.</p>'
              + robot.delivery_figure(one, caption="The delivery run from above, drawn to scale "
                                      "with the far line at %d cm." % robot.FAR_CM) + '</section>')
+    b.append('<section><h2>Session 5: the shelf lines</h2><p>A start line and '
+             + str(robot.SHELVES) + ' shelf lines, ' + str(robot.SHELF_GAP_CM) + ' cm apart.</p>'
+             + robot.shelves_figure(caption="The shelf lines from above, drawn to scale.")
+             + '</section>')
+    b.append('<section><h2>Session 6: the turn cross and the square</h2><p>The same turn '
+             'cross and the same square as session 2, with the crate in the middle.</p></section>')
+    b.append('<section><h2>Sessions 7 and 8: the line and its stop bar</h2><p>A line of black '
+             'tape ' + str(robot.TRACK_CM) + ' cm long, ending at a stop bar: a strip of tape '
+             '30 cm long laid across the end of the line. The mission line has one gentle '
+             'bend.</p>' + robot.track_figure(caption="The straight line from above, drawn to scale.")
+             + robot.track_figure(bend=True, caption="The line with a bend, from above, drawn "
+                                  "to scale.") + '</section>')
     t = ('<details class="teacher"><summary>Teacher panel</summary>'
          '<p>The drop zone is laid from the reference robot: run session 4\'s chunk 1 program '
          'with the far line at ' + str(robot.FAR_CM) + ' cm and centre the square of tape on '
@@ -1095,18 +1129,36 @@ FIRST_TAUGHT = [
     ("<code>motor_pair.move</code>, <code>await runloop.until(lambda: ...)</code>, <code>motor_pair.stop</code>",
      3, "The one way to move until a sensor says stop. The word lambda is handed over and not explained."),
     ("<code>&lt;</code>", 3, "Is less than."),
+    ("<code>sound.beep</code>, <code>light_matrix.write</code>, <code>str</code>", 5,
+     "The hub reports what the robot is doing. Part 2 starts here."),
+    ("<code>&gt;</code>", 5, "Is greater than. Crossing a line takes two waits."),
+    ("The name <code>count</code> in a <code>for</code> line", 5, "It starts at 0."),
+    ("<code>motion_sensor.reset_yaw</code>, <code>motion_sensor.tilt_angles()[0]</code>, <code>abs</code>",
+     6, "A turn that ends on a measurement, in tenths of a degree of the robot's turn."),
+    ("<code>await runloop.sleep_ms</code>", 6, "Wait for a set time, in thousandths of a second."),
+    ("<code>velocity=100</code> and <code>velocity=150</code>", 6, "Slower moves for measured turns and line following."),
+    ("<code>if</code> and <code>else</code>", 7, "Choose between two moves."),
+    ("<code>while</code>", 7, "Only with a test the student can name as its stop."),
+    ("The second colour sensor", 7, "The stop sensor."),
+    ("<code>async def name():</code> and <code>await name()</code>", 8,
+     "The students' own functions. This opens the frame handed over in session 1."),
+]
+
+NEVER_PART1 = [
+    "<code>if</code>, <code>while</code>, and functions the students define. They arrive in sessions 7 and 8.",
+    "The hub's speaker, light matrix, and motion sensor, and the second colour sensor. They arrive in sessions 5 to 7.",
+    "Any speed other than <code>velocity=250</code>. Part 2 adds 100 and 150, and lets teams tune the speed.",
 ]
 
 NEVER = [
     "Word Blocks. This course is written in Python throughout.",
     "<code>while True</code> or any loop with no stop the student can name.",
-    "<code>if</code> inside <code>if</code>. This course does not teach <code>if</code> at all.",
-    "Functions the students define, lists, and variables that change while the program runs.",
+    "<code>if</code> inside <code>if</code>. One <code>if</code> may sit inside one <code>while</code>, as in the line follower.",
+    "Lists, and variables that change while the program runs.",
     "A second task running at the same time.",
-    "Seconds as the unit of a move. Moves are counted in degrees of motor turn or ended by the sensor.",
+    "Seconds as the unit of a move. Moves are counted in degrees of motor turn or ended by a sensor.",
     "Any distance unit other than cm.",
-    "The medium motors, the second colour sensor, the hub's motion sensor, and any part not on the port map.",
-    "Any speed other than <code>velocity=250</code>.",
+    "The medium motors and any part not on the port map.",
 ]
 
 
@@ -1119,7 +1171,9 @@ def render_constraints():
         b.append('<tr><td>' + what + '</td><td class="mono">' + str(sess) + '</td><td>' + why + '</td></tr>')
     b.append('</table><p>Nothing is used before the session that teaches it.</p></section>')
     b.append('<section><h2>2. What the course never uses</h2><ul>'
-             + "".join('<li>' + x + '</li>' for x in NEVER) + '</ul></section>')
+             + "".join('<li>' + x + '</li>' for x in NEVER) + '</ul>'
+             '<h3>What part 1 leaves for part 2</h3><ul>'
+             + "".join('<li>' + x + '</li>' for x in NEVER_PART1) + '</ul></section>')
     b.append('<section><h2>3. One way to do each thing</h2><p>One frame, at the top and bottom '
              'of every program:</p>'
              + code_block(SESSION01["chunks"][0]["code"])
@@ -1146,15 +1200,21 @@ def render_constraints():
              '<p>LEGO adds no new features to the SPIKE App after 30 June 2026 and supports it '
              'until 30 June 2031 (<a href="' + robot.LEGO_UPDATE + '">LEGO Education</a>).</p></section>')
     b.append('<section><h2>6. Locked decisions</h2><ul>'
-             '<li>Four sessions. Session 4 is the demo for families.</li>'
+             '<li>Part 1 is four sessions and stands on its own. Session 4 is its demo for '
+             'families. Part 2 is four more, for a class that continues, and session 8 is a '
+             'second demo.</li>'
              '<li>Session 1 has no opener. That time goes to building the robot.</li>'
-             '<li>The final mission is told to students in session 2.</li>'
-             '<li>Machinery handed over and not opened, because four sessions leave no room: '
-             'the frame (<code>async def main():</code>, <code>runloop.run(main())</code>) in '
-             'session 1, and the word <code>lambda</code> in session 3.</li>'
+             '<li>The final mission of part 1 is told to students in session 2.</li>'
+             '<li>Machinery handed over, then opened: the frame (<code>async def main():</code>, '
+             '<code>runloop.run(main())</code>) is handed over in session 1 and explained in '
+             'session 8. A class that stops after part 1 never sees it opened.</li>'
+             '<li>Machinery handed over and not opened: the word <code>lambda</code>, from '
+             'session 3, and <code>[0]</code> after <code>tilt_angles()</code>, from session 6.</li>'
              '<li>Deliberate errors: <code>DARK = 0</code> in session 3, chunk 3, and two '
              'lines in the wrong order in session 4, chunk 2. First tries that every team '
-             'replaces: 180 for the turn, 50 for <code>DARK</code>, and <code>port.B</code>.</li>'
+             'replaces: 180 for the turn, 50 for <code>DARK</code>, <code>port.B</code> and '
+             '<code>port.F</code>, 900 for <code>QUARTER</code>, and 30 and 150 in the line '
+             'follower. Session 5, chunk 3, shows numbers that start at 0 on purpose.</li>'
              '<li>Standards: New York science (engineering design) and New York mathematics '
              'only. No computer science codes: the graph returned none for New York on '
              + RESOLVED_ON + '.</li></ul></section>')
@@ -1225,7 +1285,13 @@ def render_ledger():
              '<tr><td>Tape reading</td><td>Reflected light over the black tape. Session 3.</td>'
              + blank("Tape reading") + '</tr>'
              '<tr><td><code>DARK</code></td><td>A number between the two readings. Session 3.</td>'
-             + blank("DARK") + '</tr></table></section>')
+             + blank("DARK") + '</tr>'
+             '<tr><td><code>QUARTER</code></td><td>The motion sensor\'s count for a quarter turn. '
+             'Session 6.</td>' + blank("QUARTER") + '</tr>'
+             '<tr><td><code>STOP_SENSOR</code></td><td>The port letter of our other colour '
+             'sensor. Session 7.</td>' + blank("STOP_SENSOR") + '</tr>'
+             '<tr><td>Steering and speed</td><td>Our line follower\'s two numbers. Session 7.</td>'
+             + blank("Steering and speed") + '</tr></table></section>')
     b.append('<section><h2>Reference strip</h2>')
     strip = [
         ("motor_pair.pair(motor_pair.PAIR_1, port.A, port.E)", "The left motor is in port A, the right motor in port E."),
@@ -1237,8 +1303,13 @@ def render_ledger():
         ("for count in range(4):", "Runs the lines inside it 4 times."),
         ("color_sensor.reflection(LINE_SENSOR)", "Reflected light, from 0 to 100."),
         (SESSION03["ledger_code"], "Start the wheels, wait until the test is true, stop the wheels."),
+        ("sound.beep(440, 500, 100)", "Part 2. A note: pitch, how long in thousandths of a second, how loud."),
+        ("light_matrix.write(str(count + 1))", "Show a number on the light matrix. Python counts from 0."),
+        (SESSION06["ledger_code"], "A measured turn. The sensor counts in tenths of a degree of the robot's turn."),
+        (SESSION07["ledger_code"], "A line follower: keep choosing until the stop sensor is over the stop bar."),
+        ("async def quarter_turn():", "Give the lines inside a name. Run them with await quarter_turn()."),
     ]
-    ctx = SESSION04["chunks"][0]["code"]
+    ctx = SESSION08["chunks"][1]["code"]
     b.append('<table class="strip"><tr><th>Python</th><th>What it does</th></tr>')
     for code, gloss in strip:
         b.append('<tr><td>' + code_block(code, context=ctx) + '</td><td>' + gloss + '</td></tr>')

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your own functions, your own mission | SPIKE Prime with Python</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Lecture Light: built for a projector in a room with the lights on.
+   Light ground, near-black text, few accents, no hairlines. */
+:root{
+  --paper:#F4F0E6;
+  --card:#FFFDF7;
+  --ink:#17181B;
+  --ink-soft:#4A4D53;
+  --rule:#D3CBB8;
+  --teal:#0E4D52;
+  --teal-deep:#0A3A3E;
+  --clay:#9C2B22;
+  --ochre:#8A5A00;
+  --ochre-line:#D99B12;
+  --ochre-tint:#FBF2DC;
+  --green:#1D5B39;
+  --green-tint:#E8F1E9;
+  --green-ink:#122B1C;
+  --code-bg:#EDE7D9;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:'DM Sans',system-ui,sans-serif; font-size:18px; font-weight:500;
+  line-height:1.65;
+}
+header.top{
+  background:var(--teal); color:#FFFDF7;
+  border-bottom:6px solid var(--ochre-line); padding:30px 22px 26px;
+}
+.wrap{max-width:1080px; margin:0 auto}
+/* prose lines stay at reading length inside the wider column; code gets the width */
+p,li{max-width:72ch}
+.dates,.sessionlist li,.toolbar,.legend,.exits p,.card p,.stamp,.pill{max-width:none}
+.eyebrow{
+  font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:.14em;
+  text-transform:uppercase; color:#F2D89B; margin:0 0 10px; font-weight:700;
+}
+h1{
+  font-family:'Bricolage Grotesque','DM Sans',sans-serif; font-weight:800;
+  font-size:clamp(29px,4.8vw,44px); line-height:1.1; margin:0 0 10px;
+}
+h2{
+  font-family:'Bricolage Grotesque','DM Sans',sans-serif; font-weight:700;
+  font-size:25px; line-height:1.2; margin:0 0 12px; color:var(--teal-deep);
+}
+h3{
+  font-family:'Bricolage Grotesque','DM Sans',sans-serif; font-weight:700;
+  font-size:20px; margin:0 0 8px; color:var(--teal-deep);
+}
+header.top h1,header.top h2{color:#FFFDF7}
+.sub{color:#EAE3D2; margin:0 0 16px; font-size:19px; font-weight:400}
+.dates{
+  display:flex; flex-wrap:wrap; gap:10px; margin-top:16px;
+  font-family:'JetBrains Mono',monospace; font-size:13.5px;
+}
+.pill{
+  border:2px solid rgba(255,253,247,.4); border-radius:999px; padding:5px 13px;
+  background:rgba(255,253,247,.08);
+}
+.pill b{color:#F2D89B; font-weight:700}
+main{padding:28px 22px 12px}
+section{
+  background:var(--card); border:2px solid var(--rule); border-radius:6px;
+  padding:22px 24px; margin:0 0 20px;
+}
+section.opener{border-left:8px solid var(--green)}
+section.chunk{border-left:8px solid var(--ochre-line)}
+section.hinge{border-left:8px solid var(--clay)}
+section.brief{border-left:8px solid var(--teal)}
+section.extension{border-left:8px solid var(--clay)}
+.chunk-no{
+  font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ochre); margin:0 0 8px; font-weight:700;
+}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px; padding-left:24px}
+li{margin:0 0 8px}
+.sessionlist li{max-width:none}
+code,pre{
+  /* JetBrains Mono ligatures turn != into a slashed equals and <= into a single
+     glyph; students then type a character that does not exist. Keep every
+     operator as the keys that produce it. */
+  font-variant-ligatures:none; font-feature-settings:"liga" 0,"calt" 0,"dlig" 0;
+}
+code{
+  font-family:'JetBrains Mono',monospace; font-size:.9em; font-weight:700;
+  background:var(--code-bg); color:#1E2A2B;
+  padding:2px 6px; border-radius:3px;
+}
+pre{
+  /* 19px, a little over the 18px prose, so code reads from the back of the room */
+  font-family:'JetBrains Mono',monospace; font-size:19px; line-height:1.6;
+  background:var(--code-bg); color:var(--ink); border:2px solid var(--rule);
+  border-left:6px solid #B9AF96; border-radius:4px;
+  padding:16px 18px; overflow-x:auto; margin:0 0 16px; font-weight:500;
+}
+pre code{background:none; padding:0; border-radius:0; font-size:inherit; font-weight:inherit; color:inherit}
+/* Python code, colored the way VS Code's light theme colors it, on white. Each color
+   clears 7:1 on white (render.py checks), and the same colors print. Color only, never
+   bold or italic, so every character keeps its width. */
+pre.py{background:#FFFFFF; color:#1F1F1F}
+pre.py .hk{color:#8A00B0} pre.py .hs{color:#0000FF} pre.py .hf{color:#6A4E14} pre.py .hc{color:#135C70} pre.py .hv{color:#001080} pre.py .hn{color:#00579A} pre.py .hq{color:#A31515} pre.py .he{color:#B00000} pre.py .hd{color:#035F3E} pre.py .hm{color:#006400}
+/* Indent guides on every code block, the lines VS Code draws down each step of
+   indentation, so even a line shown on its own shows how far in it goes. Each
+   four-space step is one box with a thick dark bar down its left edge. The box holds
+   the step's four spaces, or on a blank line one space drawn by the CSS and not part
+   of the text, so it is exactly as tall as a line wherever it sits and the bars join
+   up from line to line. The spaces never wrap, even where the printed worksheets let
+   code wrap. A border rather than a shadow, so the bars print. */
+pre.py .ig{
+  display:inline-block; width:4ch; vertical-align:top; white-space:pre;
+  border-left:6px solid #595959;
+}
+pre.py .ig:empty::before{content:" "}
+pre.anatomy{background:#FFFDF7; border-left:6px solid var(--teal)}
+pre.anatomy .cond{background:#FBF2DC; border-bottom:3px solid var(--ochre-line); padding:1px 2px}
+pre.anatomy .blk{background:#E8F1E9; border-left:3px solid var(--green); padding:1px 2px}
+pre.anatomy .nm{background:#E3EDEE; border-bottom:3px solid var(--teal); padding:1px 2px}
+pre.anatomy .arg{background:#F7E4E1; border-bottom:3px solid var(--clay); padding:1px 2px}
+pre.anatomy .lbl{color:var(--ink-soft); font-weight:700}
+pre.anatomy .lbl-n{color:var(--teal)}
+pre.anatomy .lbl-a{color:var(--clay)}
+.legend i.n{background:#E3EDEE; border-bottom:3px solid var(--teal)}
+.legend i.a{background:#F7E4E1; border-bottom:3px solid var(--clay)}
+pre.anatomy .lbl-c{color:var(--ochre)}
+pre.anatomy .lbl-b{color:var(--green)}
+.legend{display:flex; flex-wrap:wrap; gap:10px 22px; font-size:16px; margin:0 0 16px}
+.legend span{display:inline-flex; align-items:center; gap:8px; margin-right:18px}
+.legend i{display:inline-block; width:22px; height:16px; border-radius:2px; margin-right:8px}
+.legend i.c{background:#FBF2DC; border-bottom:3px solid var(--ochre-line)}
+.legend i.b{background:#E8F1E9; border-left:3px solid var(--green)}
+pre.out{
+  background:var(--green-tint); border-color:#A9C6B2;
+  border-left:6px solid var(--green); color:var(--green-ink);
+}
+.outlabel{
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--green); margin:0 0 7px; font-weight:700;
+}
+.predict{
+  border:2px dashed var(--ochre); border-radius:5px;
+  padding:16px 18px; margin:0 0 16px; background:var(--ochre-tint);
+}
+.predict p{margin:0 0 12px}
+.predict .q{font-weight:700}
+button.rev{
+  font-family:'DM Sans',sans-serif; font-size:16px; font-weight:700;
+  background:var(--teal); color:#FFFDF7; border:0; border-radius:4px;
+  padding:10px 18px; cursor:pointer;
+}
+button.rev:hover{background:var(--teal-deep)}
+button.rev.hint{background:var(--card); color:var(--ochre); border:2px solid var(--ochre-line); margin:0 10px 10px 0}
+button.rev.hint:hover{background:var(--ochre-tint)}
+.hints .ans{margin:0 0 12px; padding-top:10px; border-top:2px solid var(--ochre-line)}
+.ladder .ans{margin:12px 0 0; padding-top:12px; border-top:2px solid var(--ochre-line)}
+.ladder .ans p{margin:0 0 12px}
+.ladder .ans pre{margin:0 0 12px}
+.ladder .q b{color:var(--clay)}
+.sofar,.whole{margin:0 0 16px}
+.sofar .ans,.whole .ans{margin-top:12px; padding-top:0; border-top:0}
+.ans{display:none; margin-top:16px; padding-top:16px; border-top:2px solid var(--rule)}
+.ans.open{display:block}
+table{border-collapse:collapse; width:100%; margin:0 0 16px; font-size:16.5px}
+th,td{border:2px solid var(--rule); padding:9px 11px; text-align:left; vertical-align:top}
+th{background:#EFE9DA; font-weight:700; font-size:15px; color:var(--teal-deep)}
+td.fill{background:#FBF9F3; min-width:100px}
+.exits{display:grid; gap:14px; grid-template-columns:1fr}
+@media(min-width:760px){.exits{grid-template-columns:repeat(3,1fr)}}
+.exit{border:2px solid var(--rule); border-radius:5px; padding:16px}
+.exit .tag{
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.1em;
+  text-transform:uppercase; margin:0 0 8px; font-weight:700;
+}
+.exit.floor{border-top:6px solid var(--green)}
+.exit.floor .tag{color:var(--green)}
+.exit.middle{border-top:6px solid var(--ochre-line)}
+.exit.middle .tag{color:var(--ochre)}
+.exit.stretch{border-top:6px solid var(--clay)}
+.exit.stretch .tag{color:var(--clay)}
+details.teacher{
+  background:var(--card); border:2px solid var(--rule);
+  border-left:8px solid var(--clay); border-radius:6px;
+  padding:18px 22px; margin:0 0 20px;
+}
+details.teacher summary{
+  cursor:pointer; font-family:'Bricolage Grotesque','DM Sans',sans-serif;
+  font-weight:700; font-size:21px; color:var(--clay);
+}
+details.teacher[open] summary{margin-bottom:14px}
+.note{
+  font-size:16.5px; color:var(--ink-soft); border-left:4px solid var(--rule);
+  padding-left:14px; margin:0 0 14px;
+}
+.pager{
+  max-width:1080px; margin:0 auto; padding:8px 22px 34px;
+  display:flex; justify-content:space-between; gap:12px;
+  font-family:'JetBrains Mono',monospace; font-size:14px;
+}
+.pager a{
+  color:var(--teal); text-decoration:none; font-weight:700;
+  border:2px solid var(--rule); background:var(--card);
+  border-radius:4px; padding:10px 14px;
+}
+.pager a:hover{background:#EFE9DA}
+footer{
+  background:#EAE4D5; border-top:4px solid var(--teal); padding:22px 22px 36px;
+  font-size:15px; color:var(--ink-soft);
+}
+footer a{color:var(--teal); font-weight:700}
+a{color:var(--teal)}
+.toolbar{display:flex; gap:12px; flex-wrap:wrap; margin:0 0 20px}
+a.btn{
+  display:inline-block; font-family:'DM Sans',sans-serif; font-size:17px; font-weight:700;
+  background:var(--teal); color:#FFFDF7; text-decoration:none; border-radius:4px;
+  padding:12px 20px; border:2px solid var(--teal);
+}
+a.btn:hover{background:var(--teal-deep)}
+a.btn.quiet{background:var(--card); color:var(--teal)}
+a.btn.quiet:hover{background:#EFE9DA}
+.grid2{display:grid; gap:16px; grid-template-columns:1fr}
+@media(min-width:760px){.grid2{grid-template-columns:1fr 1fr}}
+.card{border:2px solid var(--rule); border-radius:5px; padding:16px; background:#FFFDF7}
+.card h3{margin-bottom:8px}
+.sessionlist{list-style:none; padding:0; margin:0}
+.sessionlist li{
+  border:2px solid var(--rule); border-left:8px solid var(--teal);
+  border-radius:5px; margin:0 0 12px; padding:14px 16px;
+  display:flex; gap:16px; align-items:flex-start; background:#FFFDF7;
+}
+.sessionlist .n{
+  font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:700;
+  color:var(--teal); min-width:38px;
+}
+.sessionlist a{font-weight:700; text-decoration:none; font-size:19px}
+.sessionlist .meta{
+  font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--ink-soft);
+  display:block; margin-top:4px;
+}
+.bonus{border-left-color:var(--clay)}
+.bonus .n{color:var(--clay)}
+.flag{
+  background:#F7E4E1; border:2px solid var(--clay); border-left:8px solid var(--clay);
+  border-radius:5px; padding:14px 16px; margin:0 0 18px; font-size:16.5px;
+  color:#3A1512;
+}
+.stamp{
+  border:3px dashed #BFB49A; border-radius:5px; padding:14px;
+  font-size:15px; min-height:100px; background:#FFFDF7;
+}
+.stampgrid{display:grid; gap:12px; grid-template-columns:1fr 1fr}
+@media(min-width:820px){.stampgrid{grid-template-columns:repeat(3,1fr)}}
+.stamp .no{
+  font-family:'JetBrains Mono',monospace; color:var(--ochre); font-size:12.5px;
+  letter-spacing:.1em; text-transform:uppercase; display:block; margin-bottom:6px;
+  font-weight:700;
+}
+@media (max-width:760px){
+  pre{font-size:15px}
+  /* a wide table scrolls inside itself instead of widening the page */
+  table{display:block; overflow-x:auto; max-width:100%}
+  table tbody{display:table; width:100%}
+}
+@media print{
+  body{background:#fff; font-size:11pt}
+  header.top{background:#fff; color:#111; border-bottom:3px solid #111}
+  header.top h1,header.top .sub,header.top .eyebrow,.pill b{color:#111}
+  .pill{border-color:#666}
+  footer,.pager,details.teacher{background:#fff}
+  section,.stamp,.card{background:#fff; break-inside:avoid}
+  .noprint,.toolbar{display:none}
+  a{color:#111}
+  /* printed code keeps its old size, so printed pages and PDFs do not reflow */
+  pre{font-size:15.5px}
+  pre.py{background:#fff; border:1px solid #999}
+}
+
+.figwrap{overflow-x:auto; margin:0 0 6px}
+svg.fig{display:block; width:100%; min-width:560px; height:auto}
+.figcap{font-size:15.5px; color:var(--ink-soft); margin:0 0 16px}
+.outsrc{
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.06em;
+  color:var(--green-ink); margin:-2px 0 7px; font-weight:700;
+}
+.setup{border-left:6px solid var(--teal); padding:2px 0 2px 14px; margin:0 0 16px; font-weight:700}
+td.fill input{
+  width:100%; min-width:90px; border:0; border-bottom:2px solid #B9AF96; background:transparent;
+  font:inherit; color:var(--ink); padding:4px 2px;
+}
+td.fill input:focus{outline:3px solid var(--ochre-line); outline-offset:1px}
+ul.checklist{list-style:none; padding-left:0}
+ul.checklist li{padding-left:34px; position:relative}
+ul.checklist li::before{
+  content:""; position:absolute; left:0; top:4px; width:20px; height:20px;
+  border:3px solid var(--teal); border-radius:3px; background:#FFFDF7;
+}
+table.strip td:last-child,table.strip th:last-child{min-width:230px}
+table.strip pre{margin:0}
+td.mono,th.mono{font-family:'JetBrains Mono',monospace; font-weight:700}
+@media print{ td.fill input{border-bottom:1px solid #666} }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap"><p class="eyebrow">SPIKE Prime with Python &middot; Grades 4 and 5 &middot; Part 2 &middot; Session 8 of 8</p><h1>Your own functions, your own mission</h1><p class="sub">A group of lines gets a name. Then your team writes its own mission, programs it, and shows it.</p><div class="dates"><span class="pill"><b>Date</b> to be set</span><span class="pill"><b>Length</b> 90 minutes</span><span class="pill"><b>Team</b> 4 builders, 1 robot</span><span class="pill"><b>New</b> 2 items</span></div></div></header><main><div class="wrap"><section><h2>What is new today</h2><p><code>async def quarter_turn():</code> gives a group of lines a name. <code>await quarter_turn()</code> runs that group of lines. A named group of lines is called a function.</p><p><b>Deliberately re-used:</b> The measured turn from session 6, the line follower from session 7, and the beep from session 5. They go inside functions today.</p><p><a href="robot_advanced_driving_base.html?v=3">Robot page</a> &middot; <a href="field_test_field.html?v=3">Field page</a></p></section><section class="opener"><p class="chunk-no">Robot check &middot; 5 minutes</p><h2>Before the first run</h2><ul class="checklist"><li>The robot matches the robot page. Nothing is loose and nothing is missing.</li><li>Every cable is pushed all the way into its port.</li><li>The hub is charged, switched on, and connected to the SPIKE App.</li><li>A new Python project is open and named, like <code>Jonathan_session08</code>.</li><li>Your ledger card is on the table. You need your two port letters, your <code>DARK</code>, your <code>QUARTER</code>, and your steering and speed.</li></ul><p>The program in chunk 1 is today's test run, once your own <code>QUARTER</code> is in it.</p></section><section class="opener"><p class="chunk-no">Opener &middot; 10 minutes</p><h2>What do you remember from session 7?</h2><p>Talk each question through with your team before you open its answer. Your ledger card can help.</p><div class="predict"><p class="q">Question: An <code>if</code> line has an <code>else</code> line under it. How many of the two groups of lines run each time?</p><button class="rev" data-target="s8-op1" aria-controls="s8-op1" aria-expanded="false" data-show="Show the answer" data-hide="Hide the answer">Show the answer</button><div class="ans" id="s8-op1"><p>Exactly one. The lines inside <code>if</code> run when the test is true, and the lines inside <code>else</code> run when it is false.</p></div></div><div class="predict"><p class="q">Question: What does a <code>while</code> line do, and what ends it?</p><button class="rev" data-target="s8-op2" aria-controls="s8-op2" aria-expanded="false" data-show="Show the answer" data-hide="Hide the answer">Show the answer</button><div class="ans" id="s8-op2"><p>It runs the lines inside it again and again while its test is true. It ends when the test becomes false.</p></div></div><div class="predict"><p class="q">Question: In the line follower, what ended the <code>while</code> line?</p><button class="rev" data-target="s8-op3" aria-controls="s8-op3" aria-expanded="false" data-show="Show the answer" data-hide="Hide the answer">Show the answer</button><div class="ans" id="s8-op3"><p>The stop sensor reached the stop bar and read less than <code>DARK</code>.</p></div></div><div class="predict"><p class="q">Question: Every program since session 1 has had the line <code>async def main():</code> in it. What do you think that line does?</p><button class="rev" data-target="s8-op4" aria-controls="s8-op4" aria-expanded="false" data-show="Show the answer" data-hide="Hide the answer">Show the answer</button><div class="ans" id="s8-op4"><p>Talk about it now. Chunk 1 answers it.</p></div></div></section><section class="chunk"><p class="chunk-no">Chunk 1 of 2</p><h2>Give a group of lines a name</h2><p>Lines 8 to 13 are the measured turn from session 6. Line 8 gives those lines a name: <code>quarter_turn</code>. A named group of lines is called a <b>function</b>. Writing it does not run it.</p><p>Line 20 runs it: <code>await quarter_turn()</code>. The hub goes up to line 8, runs lines 9 to 13, then comes back and goes on to line 21.</p><p>Now look at line 16. It has the same shape as line 8. <code>main</code> is a function too, and you have been writing it since session 1. The last line of the program, <code>runloop.run(main())</code>, is the line that runs it.</p><pre class="py"><code><span class="hk">from</span> <span class="hc">hub</span> <span class="hk">import</span> <span class="hc">motion_sensor</span>, <span class="hc">port</span>
+<span class="hk">import</span> <span class="hc">motor_pair</span>
+<span class="hk">import</span> <span class="hc">runloop</span>
+
+<span class="hn">QUARTER</span> = <span class="hd">900</span>
+
+
+<span class="hk">async</span> <span class="hs">def</span> <span class="hf">quarter_turn</span>():
+<span class="ig">    </span><span class="hc">motion_sensor</span>.<span class="hf">reset_yaw</span>(<span class="hd">0</span>)
+<span class="ig">    </span><span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">sleep_ms</span>(<span class="hd">100</span>)
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">move</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hd">100</span>, <span class="hv">velocity</span>=<span class="hd">100</span>)
+<span class="ig">    </span><span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">until</span>(<span class="hs">lambda</span>: <span class="hf">abs</span>(<span class="hc">motion_sensor</span>.<span class="hf">tilt_angles</span>()[<span class="hd">0</span>]) &gt; <span class="hn">QUARTER</span>)
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">stop</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>)
+
+
+<span class="hk">async</span> <span class="hs">def</span> <span class="hf">main</span>():
+<span class="ig">    </span><span class="hm"># The left drive motor is in port A. The right drive motor is in port E.</span>
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">pair</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hc">port</span>.<span class="hn">A</span>, <span class="hc">port</span>.<span class="hn">E</span>)
+<span class="ig"></span>
+<span class="ig">    </span><span class="hk">await</span> <span class="hf">quarter_turn</span>()
+<span class="ig">    </span><span class="hk">await</span> <span class="hf">quarter_turn</span>()
+
+
+<span class="hc">runloop</span>.<span class="hf">run</span>(<span class="hf">main</span>())</code></pre><p class="note">Put your own number on line 5. Line 8 starts at the left edge, like line 16, with two empty lines above it. The brackets after the name are needed on lines 8, 20, and 21.</p><div class="figwrap"><svg class="fig" viewBox="0 0 900 340" role="img" aria-label="Today's field from above. Chunk 1 uses only the floor: put the robot anywhere with room to turn." xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="898" height="338" fill="#FFFDF7" stroke="#D3CBB8" stroke-width="2"/><polyline points="150,150 700,150" fill="none" stroke="#17181B" stroke-width="14" stroke-linejoin="round"/><rect x="693" y="50" width="14" height="200" fill="#17181B" stroke="#17181B" stroke-width="2"/><text x="716" y="80" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#17181B" text-anchor="start">stop bar</text><text x="716" y="98" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="start">black tape, 30 cm long</text><text x="170" y="128" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#17181B" text-anchor="start">the line to follow, black tape</text><rect x="10" y="105" width="140" height="90" fill="#FFFDF7" fill-opacity="0.85" stroke="#17181B" stroke-width="3"/><text x="80" y="146" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#17181B" text-anchor="middle">robot</text><text x="80" y="164" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="middle">(not to scale)</text><line x1="160" y1="190" x2="238" y2="190" stroke="#0E4D52" stroke-width="5"/><polygon points="260,190 238,179 238,201" fill="#0E4D52"/><text x="162" y="216" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#0E4D52" text-anchor="start">forward</text><line x1="30" y1="310" x2="100" y2="310" stroke="#17181B" stroke-width="4"/><line x1="30" y1="302" x2="30" y2="318" stroke="#17181B" stroke-width="4"/><line x1="100" y1="302" x2="100" y2="318" stroke="#17181B" stroke-width="4"/><text x="110" y="315" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#17181B" text-anchor="start">10 cm</text><text x="180" y="315" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="start">At the start the line sensor is over the tape.</text></svg></div><p class="figcap">Today's field from above. Chunk 1 uses only the floor: put the robot anywhere with room to turn.</p><p class="setup">Setup: the robot sits on the floor with room to turn, facing along the line. It starts here on every run.</p><div class="predict"><p class="q">Predict: How many quarter turns does the robot make? Which way does it face when the program ends, compared with the start?</p><div class="hints"><button class="rev hint" data-target="s8-c1-hint1" aria-controls="s8-c1-hint1" aria-expanded="false" data-show="Hint 1" data-hide="Hide hint 1">Hint 1</button><div class="ans" id="s8-c1-hint1"><p>Count the lines inside <code>main</code> that say <code>await quarter_turn()</code>.</p><button class="rev hint" data-target="s8-c1-hint2" aria-controls="s8-c1-hint2" aria-expanded="false" data-show="Hint 2" data-hide="Hide hint 2">Hint 2</button><div class="ans" id="s8-c1-hint2"><p>Two quarter turns to the right, one after the other, make what?</p><button class="rev" data-target="s8-c1" aria-controls="s8-c1" aria-expanded="false" data-show="Run it first, then check here" data-hide="Hide">Run it first, then check here</button><div class="ans" id="s8-c1"><p class="outlabel">What the page works out</p><p class="outsrc">Computed, not measured</p><pre class="out">quarter turn to the right
+quarter turn to the right
+2 quarter turns = a half turn: the robot faces the opposite way</pre><p>The first one: 2. Lines 20 and 21 each run the function once.</p><p>The second one: the opposite way. Two quarter turns make a half turn, so the robot faces back the way it came, or close to it.</p><p>Add a third <code>await quarter_turn()</code> line. Say which way the robot will face before you run it.</p></div></div></div></div></div></section><section class="chunk"><p class="chunk-no">Chunk 2 of 2</p><h2>A program that reads like a plan</h2><p>This program has two functions of its own: <code>follow_to_bar</code> is the line follower from session 7, and <code>quarter_turn</code> is the measured turn.</p><p>With the hard parts named, <code>main</code> is short. Lines 34 to 37 are the plan, one step on each line. You can read what the robot will do without reading how it does it.</p><pre class="py"><code><span class="hk">from</span> <span class="hc">hub</span> <span class="hk">import</span> <span class="hc">motion_sensor</span>, <span class="hc">port</span>, <span class="hc">sound</span>
+<span class="hk">import</span> <span class="hc">color_sensor</span>
+<span class="hk">import</span> <span class="hc">motor_pair</span>
+<span class="hk">import</span> <span class="hc">runloop</span>
+
+<span class="hn">LINE_SENSOR</span> = <span class="hc">port</span>.<span class="hn">B</span>
+<span class="hn">STOP_SENSOR</span> = <span class="hc">port</span>.<span class="hn">F</span>
+<span class="hn">DARK</span> = <span class="hd">50</span>
+<span class="hn">FORWARD</span> = <span class="hd">360</span>
+<span class="hn">QUARTER</span> = <span class="hd">900</span>
+
+
+<span class="hk">async</span> <span class="hs">def</span> <span class="hf">follow_to_bar</span>():
+<span class="ig">    </span><span class="hk">while</span> <span class="hc">color_sensor</span>.<span class="hf">reflection</span>(<span class="hn">STOP_SENSOR</span>) &gt; <span class="hn">DARK</span>:
+<span class="ig">    </span><span class="ig">    </span><span class="hk">if</span> <span class="hc">color_sensor</span>.<span class="hf">reflection</span>(<span class="hn">LINE_SENSOR</span>) &lt; <span class="hn">DARK</span>:
+<span class="ig">    </span><span class="ig">    </span><span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">move</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hd">30</span>, <span class="hv">velocity</span>=<span class="hd">150</span>)
+<span class="ig">    </span><span class="ig">    </span><span class="hk">else</span>:
+<span class="ig">    </span><span class="ig">    </span><span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">move</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, -<span class="hd">30</span>, <span class="hv">velocity</span>=<span class="hd">150</span>)
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">stop</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>)
+
+
+<span class="hk">async</span> <span class="hs">def</span> <span class="hf">quarter_turn</span>():
+<span class="ig">    </span><span class="hc">motion_sensor</span>.<span class="hf">reset_yaw</span>(<span class="hd">0</span>)
+<span class="ig">    </span><span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">sleep_ms</span>(<span class="hd">100</span>)
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">move</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hd">100</span>, <span class="hv">velocity</span>=<span class="hd">100</span>)
+<span class="ig">    </span><span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">until</span>(<span class="hs">lambda</span>: <span class="hf">abs</span>(<span class="hc">motion_sensor</span>.<span class="hf">tilt_angles</span>()[<span class="hd">0</span>]) &gt; <span class="hn">QUARTER</span>)
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">stop</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>)
+
+
+<span class="hk">async</span> <span class="hs">def</span> <span class="hf">main</span>():
+<span class="ig">    </span><span class="hm"># The left drive motor is in port A. The right drive motor is in port E.</span>
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">pair</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hc">port</span>.<span class="hn">A</span>, <span class="hc">port</span>.<span class="hn">E</span>)
+<span class="ig"></span>
+<span class="ig">    </span><span class="hk">await</span> <span class="hf">follow_to_bar</span>()
+<span class="ig">    </span><span class="hk">await</span> <span class="hf">quarter_turn</span>()
+<span class="ig">    </span><span class="hk">await</span> <span class="hc">motor_pair</span>.<span class="hf">move_for_degrees</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hn">FORWARD</span>, <span class="hd">0</span>, <span class="hv">velocity</span>=<span class="hd">250</span>)
+<span class="ig">    </span><span class="hk">await</span> <span class="hc">sound</span>.<span class="hf">beep</span>(<span class="hd">880</span>, <span class="hd">500</span>, <span class="hd">100</span>)
+
+
+<span class="hc">runloop</span>.<span class="hf">run</span>(<span class="hf">main</span>())</code></pre><p class="note">Type <code>follow_to_bar</code> above <code>quarter_turn</code>. Put your own values on lines 6 to 10, and your own steering and speed on lines 16 and 18.</p><div class="figwrap"><svg class="fig" viewBox="0 0 900 340" role="img" aria-label="The line and its stop bar from above. The line is 70 cm long." xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="898" height="338" fill="#FFFDF7" stroke="#D3CBB8" stroke-width="2"/><polyline points="150,150 700,150" fill="none" stroke="#17181B" stroke-width="14" stroke-linejoin="round"/><rect x="693" y="50" width="14" height="200" fill="#17181B" stroke="#17181B" stroke-width="2"/><text x="716" y="80" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#17181B" text-anchor="start">stop bar</text><text x="716" y="98" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="start">black tape, 30 cm long</text><text x="170" y="128" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#17181B" text-anchor="start">the line to follow, black tape</text><rect x="10" y="105" width="140" height="90" fill="#FFFDF7" fill-opacity="0.85" stroke="#17181B" stroke-width="3"/><text x="80" y="146" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#17181B" text-anchor="middle">robot</text><text x="80" y="164" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="middle">(not to scale)</text><line x1="160" y1="190" x2="238" y2="190" stroke="#0E4D52" stroke-width="5"/><polygon points="260,190 238,179 238,201" fill="#0E4D52"/><text x="162" y="216" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#0E4D52" text-anchor="start">forward</text><line x1="30" y1="310" x2="100" y2="310" stroke="#17181B" stroke-width="4"/><line x1="30" y1="302" x2="30" y2="318" stroke="#17181B" stroke-width="4"/><line x1="100" y1="302" x2="100" y2="318" stroke="#17181B" stroke-width="4"/><text x="110" y="315" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#17181B" text-anchor="start">10 cm</text><text x="180" y="315" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="start">At the start the line sensor is over the tape.</text></svg></div><p class="figcap">The line and its stop bar from above. The line is 70 cm long.</p><p class="setup">Setup: the robot is at the start of the line, facing along it, with the line sensor over the tape. It starts here on every run.</p><div class="predict"><p class="q">Predict: Read only lines 34 to 37. In what order does the robot do things, and what is the last thing that happens?</p><div class="hints"><button class="rev hint" data-target="s8-c2-hint1" aria-controls="s8-c2-hint1" aria-expanded="false" data-show="Show a hint" data-hide="Hide the hint">Show a hint</button><div class="ans" id="s8-c2-hint1"><p>Each of the four lines is one step. Read their names.</p><button class="rev" data-target="s8-c2" aria-controls="s8-c2" aria-expanded="false" data-show="Run it first, then check here" data-hide="Hide">Run it first, then check here</button><div class="ans" id="s8-c2"><p class="outlabel">What the page works out</p><p class="outsrc">Computed, not measured</p><pre class="out">follow the line to the stop bar
+quarter turn to the right
+forward 1 full turn of the wheel, about 28 cm
+beep, pitch 880</pre><p>It follows the line to the stop bar. Then it turns a quarter turn to its right. Then it moves forward about 28 cm. The last thing is a high beep from the hub.</p><p>You could answer that from four lines, because the names say what the lines do.</p><p>Run it and check each step against the plan as it happens.</p></div></div></div></div></section><section class="hinge"><p class="chunk-no">Hinge question &middot; from today's chunks</p><h2>Before the mission</h2><pre class="py"><code><span class="ig">    </span><span class="hk">await</span> <span class="hf">quarter_turn</span>()
+<span class="ig">    </span><span class="hk">await</span> <span class="hf">follow_to_bar</span>()</code></pre><div class="predict"><p class="q">Question: A team swaps two lines of the plan, so <code>main</code> has these two lines first. The robot starts at the start of the line, as before. What does it do first, and is it likely to reach the stop bar?</p><button class="rev" data-target="s8-hinge" aria-controls="s8-hinge" aria-expanded="false" data-show="Show the answer" data-hide="Hide the answer">Show the answer</button><div class="ans" id="s8-hinge"><p>It turns a quarter turn to its right first, away from the line.</p><p>It is not likely to reach the stop bar. After the turn, the line sensor is no longer over the line the follower needs. The order of the lines in <code>main</code> is the order of the steps.</p></div></div></section><section class="brief"><p class="chunk-no">Mission &middot; 25 minutes</p><h2>Write your own mission</h2><p>Until now the warehouse gave the orders. Today your team runs the warehouse. Decide what your cart should do, write it down as a mission card, and then program it. Another team will read your card and check your robot against it.</p><p>A good mission card says what the robot does, what done means, and what may not be changed. Write the card before you type.</p><div class="figwrap"><svg class="fig" viewBox="0 0 760 480" role="img" aria-label="One field you may use: the delivery run from session 4. You may also use the shelf lines, the line with its stop bar, or the square." xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="758" height="478" fill="#FFFDF7" stroke="#D3CBB8" stroke-width="2"/><rect x="185" y="50" width="10" height="130" fill="#17181B" stroke="#17181B" stroke-width="2"/><text x="190" y="24" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#17181B" text-anchor="middle">start line</text><text x="190" y="42" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="middle">black tape, 0 cm</text><rect x="460" y="50" width="10" height="130" fill="#17181B" stroke="#17181B" stroke-width="2"/><text x="465" y="24" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#17181B" text-anchor="middle">far line</text><text x="465" y="42" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="middle">black tape, 40 to 70 cm</text><rect x="62" y="75" width="120" height="70" fill="none" stroke="#17181B" stroke-width="3"/><text x="122" y="108" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#17181B" text-anchor="middle">robot</text><text x="122" y="126" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="middle">(not to scale)</text><line x1="204" y1="110" x2="429" y2="110" stroke="#0E4D52" stroke-width="5"/><polygon points="451,110 429,99 429,121" fill="#0E4D52"/><text x="214" y="98" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#0E4D52" text-anchor="start">1. move until the far line</text><line x1="435" y1="130" x2="435" y2="248" stroke="#0E4D52" stroke-width="5"/><polygon points="435,270 446,248 424,248" fill="#0E4D52"/><text x="421" y="154" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#0E4D52" text-anchor="end">2. quarter turn to the right</text><text x="421" y="174" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#0E4D52" text-anchor="end">3. forward about 28 cm</text><rect x="335" y="230" width="200" height="200" fill="none" stroke="#17181B" stroke-width="4" stroke-dasharray="14 8"/><text x="547" y="324" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#17181B" text-anchor="start">drop zone</text><text x="547" y="344" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="start">40 cm by 40 cm, tape</text><line x1="30" y1="450" x2="80" y2="450" stroke="#17181B" stroke-width="4"/><line x1="30" y1="442" x2="30" y2="458" stroke="#17181B" stroke-width="4"/><line x1="80" y1="442" x2="80" y2="458" stroke="#17181B" stroke-width="4"/><text x="90" y="455" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#17181B" text-anchor="start">10 cm</text></svg></div><p class="figcap">One field you may use: the delivery run from session 4. You may also use the shelf lines, the line with its stop bar, or the square.</p><table><tr><th>Your mission must use</th><td>At least two functions of your own, each run with <code>await</code>, and one sound or one number on the light matrix.</td></tr><tr><th>It may use</th><td>Any field from sessions 1 to 7, and any Python on your ledger card.</td></tr><tr><th>Done means</th><td>Your team writes this. It must be something another team can check by looking or measuring.</td></tr><tr><th>Time</th><td>25 minutes, then the demo.</td></tr></table><h3>Your mission card</h3><p>Fill in the first three rows before you type anything.</p><table><tr><th>Mission card</th><th>Your team's words</th></tr><tr><td>What the robot does, in order</td><td class="fill"><input type="text" aria-label="Your team&#x27;s words, row 1"></td></tr><tr><td>Done means</td><td class="fill"><input type="text" aria-label="Your team&#x27;s words, row 2"></td></tr><tr><td>You may not</td><td class="fill"><input type="text" aria-label="Your team&#x27;s words, row 3"></td></tr><tr><td>Checked by (another team)</td><td class="fill"><input type="text" aria-label="Your team&#x27;s words, row 4"></td></tr></table><p>Start from this program. Both functions are ready, once your own values are in. Write your plan under line 34, and add a function of your own if your mission needs one.</p><pre class="py"><code><span class="hk">from</span> <span class="hc">hub</span> <span class="hk">import</span> <span class="hc">motion_sensor</span>, <span class="hc">port</span>, <span class="hc">sound</span>
+<span class="hk">import</span> <span class="hc">color_sensor</span>
+<span class="hk">import</span> <span class="hc">motor_pair</span>
+<span class="hk">import</span> <span class="hc">runloop</span>
+
+<span class="hn">LINE_SENSOR</span> = <span class="hc">port</span>.<span class="hn">B</span>
+<span class="hn">STOP_SENSOR</span> = <span class="hc">port</span>.<span class="hn">F</span>
+<span class="hn">DARK</span> = <span class="hd">50</span>
+<span class="hn">FORWARD</span> = <span class="hd">360</span>
+<span class="hn">QUARTER</span> = <span class="hd">900</span>
+
+
+<span class="hk">async</span> <span class="hs">def</span> <span class="hf">follow_to_bar</span>():
+<span class="ig">    </span><span class="hk">while</span> <span class="hc">color_sensor</span>.<span class="hf">reflection</span>(<span class="hn">STOP_SENSOR</span>) &gt; <span class="hn">DARK</span>:
+<span class="ig">    </span><span class="ig">    </span><span class="hk">if</span> <span class="hc">color_sensor</span>.<span class="hf">reflection</span>(<span class="hn">LINE_SENSOR</span>) &lt; <span class="hn">DARK</span>:
+<span class="ig">    </span><span class="ig">    </span><span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">move</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hd">30</span>, <span class="hv">velocity</span>=<span class="hd">150</span>)
+<span class="ig">    </span><span class="ig">    </span><span class="hk">else</span>:
+<span class="ig">    </span><span class="ig">    </span><span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">move</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, -<span class="hd">30</span>, <span class="hv">velocity</span>=<span class="hd">150</span>)
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">stop</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>)
+
+
+<span class="hk">async</span> <span class="hs">def</span> <span class="hf">quarter_turn</span>():
+<span class="ig">    </span><span class="hc">motion_sensor</span>.<span class="hf">reset_yaw</span>(<span class="hd">0</span>)
+<span class="ig">    </span><span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">sleep_ms</span>(<span class="hd">100</span>)
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">move</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hd">100</span>, <span class="hv">velocity</span>=<span class="hd">100</span>)
+<span class="ig">    </span><span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">until</span>(<span class="hs">lambda</span>: <span class="hf">abs</span>(<span class="hc">motion_sensor</span>.<span class="hf">tilt_angles</span>()[<span class="hd">0</span>]) &gt; <span class="hn">QUARTER</span>)
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">stop</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>)
+
+
+<span class="hk">async</span> <span class="hs">def</span> <span class="hf">main</span>():
+<span class="ig">    </span><span class="hm"># The left drive motor is in port A. The right drive motor is in port E.</span>
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">pair</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hc">port</span>.<span class="hn">A</span>, <span class="hc">port</span>.<span class="hn">E</span>)
+<span class="ig"></span>
+<span class="ig">    </span><span class="hm"># Your plan goes here, one step on each line.</span>
+
+
+<span class="hc">runloop</span>.<span class="hf">run</span>(<span class="hf">main</span>())</code></pre><ol><li>Fill in the mission card.</li><li>Write the plan in <code>main</code>, one step on each line.</li><li>Fill in Expected, then run. One change per run.</li><li>Swap cards with another team. Run your mission for them and let them fill in the last row of your card.</li></ol><h3>Expected and measured</h3><p>Fill in the Expected column before each run. Fill in the rest of the row after it. One change per run.</p><table><tr><th>Run</th><th>The one thing changed</th><th>Expected</th><th>Measured</th><th>Done, by your own card?</th></tr><tr><td class="mono">1</td><td>Nothing yet</td><td class="fill"><input type="text" aria-label="Expected, row 1"></td><td class="fill"><input type="text" aria-label="Measured, row 1"></td><td class="fill"><input type="text" aria-label="Done, by your own card?, row 1"></td></tr><tr><td class="mono">2</td><td class="fill"><input type="text" aria-label="The one thing changed, row 2"></td><td class="fill"><input type="text" aria-label="Expected, row 2"></td><td class="fill"><input type="text" aria-label="Measured, row 2"></td><td class="fill"><input type="text" aria-label="Done, by your own card?, row 2"></td></tr><tr><td class="mono">3</td><td class="fill"><input type="text" aria-label="The one thing changed, row 3"></td><td class="fill"><input type="text" aria-label="Expected, row 3"></td><td class="fill"><input type="text" aria-label="Measured, row 3"></td><td class="fill"><input type="text" aria-label="Done, by your own card?, row 3"></td></tr><tr><td class="mono">4</td><td class="fill"><input type="text" aria-label="The one thing changed, row 4"></td><td class="fill"><input type="text" aria-label="Expected, row 4"></td><td class="fill"><input type="text" aria-label="Measured, row 4"></td><td class="fill"><input type="text" aria-label="Done, by your own card?, row 4"></td></tr><tr><td class="mono">5</td><td class="fill"><input type="text" aria-label="The one thing changed, row 5"></td><td class="fill"><input type="text" aria-label="Expected, row 5"></td><td class="fill"><input type="text" aria-label="Measured, row 5"></td><td class="fill"><input type="text" aria-label="Done, by your own card?, row 5"></td></tr></table></section><section><h2>Where you can stop</h2><p>All three are real places to stop. Nobody is behind for finishing at the floor.</p><div class="exits"><div class="exit floor"><p class="tag">Floor</p><p>The chunk 2 program runs with your team's own values, and your mission card is filled in.</p></div><div class="exit middle"><p class="tag">Middle</p><p>Your robot does your own mission once, and <code>main</code> reads as a plan with one step on each line.</p></div><div class="exit stretch"><p class="tag">Stretch</p><p>Another team has checked your robot against your card and written that it passes, in 3 runs out of 3.</p></div></div></section><section class="brief"><p class="chunk-no">Demo &middot; 20 minutes</p><h2>Demo for families</h2><p>Each team has about four minutes. Decide who says what before your turn.</p><ol><li>One builder reads the team's mission card aloud.</li><li>The team runs the mission, up to 3 times.</li><li>One builder shows <code>main</code> on the screen and reads the plan, one line at a time.</li><li>Each builder names one function and says what it does.</li><li>If a run fails, say which step of the plan it failed at and what you would change first.</li></ol></section><section><h2>Ledger card</h2><p>Copy this onto your card.</p><pre class="py"><code><span class="hk">async</span> <span class="hs">def</span> <span class="hf">quarter_turn</span>():
+<span class="ig">    </span>...
+
+<span class="hk">await</span> <span class="hf">quarter_turn</span>()</code></pre><p>Session 8. The first line gives a group of lines a name. The last line runs them. Write the names of your team's functions, and one sentence about your own mission.</p><p>Today's stamp is for the demo: you named one function and said what it does.</p><p><a href="course_ledger_card.html?v=3">Open the ledger card</a></p></section><details class="teacher"><summary>Teacher panel</summary><h3>Before class</h3><ul><li>Charge every hub. Each team needs its ledger card with its own values.</li><li>Lay out one of each field: the lane with a drop zone, the shelf lines, the line with its stop bar, and space for a square. Teams choose.</li><li>Print one blank mission card for each team, or have them use the page.</li><li>Decide the order of teams for the demo and where families stand.</li><li>Log three runs of the chunk 1 and chunk 2 programs on the reference robot.</li></ul><h3>Timing, 90 minutes</h3><ul><li>0:00 Robot check, 5 min</li><li>0:05 Opener, 10 min</li><li>0:15 Chunk 1, give lines a name, 10 min</li><li>0:25 Chunk 2, a program that reads like a plan, 10 min</li><li>0:35 Hinge question, 3 min</li><li>0:38 Mission, 25 min</li><li>1:03 Demo for families, 20 min</li><li>1:23 Pack away, 5 min</li><li>1:28 Ledger stamp, 2 min</li></ul><p class="note">Chunk 2's program is long to type. If devices still hold the session 6 and 7 projects, let teams copy from them. A team at the floor exit demos the chunk 2 program and reads its plan aloud. That is a finish.</p><h3>What you will see, and what to do</h3><table><tr><th>In the room</th><th>Redirect</th></tr><tr><td>A team writes <code>quarter_turn</code> without the brackets, or without <code>await</code>.</td><td>The robot skips the turn. Compare the line with line 20 of chunk 1, one character at a time.</td></tr><tr><td>A function is typed inside <code>main</code>, or <code>main</code> inside a function.</td><td>Each <code>async def</code> line starts at the left edge with two empty lines above it. Point at the grey bars on the page.</td></tr><tr><td>A team's mission card says "the robot does it well".</td><td>Ask how another team would check that with a ruler or by looking. Done means something that can be seen or measured.</td></tr><tr><td>A team plans a mission that needs something new.</td><td>The card says: any Python on your ledger card. Ask which of their functions could do the nearest thing.</td></tr><tr><td>In the demo a run fails.</td><td>Ask which step of the plan it failed at. Reading <code>main</code> to find the step is the skill the session teaches.</td></tr></table><h3>Mapped to</h3><table class="std"><tr><th>Code</th><th>Framework</th><th>Grade</th><th>Statement, as retrieved</th><th>CASE identifier</th><th>Mapped because</th></tr><tr><td><code>3-5-ETS1-1</code></td><td>New York State P-12 Science Learning Standards</td><td>4 and 5</td><td>Define a simple design problem reflecting a need or a want that includes specified criteria for success and constraints on materials, time, or cost.</td><td>Grade 4: <code>2fb0cfd6-caa2-4224-8c1b-12144f8dd898</code><br>Grade 5: <code>b7b9475e-16fc-49fc-9829-bc6ef6334d69</code></td><td>Each mission states what counts as done and what the team may not change.</td></tr><tr><td><code>3-5-ETS1-2</code></td><td>New York State P-12 Science Learning Standards</td><td>4 and 5</td><td>Generate and compare multiple possible solutions to a problem based on how well each is likely to meet the criteria and constraints of the problem.</td><td>Grade 4: <code>46281f20-643c-4093-a34d-cd41d7aa02be</code><br>Grade 5: <code>4a149369-456b-45f1-b494-3ca247cd88f7</code></td><td>Teams write two plans for the delivery run and choose one before they type.</td></tr><tr><td><code>3-5-ETS1-3</code></td><td>New York State P-12 Science Learning Standards</td><td>4 and 5</td><td>Plan and carry out fair tests in which variables are controlled and failure points are considered to identify aspects of a model or prototype that can be improved.</td><td>Grade 4: <code>f9f9243b-9eff-43a3-9c15-5036ca8df270</code><br>Grade 5: <code>3f6f1ba6-3b02-42b3-9525-08fe3f98f552</code></td><td>The mission changes one number per run and records every run.</td></tr></table><h3>If time runs out</h3><p>If the mission runs long, the demo still starts at 1:03. Never cut the mission card: writing what done means is what the session is mapped to.</p><h3>Deliberate</h3><p>Session 1 handed over <code>async def main():</code> and <code>runloop.run(main())</code> without explaining them. Chunk 1 of this session explains them. The word <code>lambda</code> stays unexplained.</p><h3>Files</h3><p><a href="robot_advanced_driving_base.html?v=3">Robot page</a> &middot; <a href="field_test_field.html?v=3">Field page</a> &middot; <a href="course_constraints.html?v=3">Course constraints</a> &middot; <a href="runs.csv?v=3">Run log, runs.csv</a></p><p>Log each run on the reference robot in <code>runs.csv</code> with the program id below, then rebuild. A run counts only while its program id matches the program on this page.</p><table><tr><th>Result</th><th>Program id</th><th>Runs logged</th><th>On the page?</th></tr><tr><td>chunk1</td><td class="mono">f51fcc35</td><td>0 of 3</td><td>Not yet</td></tr><tr><td>chunk2</td><td class="mono">90dec217</td><td>0 of 3</td><td>Not yet</td></tr><tr><td>mission</td><td class="mono">752225fa</td><td>0 of 3</td><td>Not yet</td></tr></table></details></div></main><nav class="pager"><a href="session07_follow_the_line.html?v=3">&larr; Session 7</a><a href="spike_course_hub.html?v=3">Course home</a><span></span></nav><footer><div class="wrap"><p>SPIKE Prime with Python, grades 4 and 5. Part 1 is sessions 1 to 4. Part 2 is sessions 5 to 8, for a class that continues. The class robot is LEGO's Advanced Driving Base. LEGO's building instructions are linked, not copied.</p><p>Mapped to the New York State P-12 Science Learning Standards and the New York Next Generation Mathematics Learning Standards. Codes retrieved through the Learning Commons Knowledge Graph (CASE Network) on 12 November 2026. <a href="standards_map.html?v=3">Full standards map</a> &middot; <a href="course_constraints.html?v=3">Course constraints, published 12 November 2026</a></p><p>LEGO and SPIKE are trademarks of the LEGO Group, which does not sponsor or endorse this course.</p></div></footer>
+<script>
+document.addEventListener('click', function(e){
+  var b = e.target.closest('button.rev');
+  if(!b) return;
+  var t = document.getElementById(b.getAttribute('data-target'));
+  if(!t) return;
+  var open = t.classList.toggle('open');
+  b.setAttribute('aria-expanded', open ? 'true' : 'false');
+  b.textContent = open ? b.getAttribute('data-hide') : b.getAttribute('data-show');
+});
+</script>
+</body>
+</html>

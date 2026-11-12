@@ -1,7 +1,8 @@
 # SPIKE Prime with Python
 
-LEGO SPIKE Prime robotics for grades 4 and 5, in four sessions of 90 minutes, written
-in Python for the SPIKE App 3. The class robot is LEGO's Advanced Driving Base. The
+LEGO SPIKE Prime robotics for grades 4 and 5, in sessions of 90 minutes, written in
+Python for the SPIKE App 3. Part 1 is sessions 1 to 4 and stands on its own. Part 2 is
+sessions 5 to 8, for a class that finishes early or continues for another term. The class robot is LEGO's Advanced Driving Base. The
 house style is the SPIKE Prime Course Style Guide, snapshot of 12 November 2026.
 
 **Open the course: [silvermanjonathan.github.io/legospikerobotics/spike_course_hub.html](https://silvermanjonathan.github.io/legospikerobotics/spike_course_hub.html)**
@@ -18,6 +19,10 @@ The site is served by GitHub Pages from the root of the `main` branch.
 | `session02_quarter_turn_and_square.html` | Session 2. Names for numbers, the quarter turn found by testing, a square the long way and with a `for` line. Tells students the final mission. |
 | `session03_stop_at_the_line.html` | Session 3. The colour sensor's reflected light, and moving until a line. |
 | `session04_delivery_run_and_demo.html` | Session 4. No new Python. The delivery run, then the demo for families. |
+| `session05_count_the_lines.html` | Session 5, part 2. The hub beeps and shows numbers; the robot counts shelf lines and stops at the one called. |
+| `session06_turns_that_measure_themselves.html` | Session 6. The motion sensor; a turn that ends on a measurement; counted and measured turns compared on the square. |
+| `session07_follow_the_line.html` | Session 7. `if`, `else`, `while`, and a line follower with a stop bar, then timed runs. |
+| `session08_your_own_functions_and_mission.html` | Session 8. The students' own functions; each team writes and runs its own mission; second demo. |
 | `robot_advanced_driving_base.html` | The class robot: links to LEGO's five building books, the port map, the wheel table. |
 | `field_test_field.html` | The test field for every session, drawn to scale. |
 | `course_constraints.html` | What the course uses and when each thing is first taught, what it never uses, the locked decisions. Dated. |
@@ -36,7 +41,7 @@ Pages are generated, never edited by hand.
 
 | Generator | Holds |
 |---|---|
-| `build/session01.py` to `build/session04.py` | One session each: its programs and every word on its page |
+| `build/session01.py` to `build/session08.py` | One session each: its programs and every word on its page |
 | `build/robot.py` | Port map, LEGO's links, every field and robot figure |
 | `build/wheel.py` | Wheel arithmetic: degrees of motor turn to centimetres |
 | `build/standards.py` | Standards, as retrieved, with CASE identifiers |
@@ -63,10 +68,13 @@ The constraints page carries the full list. The ones that differ from the style 
 2. **The class robot is the Advanced Driving Base**, one for each team of four. Port
    map: A left drive motor, E right drive motor, as LEGO's own programs for this robot
    say. The style guide's default port map is the Rhinobot's (A and B).
-3. **Four sessions.** Session 4 is the demo for families. The final mission is told
-   to students in session 2, because session 1 is the build.
-4. **Machinery handed over and never opened**, because four sessions leave no room:
-   the frame (`async def main():`, `runloop.run(main())`) and the word `lambda`.
+3. **Two parts of four sessions.** Part 1 stands alone and session 4 is its demo for
+   families; its final mission is told to students in session 2. Part 2 opens what
+   part 1 never used: sound and the light matrix, the motion sensor, `if` and `while`,
+   the second colour sensor, slower speeds, and the students' own functions.
+4. **Machinery handed over.** The frame (`async def main():`, `runloop.run(main())`)
+   is handed over in session 1 and opened in session 8. The word `lambda` and the
+   `[0]` after `tilt_angles()` are never opened.
 5. **Teams fill in their own numbers.** No turn number, sensor port letter, or
    reflected light reading is printed as a fact. The programs carry first tries (180,
    `port.B`, 50) that each team replaces by testing.
@@ -75,6 +83,38 @@ The constraints page carries the full list. The ones that differ from the style 
    only, retrieved through the Learning Commons Knowledge Graph on 12 November 2026.
 
 ## Release log
+
+### 12 November 2026, third printing (version pin 3)
+
+What changed: part 2 added, sessions 5 to 8. The hub, field page, constraints page,
+standards map, and ledger card now cover both parts. Sessions 1 to 4 say "Part 1" in
+their mastheads; their programs did not change, so their program ids are the same.
+
+What was checked:
+
+- `validate.py` passes on all 14 pages. It now also checks that each mission's minutes
+  match its timing row.
+- `runcheck.py`: all 38 programs run cleanly against the stand-in modules and ask for
+  what their pages say, in order. Both branches of the `if` and both edges of the line
+  follower were run against scripted readings.
+- Layout looked at in a browser at 1280px and 390px with every reveal open.
+- The new functions were checked against published SPIKE App 3 material:
+  `await sound.beep(450, 500, 100)` and `await light_matrix.write(str(...))` appear in
+  LEGO's own Python lessons, `light_matrix.write` without `await` in a published
+  tutorial, and `motion_sensor.reset_yaw(0)` followed by a short wait and
+  `abs(motion_sensor.tilt_angles()[0])` in a published turn test. That test also
+  measured the robot ending past its target angle, which session 6 teaches.
+
+What is not done, on top of the list under the second printing:
+
+- **Thirty measured results are pending now**, fifteen of them in part 2.
+- **Part 2 leans harder on the two colour sensors.** Session 7 needs them far enough
+  apart for one to sit over the tape while the other is over the floor. Check that on
+  a built robot before planning part 2.
+- **Session 5's line spacing (20 cm) is a first choice.** If the reference robot
+  miscounts, widen it.
+- **Session 7's first tries (steering 30, speed 150) come from a published follower
+  for a different robot.** They may need changing before the first class.
 
 ### 12 November 2026, second printing (version pin 2)
 

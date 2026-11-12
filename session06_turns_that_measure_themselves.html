@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turns that measure themselves | SPIKE Prime with Python</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Lecture Light: built for a projector in a room with the lights on.
+   Light ground, near-black text, few accents, no hairlines. */
+:root{
+  --paper:#F4F0E6;
+  --card:#FFFDF7;
+  --ink:#17181B;
+  --ink-soft:#4A4D53;
+  --rule:#D3CBB8;
+  --teal:#0E4D52;
+  --teal-deep:#0A3A3E;
+  --clay:#9C2B22;
+  --ochre:#8A5A00;
+  --ochre-line:#D99B12;
+  --ochre-tint:#FBF2DC;
+  --green:#1D5B39;
+  --green-tint:#E8F1E9;
+  --green-ink:#122B1C;
+  --code-bg:#EDE7D9;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:'DM Sans',system-ui,sans-serif; font-size:18px; font-weight:500;
+  line-height:1.65;
+}
+header.top{
+  background:var(--teal); color:#FFFDF7;
+  border-bottom:6px solid var(--ochre-line); padding:30px 22px 26px;
+}
+.wrap{max-width:1080px; margin:0 auto}
+/* prose lines stay at reading length inside the wider column; code gets the width */
+p,li{max-width:72ch}
+.dates,.sessionlist li,.toolbar,.legend,.exits p,.card p,.stamp,.pill{max-width:none}
+.eyebrow{
+  font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:.14em;
+  text-transform:uppercase; color:#F2D89B; margin:0 0 10px; font-weight:700;
+}
+h1{
+  font-family:'Bricolage Grotesque','DM Sans',sans-serif; font-weight:800;
+  font-size:clamp(29px,4.8vw,44px); line-height:1.1; margin:0 0 10px;
+}
+h2{
+  font-family:'Bricolage Grotesque','DM Sans',sans-serif; font-weight:700;
+  font-size:25px; line-height:1.2; margin:0 0 12px; color:var(--teal-deep);
+}
+h3{
+  font-family:'Bricolage Grotesque','DM Sans',sans-serif; font-weight:700;
+  font-size:20px; margin:0 0 8px; color:var(--teal-deep);
+}
+header.top h1,header.top h2{color:#FFFDF7}
+.sub{color:#EAE3D2; margin:0 0 16px; font-size:19px; font-weight:400}
+.dates{
+  display:flex; flex-wrap:wrap; gap:10px; margin-top:16px;
+  font-family:'JetBrains Mono',monospace; font-size:13.5px;
+}
+.pill{
+  border:2px solid rgba(255,253,247,.4); border-radius:999px; padding:5px 13px;
+  background:rgba(255,253,247,.08);
+}
+.pill b{color:#F2D89B; font-weight:700}
+main{padding:28px 22px 12px}
+section{
+  background:var(--card); border:2px solid var(--rule); border-radius:6px;
+  padding:22px 24px; margin:0 0 20px;
+}
+section.opener{border-left:8px solid var(--green)}
+section.chunk{border-left:8px solid var(--ochre-line)}
+section.hinge{border-left:8px solid var(--clay)}
+section.brief{border-left:8px solid var(--teal)}
+section.extension{border-left:8px solid var(--clay)}
+.chunk-no{
+  font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ochre); margin:0 0 8px; font-weight:700;
+}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px; padding-left:24px}
+li{margin:0 0 8px}
+.sessionlist li{max-width:none}
+code,pre{
+  /* JetBrains Mono ligatures turn != into a slashed equals and <= into a single
+     glyph; students then type a character that does not exist. Keep every
+     operator as the keys that produce it. */
+  font-variant-ligatures:none; font-feature-settings:"liga" 0,"calt" 0,"dlig" 0;
+}
+code{
+  font-family:'JetBrains Mono',monospace; font-size:.9em; font-weight:700;
+  background:var(--code-bg); color:#1E2A2B;
+  padding:2px 6px; border-radius:3px;
+}
+pre{
+  /* 19px, a little over the 18px prose, so code reads from the back of the room */
+  font-family:'JetBrains Mono',monospace; font-size:19px; line-height:1.6;
+  background:var(--code-bg); color:var(--ink); border:2px solid var(--rule);
+  border-left:6px solid #B9AF96; border-radius:4px;
+  padding:16px 18px; overflow-x:auto; margin:0 0 16px; font-weight:500;
+}
+pre code{background:none; padding:0; border-radius:0; font-size:inherit; font-weight:inherit; color:inherit}
+/* Python code, colored the way VS Code's light theme colors it, on white. Each color
+   clears 7:1 on white (render.py checks), and the same colors print. Color only, never
+   bold or italic, so every character keeps its width. */
+pre.py{background:#FFFFFF; color:#1F1F1F}
+pre.py .hk{color:#8A00B0} pre.py .hs{color:#0000FF} pre.py .hf{color:#6A4E14} pre.py .hc{color:#135C70} pre.py .hv{color:#001080} pre.py .hn{color:#00579A} pre.py .hq{color:#A31515} pre.py .he{color:#B00000} pre.py .hd{color:#035F3E} pre.py .hm{color:#006400}
+/* Indent guides on every code block, the lines VS Code draws down each step of
+   indentation, so even a line shown on its own shows how far in it goes. Each
+   four-space step is one box with a thick dark bar down its left edge. The box holds
+   the step's four spaces, or on a blank line one space drawn by the CSS and not part
+   of the text, so it is exactly as tall as a line wherever it sits and the bars join
+   up from line to line. The spaces never wrap, even where the printed worksheets let
+   code wrap. A border rather than a shadow, so the bars print. */
+pre.py .ig{
+  display:inline-block; width:4ch; vertical-align:top; white-space:pre;
+  border-left:6px solid #595959;
+}
+pre.py .ig:empty::before{content:" "}
+pre.anatomy{background:#FFFDF7; border-left:6px solid var(--teal)}
+pre.anatomy .cond{background:#FBF2DC; border-bottom:3px solid var(--ochre-line); padding:1px 2px}
+pre.anatomy .blk{background:#E8F1E9; border-left:3px solid var(--green); padding:1px 2px}
+pre.anatomy .nm{background:#E3EDEE; border-bottom:3px solid var(--teal); padding:1px 2px}
+pre.anatomy .arg{background:#F7E4E1; border-bottom:3px solid var(--clay); padding:1px 2px}
+pre.anatomy .lbl{color:var(--ink-soft); font-weight:700}
+pre.anatomy .lbl-n{color:var(--teal)}
+pre.anatomy .lbl-a{color:var(--clay)}
+.legend i.n{background:#E3EDEE; border-bottom:3px solid var(--teal)}
+.legend i.a{background:#F7E4E1; border-bottom:3px solid var(--clay)}
+pre.anatomy .lbl-c{color:var(--ochre)}
+pre.anatomy .lbl-b{color:var(--green)}
+.legend{display:flex; flex-wrap:wrap; gap:10px 22px; font-size:16px; margin:0 0 16px}
+.legend span{display:inline-flex; align-items:center; gap:8px; margin-right:18px}
+.legend i{display:inline-block; width:22px; height:16px; border-radius:2px; margin-right:8px}
+.legend i.c{background:#FBF2DC; border-bottom:3px solid var(--ochre-line)}
+.legend i.b{background:#E8F1E9; border-left:3px solid var(--green)}
+pre.out{
+  background:var(--green-tint); border-color:#A9C6B2;
+  border-left:6px solid var(--green); color:var(--green-ink);
+}
+.outlabel{
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--green); margin:0 0 7px; font-weight:700;
+}
+.predict{
+  border:2px dashed var(--ochre); border-radius:5px;
+  padding:16px 18px; margin:0 0 16px; background:var(--ochre-tint);
+}
+.predict p{margin:0 0 12px}
+.predict .q{font-weight:700}
+button.rev{
+  font-family:'DM Sans',sans-serif; font-size:16px; font-weight:700;
+  background:var(--teal); color:#FFFDF7; border:0; border-radius:4px;
+  padding:10px 18px; cursor:pointer;
+}
+button.rev:hover{background:var(--teal-deep)}
+button.rev.hint{background:var(--card); color:var(--ochre); border:2px solid var(--ochre-line); margin:0 10px 10px 0}
+button.rev.hint:hover{background:var(--ochre-tint)}
+.hints .ans{margin:0 0 12px; padding-top:10px; border-top:2px solid var(--ochre-line)}
+.ladder .ans{margin:12px 0 0; padding-top:12px; border-top:2px solid var(--ochre-line)}
+.ladder .ans p{margin:0 0 12px}
+.ladder .ans pre{margin:0 0 12px}
+.ladder .q b{color:var(--clay)}
+.sofar,.whole{margin:0 0 16px}
+.sofar .ans,.whole .ans{margin-top:12px; padding-top:0; border-top:0}
+.ans{display:none; margin-top:16px; padding-top:16px; border-top:2px solid var(--rule)}
+.ans.open{display:block}
+table{border-collapse:collapse; width:100%; margin:0 0 16px; font-size:16.5px}
+th,td{border:2px solid var(--rule); padding:9px 11px; text-align:left; vertical-align:top}
+th{background:#EFE9DA; font-weight:700; font-size:15px; color:var(--teal-deep)}
+td.fill{background:#FBF9F3; min-width:100px}
+.exits{display:grid; gap:14px; grid-template-columns:1fr}
+@media(min-width:760px){.exits{grid-template-columns:repeat(3,1fr)}}
+.exit{border:2px solid var(--rule); border-radius:5px; padding:16px}
+.exit .tag{
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.1em;
+  text-transform:uppercase; margin:0 0 8px; font-weight:700;
+}
+.exit.floor{border-top:6px solid var(--green)}
+.exit.floor .tag{color:var(--green)}
+.exit.middle{border-top:6px solid var(--ochre-line)}
+.exit.middle .tag{color:var(--ochre)}
+.exit.stretch{border-top:6px solid var(--clay)}
+.exit.stretch .tag{color:var(--clay)}
+details.teacher{
+  background:var(--card); border:2px solid var(--rule);
+  border-left:8px solid var(--clay); border-radius:6px;
+  padding:18px 22px; margin:0 0 20px;
+}
+details.teacher summary{
+  cursor:pointer; font-family:'Bricolage Grotesque','DM Sans',sans-serif;
+  font-weight:700; font-size:21px; color:var(--clay);
+}
+details.teacher[open] summary{margin-bottom:14px}
+.note{
+  font-size:16.5px; color:var(--ink-soft); border-left:4px solid var(--rule);
+  padding-left:14px; margin:0 0 14px;
+}
+.pager{
+  max-width:1080px; margin:0 auto; padding:8px 22px 34px;
+  display:flex; justify-content:space-between; gap:12px;
+  font-family:'JetBrains Mono',monospace; font-size:14px;
+}
+.pager a{
+  color:var(--teal); text-decoration:none; font-weight:700;
+  border:2px solid var(--rule); background:var(--card);
+  border-radius:4px; padding:10px 14px;
+}
+.pager a:hover{background:#EFE9DA}
+footer{
+  background:#EAE4D5; border-top:4px solid var(--teal); padding:22px 22px 36px;
+  font-size:15px; color:var(--ink-soft);
+}
+footer a{color:var(--teal); font-weight:700}
+a{color:var(--teal)}
+.toolbar{display:flex; gap:12px; flex-wrap:wrap; margin:0 0 20px}
+a.btn{
+  display:inline-block; font-family:'DM Sans',sans-serif; font-size:17px; font-weight:700;
+  background:var(--teal); color:#FFFDF7; text-decoration:none; border-radius:4px;
+  padding:12px 20px; border:2px solid var(--teal);
+}
+a.btn:hover{background:var(--teal-deep)}
+a.btn.quiet{background:var(--card); color:var(--teal)}
+a.btn.quiet:hover{background:#EFE9DA}
+.grid2{display:grid; gap:16px; grid-template-columns:1fr}
+@media(min-width:760px){.grid2{grid-template-columns:1fr 1fr}}
+.card{border:2px solid var(--rule); border-radius:5px; padding:16px; background:#FFFDF7}
+.card h3{margin-bottom:8px}
+.sessionlist{list-style:none; padding:0; margin:0}
+.sessionlist li{
+  border:2px solid var(--rule); border-left:8px solid var(--teal);
+  border-radius:5px; margin:0 0 12px; padding:14px 16px;
+  display:flex; gap:16px; align-items:flex-start; background:#FFFDF7;
+}
+.sessionlist .n{
+  font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:700;
+  color:var(--teal); min-width:38px;
+}
+.sessionlist a{font-weight:700; text-decoration:none; font-size:19px}
+.sessionlist .meta{
+  font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--ink-soft);
+  display:block; margin-top:4px;
+}
+.bonus{border-left-color:var(--clay)}
+.bonus .n{color:var(--clay)}
+.flag{
+  background:#F7E4E1; border:2px solid var(--clay); border-left:8px solid var(--clay);
+  border-radius:5px; padding:14px 16px; margin:0 0 18px; font-size:16.5px;
+  color:#3A1512;
+}
+.stamp{
+  border:3px dashed #BFB49A; border-radius:5px; padding:14px;
+  font-size:15px; min-height:100px; background:#FFFDF7;
+}
+.stampgrid{display:grid; gap:12px; grid-template-columns:1fr 1fr}
+@media(min-width:820px){.stampgrid{grid-template-columns:repeat(3,1fr)}}
+.stamp .no{
+  font-family:'JetBrains Mono',monospace; color:var(--ochre); font-size:12.5px;
+  letter-spacing:.1em; text-transform:uppercase; display:block; margin-bottom:6px;
+  font-weight:700;
+}
+@media (max-width:760px){
+  pre{font-size:15px}
+  /* a wide table scrolls inside itself instead of widening the page */
+  table{display:block; overflow-x:auto; max-width:100%}
+  table tbody{display:table; width:100%}
+}
+@media print{
+  body{background:#fff; font-size:11pt}
+  header.top{background:#fff; color:#111; border-bottom:3px solid #111}
+  header.top h1,header.top .sub,header.top .eyebrow,.pill b{color:#111}
+  .pill{border-color:#666}
+  footer,.pager,details.teacher{background:#fff}
+  section,.stamp,.card{background:#fff; break-inside:avoid}
+  .noprint,.toolbar{display:none}
+  a{color:#111}
+  /* printed code keeps its old size, so printed pages and PDFs do not reflow */
+  pre{font-size:15.5px}
+  pre.py{background:#fff; border:1px solid #999}
+}
+
+.figwrap{overflow-x:auto; margin:0 0 6px}
+svg.fig{display:block; width:100%; min-width:560px; height:auto}
+.figcap{font-size:15.5px; color:var(--ink-soft); margin:0 0 16px}
+.outsrc{
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.06em;
+  color:var(--green-ink); margin:-2px 0 7px; font-weight:700;
+}
+.setup{border-left:6px solid var(--teal); padding:2px 0 2px 14px; margin:0 0 16px; font-weight:700}
+td.fill input{
+  width:100%; min-width:90px; border:0; border-bottom:2px solid #B9AF96; background:transparent;
+  font:inherit; color:var(--ink); padding:4px 2px;
+}
+td.fill input:focus{outline:3px solid var(--ochre-line); outline-offset:1px}
+ul.checklist{list-style:none; padding-left:0}
+ul.checklist li{padding-left:34px; position:relative}
+ul.checklist li::before{
+  content:""; position:absolute; left:0; top:4px; width:20px; height:20px;
+  border:3px solid var(--teal); border-radius:3px; background:#FFFDF7;
+}
+table.strip td:last-child,table.strip th:last-child{min-width:230px}
+table.strip pre{margin:0}
+td.mono,th.mono{font-family:'JetBrains Mono',monospace; font-weight:700}
+@media print{ td.fill input{border-bottom:1px solid #666} }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap"><p class="eyebrow">SPIKE Prime with Python &middot; Grades 4 and 5 &middot; Part 2 &middot; Session 6 of 8</p><h1>Turns that measure themselves</h1><p class="sub">The hub has a sensor that counts how far the robot has turned. The turn ends when the count is big enough.</p><div class="dates"><span class="pill"><b>Date</b> to be set</span><span class="pill"><b>Length</b> 90 minutes</span><span class="pill"><b>Team</b> 4 builders, 1 robot</span><span class="pill"><b>New</b> 4 items</span></div></div></header><main><div class="wrap"><section><h2>What is new today</h2><p><code>motion_sensor.tilt_angles()[0]</code> gives the robot's turn as a number. <code>motion_sensor.reset_yaw(0)</code> sets that number back to 0. <code>abs</code> takes away a minus sign. <code>runloop.sleep_ms</code> waits for a set time.</p><p><b>Deliberately re-used:</b> Start the wheels, wait, stop the wheels, from session 3. The turn cross and the square from session 2.</p><p><a href="robot_advanced_driving_base.html?v=3">Robot page</a> &middot; <a href="field_test_field.html?v=3">Field page</a></p></section><section class="opener"><p class="chunk-no">Robot check &middot; 5 minutes</p><h2>Before the first run</h2><ul class="checklist"><li>The robot matches the robot page. Nothing is loose and nothing is missing.</li><li>Every cable is pushed all the way into its port.</li><li>The hub is charged, switched on, and connected to the SPIKE App.</li><li>A new Python project is open and named, like <code>Jonathan_session06</code>.</li><li>The robot is standing still on the table when you press run. The motion sensor needs the hub to be still at the start.</li></ul><p>The program in chunk 1 is today's test run. It uses no motors.</p></section><section class="opener"><p class="chunk-no">Opener &middot; 10 minutes</p><h2>What do you remember from session 5?</h2><p>Talk each question through with your team before you open its answer. Your ledger card can help.</p><div class="predict"><p class="q">Question: Crossing a line took two waits. What was each one waiting for?</p><button class="rev" data-target="s6-op1" aria-controls="s6-op1" aria-expanded="false" data-show="Show the answer" data-hide="Hide the answer">Show the answer</button><div class="ans" id="s6-op1"><p>The first waited for the tape: a reading less than <code>DARK</code>. The second waited for the floor after the tape: a reading greater than <code>DARK</code>.</p></div></div><div class="predict"><p class="q">Question: In <code>for count in range(3):</code>, what numbers does <code>count</code> hold?</p><button class="rev" data-target="s6-op2" aria-controls="s6-op2" aria-expanded="false" data-show="Show the answer" data-hide="Hide the answer">Show the answer</button><div class="ans" id="s6-op2"><p>0, then 1, then 2. Python starts counting at 0.</p></div></div><div class="predict"><p class="q">Question: In session 2 your team found its own number for a quarter turn. What did that number count?</p><button class="rev" data-target="s6-op3" aria-controls="s6-op3" aria-expanded="false" data-show="Show the answer" data-hide="Hide the answer">Show the answer</button><div class="ans" id="s6-op3"><p>Degrees of motor turn. It was found by testing, and it was different from the 90 degrees of the robot's turn in a quarter turn.</p></div></div><div class="predict"><p class="q">Question: What do the three lines "start the wheels, wait, stop the wheels" let the robot do that a number of degrees of motor turn cannot?</p><button class="rev" data-target="s6-op4" aria-controls="s6-op4" aria-expanded="false" data-show="Show the answer" data-hide="Hide the answer">Show the answer</button><div class="ans" id="s6-op4"><p>Stop when a sensor's reading changes, wherever that happens.</p></div></div></section><section class="chunk"><p class="chunk-no">Chunk 1 of 3</p><h2>The hub counts its own turn</h2><p>Inside the hub is a <b>motion sensor</b>. It measures how far the hub has turned since the count was last set to 0. It counts in tenths of a degree of the robot's turn, so a quarter turn, which is 90 degrees of the robot's turn, counts as about 900.</p><p>Line 6 sets the count to 0. Line 7 waits 5000 thousandths of a second, which is 5 seconds. Line 8 prints the count. The <code>[0]</code> picks the first of three numbers the sensor gives. Type it exactly.</p><pre class="py"><code><span class="hk">from</span> <span class="hc">hub</span> <span class="hk">import</span> <span class="hc">motion_sensor</span>
+<span class="hk">import</span> <span class="hc">runloop</span>
+
+
+<span class="hk">async</span> <span class="hs">def</span> <span class="hf">main</span>():
+<span class="ig">    </span><span class="hc">motion_sensor</span>.<span class="hf">reset_yaw</span>(<span class="hd">0</span>)
+<span class="ig">    </span><span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">sleep_ms</span>(<span class="hd">5000</span>)
+<span class="ig">    </span><span class="hf">print</span>(<span class="hc">motion_sensor</span>.<span class="hf">tilt_angles</span>()[<span class="hd">0</span>])
+
+
+<span class="hc">runloop</span>.<span class="hf">run</span>(<span class="hf">main</span>())</code></pre><p class="note">During the 5 seconds, one builder turns the robot by hand, flat on the table, a quarter turn to its right.</p><div class="figwrap"><svg class="fig" viewBox="0 0 720 360" role="img" aria-label="The turn cross from above. Turn the robot by hand from strip 1 to strip 2." xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="718" height="358" fill="#FFFDF7" stroke="#D3CBB8" stroke-width="2"/><rect x="80" y="175" width="440" height="10" fill="#17181B" stroke="#17181B" stroke-width="2"/><rect x="295" y="30" width="10" height="300" fill="#17181B" stroke="#17181B" stroke-width="2"/><rect x="225" y="135" width="150" height="90" fill="#FFFDF7" fill-opacity="0.9" stroke="#17181B" stroke-width="3"/><text x="300" y="172" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#17181B" text-anchor="middle">robot</text><text x="300" y="192" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="middle">(outline, not to scale)</text><line x1="385" y1="156" x2="478" y2="156" stroke="#0E4D52" stroke-width="5"/><polygon points="500,156 478,145 478,167" fill="#0E4D52"/><text x="390" y="142" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#0E4D52" text-anchor="start">before the turn: forward</text><line x1="330" y1="235" x2="330" y2="298" stroke="#17181B" stroke-width="5"/><polygon points="330,320 341,298 319,298" fill="#17181B"/><text x="348" y="290" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#17181B" text-anchor="start">after a quarter turn to the right:</text><text x="348" y="308" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#17181B" text-anchor="start">the robot faces along this strip</text><text x="90" y="164" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#4A4D53" text-anchor="start">strip 1, black tape</text><text x="286" y="48" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#4A4D53" text-anchor="end">strip 2, black tape</text></svg></div><p class="figcap">The turn cross from above. Turn the robot by hand from strip 1 to strip 2.</p><p class="setup">Setup: the robot sits still over the middle of the turn cross, facing along strip 1. Press run, then turn it by hand to face along strip 2.</p><div class="predict"><p class="q">Predict: Which is the printed number closest to: 9, 90, or 900? It may have a minus sign in front.</p><div class="hints"><button class="rev hint" data-target="s6-c1-hint1" aria-controls="s6-c1-hint1" aria-expanded="false" data-show="Show a hint" data-hide="Hide the hint">Show a hint</button><div class="ans" id="s6-c1-hint1"><p>The sensor counts in tenths. How many tenths are in 90 whole ones?</p><button class="rev" data-target="s6-c1" aria-controls="s6-c1" aria-expanded="false" data-show="Run it first, then check here" data-hide="Hide">Run it first, then check here</button><div class="ans" id="s6-c1"><p class="outlabel">What the page works out</p><p class="outsrc">Computed, not measured</p><pre class="out">a quarter turn is 90 degrees of the robot&#x27;s turn
+the sensor counts in tenths: 90 x 10 = 900</pre><p>900, or close to it. The robot turned about 90 degrees of the robot's turn, and the sensor counts each one as 10.</p><p>Turning one way gives a minus sign and turning the other way does not. Run it twice, once turning right and once turning left, and write both numbers in the sheet.</p><p>Your numbers will not be exactly 900, because a hand is not exact.</p></div></div></div></div><h3>Your two counts</h3><p>Write what the console prints, with its minus sign if it has one.</p><table><tr><th>Turned by hand</th><th>Printed count</th></tr><tr><td>A quarter turn to the robot's right</td><td class="fill"><input type="text" aria-label="Printed count, row 1"></td></tr><tr><td>A quarter turn to the robot's left</td><td class="fill"><input type="text" aria-label="Printed count, row 2"></td></tr></table></section><section class="chunk"><p class="chunk-no">Chunk 2 of 3</p><h2>Turn until the count says a quarter turn</h2><p>This is start, wait, stop again, with a new test. Line 13 sets the count to 0, and line 14 waits a tenth of a second for the sensor to settle. Line 15 starts a turn to the right on the spot.</p><p>Line 16 waits until the count is greater than <code>QUARTER</code>. <code>abs</code> takes away a minus sign, so the test works whichever way the sensor counts. Line 17 stops the wheels.</p><pre class="py"><code><span class="hk">from</span> <span class="hc">hub</span> <span class="hk">import</span> <span class="hc">motion_sensor</span>, <span class="hc">port</span>
+<span class="hk">import</span> <span class="hc">motor_pair</span>
+<span class="hk">import</span> <span class="hc">runloop</span>
+
+<span class="hn">QUARTER</span> = <span class="hd">900</span>
+
+
+<span class="hk">async</span> <span class="hs">def</span> <span class="hf">main</span>():
+<span class="ig">    </span><span class="hm"># The left drive motor is in port A. The right drive motor is in port E.</span>
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">pair</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hc">port</span>.<span class="hn">A</span>, <span class="hc">port</span>.<span class="hn">E</span>)
+<span class="ig"></span>
+<span class="ig">    </span><span class="hm"># Set the count to 0. Turn right until the count passes QUARTER. Stop.</span>
+<span class="ig">    </span><span class="hc">motion_sensor</span>.<span class="hf">reset_yaw</span>(<span class="hd">0</span>)
+<span class="ig">    </span><span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">sleep_ms</span>(<span class="hd">100</span>)
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">move</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hd">100</span>, <span class="hv">velocity</span>=<span class="hd">250</span>)
+<span class="ig">    </span><span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">until</span>(<span class="hs">lambda</span>: <span class="hf">abs</span>(<span class="hc">motion_sensor</span>.<span class="hf">tilt_angles</span>()[<span class="hd">0</span>]) &gt; <span class="hn">QUARTER</span>)
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">stop</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>)
+
+
+<span class="hc">runloop</span>.<span class="hf">run</span>(<span class="hf">main</span>())</code></pre><h3>The parts of line 16</h3><table><tr><th>Part</th><th>What it says</th></tr><tr><td><code>motion_sensor.tilt_angles()[0]</code></td><td>The count: the robot's turn, in tenths of a degree of the robot's turn.</td></tr><tr><td><code>abs( )</code></td><td>Takes away a minus sign, so -900 and 900 both count as 900.</td></tr><tr><td><code>&gt; QUARTER</code></td><td>The test: the count is greater than QUARTER.</td></tr></table><p class="note">Type the whole program. Take your time with the brackets on line 16.</p><div class="figwrap"><svg class="fig" viewBox="0 0 720 360" role="img" aria-label="The turn cross from above." xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="718" height="358" fill="#FFFDF7" stroke="#D3CBB8" stroke-width="2"/><rect x="80" y="175" width="440" height="10" fill="#17181B" stroke="#17181B" stroke-width="2"/><rect x="295" y="30" width="10" height="300" fill="#17181B" stroke="#17181B" stroke-width="2"/><rect x="225" y="135" width="150" height="90" fill="#FFFDF7" fill-opacity="0.9" stroke="#17181B" stroke-width="3"/><text x="300" y="172" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#17181B" text-anchor="middle">robot</text><text x="300" y="192" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="middle">(outline, not to scale)</text><line x1="385" y1="156" x2="478" y2="156" stroke="#0E4D52" stroke-width="5"/><polygon points="500,156 478,145 478,167" fill="#0E4D52"/><text x="390" y="142" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#0E4D52" text-anchor="start">before the turn: forward</text><line x1="330" y1="235" x2="330" y2="298" stroke="#17181B" stroke-width="5"/><polygon points="330,320 341,298 319,298" fill="#17181B"/><text x="348" y="290" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#17181B" text-anchor="start">after a quarter turn to the right:</text><text x="348" y="308" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#17181B" text-anchor="start">the robot faces along this strip</text><text x="90" y="164" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#4A4D53" text-anchor="start">strip 1, black tape</text><text x="286" y="48" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#4A4D53" text-anchor="end">strip 2, black tape</text></svg></div><p class="figcap">The turn cross from above.</p><p class="setup">Setup: the robot sits over the middle of the turn cross and faces along strip 1. It starts here on every run.</p><div class="predict"><p class="q">Predict: What ends this turn: a number of degrees of motor turn, or a reading from a sensor? Does the robot end facing exactly along strip 2, a little short of it, or a little past it?</p><div class="hints"><button class="rev hint" data-target="s6-c2-hint1" aria-controls="s6-c2-hint1" aria-expanded="false" data-show="Show a hint" data-hide="Hide the hint">Show a hint</button><div class="ans" id="s6-c2-hint1"><p>Read line 16. Then think about the wheels at the moment the test becomes true: are they still turning?</p><button class="rev" data-target="s6-c2" aria-controls="s6-c2" aria-expanded="false" data-show="Run it first, then check here" data-hide="Hide">Run it first, then check here</button><div class="ans" id="s6-c2"><p class="outlabel">What the page works out</p><p class="outsrc">Computed, not measured</p><pre class="out">set the count to 0, wait, start turning right
+wait until the count passes 900
+stop: the wheels take a moment, so the robot ends a little past</pre><p>The first one: a reading from a sensor. No line in this program counts degrees of motor turn.</p><p>The second one: a little past. The wheels are still turning at the moment the count passes 900, and they take a moment to stop.</p><p>Run it three times from the same start. Does it end in the same place each time? That matters more than how far past it is.</p></div></div></div></div></section><section class="chunk"><p class="chunk-no">Chunk 3 of 3</p><h2>A slower turn, and your own QUARTER</h2><p>Two things bring the robot closer to strip 2. One is to turn more slowly. The other is to ask for a little less than 900, so that going past it lands in the right place.</p><p>This program changes only the speed of the turn, on line 15, from 250 to 100. One change per run.</p><pre class="py"><code><span class="hk">from</span> <span class="hc">hub</span> <span class="hk">import</span> <span class="hc">motion_sensor</span>, <span class="hc">port</span>
+<span class="hk">import</span> <span class="hc">motor_pair</span>
+<span class="hk">import</span> <span class="hc">runloop</span>
+
+<span class="hn">QUARTER</span> = <span class="hd">900</span>
+
+
+<span class="hk">async</span> <span class="hs">def</span> <span class="hf">main</span>():
+<span class="ig">    </span><span class="hm"># The left drive motor is in port A. The right drive motor is in port E.</span>
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">pair</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hc">port</span>.<span class="hn">A</span>, <span class="hc">port</span>.<span class="hn">E</span>)
+<span class="ig"></span>
+<span class="ig">    </span><span class="hm"># Set the count to 0. Turn right until the count passes QUARTER. Stop.</span>
+<span class="ig">    </span><span class="hc">motion_sensor</span>.<span class="hf">reset_yaw</span>(<span class="hd">0</span>)
+<span class="ig">    </span><span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">sleep_ms</span>(<span class="hd">100</span>)
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">move</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hd">100</span>, <span class="hv">velocity</span>=<span class="hd">100</span>)
+<span class="ig">    </span><span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">until</span>(<span class="hs">lambda</span>: <span class="hf">abs</span>(<span class="hc">motion_sensor</span>.<span class="hf">tilt_angles</span>()[<span class="hd">0</span>]) &gt; <span class="hn">QUARTER</span>)
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">stop</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>)
+
+
+<span class="hc">runloop</span>.<span class="hf">run</span>(<span class="hf">main</span>())</code></pre><p class="note">Change only line 15.</p><div class="figwrap"><svg class="fig" viewBox="0 0 720 360" role="img" aria-label="The turn cross from above." xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="718" height="358" fill="#FFFDF7" stroke="#D3CBB8" stroke-width="2"/><rect x="80" y="175" width="440" height="10" fill="#17181B" stroke="#17181B" stroke-width="2"/><rect x="295" y="30" width="10" height="300" fill="#17181B" stroke="#17181B" stroke-width="2"/><rect x="225" y="135" width="150" height="90" fill="#FFFDF7" fill-opacity="0.9" stroke="#17181B" stroke-width="3"/><text x="300" y="172" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#17181B" text-anchor="middle">robot</text><text x="300" y="192" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="middle">(outline, not to scale)</text><line x1="385" y1="156" x2="478" y2="156" stroke="#0E4D52" stroke-width="5"/><polygon points="500,156 478,145 478,167" fill="#0E4D52"/><text x="390" y="142" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#0E4D52" text-anchor="start">before the turn: forward</text><line x1="330" y1="235" x2="330" y2="298" stroke="#17181B" stroke-width="5"/><polygon points="330,320 341,298 319,298" fill="#17181B"/><text x="348" y="290" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#17181B" text-anchor="start">after a quarter turn to the right:</text><text x="348" y="308" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#17181B" text-anchor="start">the robot faces along this strip</text><text x="90" y="164" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#4A4D53" text-anchor="start">strip 1, black tape</text><text x="286" y="48" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#4A4D53" text-anchor="end">strip 2, black tape</text></svg></div><p class="figcap">The turn cross from above.</p><p class="setup">Setup: the robot sits over the middle of the turn cross and faces along strip 1. It starts here on every run.</p><div class="predict"><p class="q">Predict: Which turn ends further past strip 2: the turn at <code>velocity=250</code> or the turn at <code>velocity=100</code>?</p><div class="hints"><button class="rev hint" data-target="s6-c3-hint1" aria-controls="s6-c3-hint1" aria-expanded="false" data-show="Show a hint" data-hide="Hide the hint">Show a hint</button><div class="ans" id="s6-c3-hint1"><p>Which wheels take longer to stop, fast ones or slow ones?</p><button class="rev" data-target="s6-c3" aria-controls="s6-c3" aria-expanded="false" data-show="Run it first, then check here" data-hide="Hide">Run it first, then check here</button><div class="ans" id="s6-c3"><p class="outlabel">What the page works out</p><p class="outsrc">Computed, not measured</p><pre class="out">velocity=250: ends further past strip 2
+velocity=100: ends closer to strip 2</pre><p>The turn at 250. Faster wheels take longer to stop, so the robot turns further in that time.</p><p>Now keep the speed at 100 and change <code>QUARTER</code> on line 5, one change per run, until the robot ends along strip 2. Use the sheet below.</p><p>Write your team's number for <code>QUARTER</code> on your ledger card.</p></div></div></div></div><h3>Expected and measured: your QUARTER</h3><p>Fill in the Expected column before each run. One change per run.</p><table><tr><th>Run</th><th>QUARTER on line 5</th><th>Expected: short of strip 2, along it, or past it</th><th>Measured: what the robot did</th><th>Along strip 2?</th></tr><tr><td class="mono">1</td><td class="mono">900</td><td class="fill"><input type="text" aria-label="Expected: short of strip 2, along it, or past it, row 1"></td><td class="fill"><input type="text" aria-label="Measured: what the robot did, row 1"></td><td class="fill"><input type="text" aria-label="Along strip 2?, row 1"></td></tr><tr><td class="mono">2</td><td class="fill"><input type="text" aria-label="QUARTER on line 5, row 2"></td><td class="fill"><input type="text" aria-label="Expected: short of strip 2, along it, or past it, row 2"></td><td class="fill"><input type="text" aria-label="Measured: what the robot did, row 2"></td><td class="fill"><input type="text" aria-label="Along strip 2?, row 2"></td></tr><tr><td class="mono">3</td><td class="fill"><input type="text" aria-label="QUARTER on line 5, row 3"></td><td class="fill"><input type="text" aria-label="Expected: short of strip 2, along it, or past it, row 3"></td><td class="fill"><input type="text" aria-label="Measured: what the robot did, row 3"></td><td class="fill"><input type="text" aria-label="Along strip 2?, row 3"></td></tr><tr><td class="mono">4</td><td class="fill"><input type="text" aria-label="QUARTER on line 5, row 4"></td><td class="fill"><input type="text" aria-label="Expected: short of strip 2, along it, or past it, row 4"></td><td class="fill"><input type="text" aria-label="Measured: what the robot did, row 4"></td><td class="fill"><input type="text" aria-label="Along strip 2?, row 4"></td></tr><tr><td class="mono">5</td><td class="fill"><input type="text" aria-label="QUARTER on line 5, row 5"></td><td class="fill"><input type="text" aria-label="Expected: short of strip 2, along it, or past it, row 5"></td><td class="fill"><input type="text" aria-label="Measured: what the robot did, row 5"></td><td class="fill"><input type="text" aria-label="Along strip 2?, row 5"></td></tr></table></section><section class="hinge"><p class="chunk-no">Hinge question &middot; from today's chunks</p><h2>Before the mission</h2><pre class="py"><code><span class="ig">    </span><span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">until</span>(<span class="hs">lambda</span>: <span class="hf">abs</span>(<span class="hc">motion_sensor</span>.<span class="hf">tilt_angles</span>()[<span class="hd">0</span>]) &gt; <span class="hn">QUARTER</span>)</code></pre><div class="predict"><p class="q">Question: A team wants a half turn, which is 180 degrees of the robot's turn. Before any testing, what first try should they give <code>QUARTER</code>? And is the name still a good one?</p><button class="rev" data-target="s6-hinge" aria-controls="s6-hinge" aria-expanded="false" data-show="Show the answer" data-hide="Hide the answer">Show the answer</button><div class="ans" id="s6-hinge"><p>1800. The sensor counts in tenths, so 180 counts as 1800.</p><p>The name is no longer good. A number for a half turn should be called something like <code>HALF</code>. Names say what they do.</p></div></div></section><section class="brief"><p class="chunk-no">Mission &middot; 31 minutes</p><h2>Two ways to turn: which is better?</h2><p>The warehouse wants its cart to drive a square route around a crate, like in session 2, and it wants to know which way of turning to trust. Your team has two: the counted turn from session 2, which uses your number of degrees of motor turn, and the measured turn from today, which uses the motion sensor.</p><p>You will run the same square both ways and let the wheel markers decide.</p><div class="figwrap"><svg class="fig" viewBox="0 0 720 370" role="img" aria-label="The square from above. Each side is about 55 cm." xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="718" height="368" fill="#FFFDF7" stroke="#D3CBB8" stroke-width="2"/><line x1="250" y1="70" x2="448" y2="70" stroke="#0E4D52" stroke-width="4"/><polygon points="470,70 448,59 448,81" fill="#0E4D52"/><line x1="470" y1="70" x2="470" y2="268" stroke="#0E4D52" stroke-width="4"/><polygon points="470,290 481,268 459,268" fill="#0E4D52"/><line x1="470" y1="290" x2="272" y2="290" stroke="#0E4D52" stroke-width="4"/><polygon points="250,290 272,301 272,279" fill="#0E4D52"/><line x1="250" y1="290" x2="250" y2="92" stroke="#0E4D52" stroke-width="4"/><polygon points="250,70 239,92 261,92" fill="#0E4D52"/><text x="360" y="58" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#0E4D52" text-anchor="middle">side 1, forward</text><text x="482" y="180" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#0E4D52" text-anchor="start">side 2</text><text x="360" y="312" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#0E4D52" text-anchor="middle">side 3</text><text x="238" y="180" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#0E4D52" text-anchor="end">side 4</text><rect x="172" y="42" width="70" height="56" fill="none" stroke="#17181B" stroke-width="3"/><text x="164" y="68" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#17181B" text-anchor="end">robot starts here</text><text x="164" y="86" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="end">(outline, not to scale)</text><rect x="196" y="28" width="22" height="8" fill="#FFFDF7" stroke="#17181B" stroke-width="2"/><rect x="196" y="104" width="22" height="8" fill="#FFFDF7" stroke="#17181B" stroke-width="2"/><text x="207" y="20" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#17181B" text-anchor="middle">wheel markers</text><rect x="340" y="160" width="40" height="40" fill="#EDE7D9" stroke="#17181B" stroke-width="3"/><text x="360" y="220" font-family="DM Sans, sans-serif" font-size="15" font-weight="700" fill="#17181B" text-anchor="middle">crate</text><text x="360" y="238" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="middle">no more than 10 cm across</text><line x1="30" y1="340" x2="70" y2="340" stroke="#17181B" stroke-width="4"/><line x1="30" y1="332" x2="30" y2="348" stroke="#17181B" stroke-width="4"/><line x1="70" y1="332" x2="70" y2="348" stroke="#17181B" stroke-width="4"/><text x="80" y="345" font-family="DM Sans, sans-serif" font-size="14" font-weight="700" fill="#17181B" text-anchor="start">10 cm</text><text x="150" y="345" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#4A4D53" text-anchor="start">Each side is about 55 cm. Every turn is a quarter turn to the robot's right.</text></svg></div><p class="figcap">The square from above. Each side is about 55 cm.</p><table><tr><th>Start</th><td>At the first corner, facing along side 1, with a wheel marker beside each wheel.</td></tr><tr><th>Plan A</th><td>The session 2 square program, with your team's <code>QUARTER_TURN</code> from your ledger card.</td></tr><tr><th>Plan B</th><td>The program below, with your team's <code>QUARTER</code> from today.</td></tr><tr><th>Fair test</th><td>Three runs of each plan, from the same start, on the same floor.</td></tr><tr><th>Done means</th><td>Six rows filled in, and one sentence saying which plan your team would choose and why.</td></tr></table><h3>Two plans</h3><p>Write both plans before you type anything.</p><table><tr><th>Plan</th><th>How the turn ends</th><th>Our guess: closer or further from the markers?</th><th>Why we think so</th></tr><tr><td>A, counted</td><td class="fill"><input type="text" aria-label="How the turn ends, row 1"></td><td class="fill"><input type="text" aria-label="Our guess: closer or further from the markers?, row 1"></td><td class="fill"><input type="text" aria-label="Why we think so, row 1"></td></tr><tr><td>B, measured</td><td class="fill"><input type="text" aria-label="How the turn ends, row 2"></td><td class="fill"><input type="text" aria-label="Our guess: closer or further from the markers?, row 2"></td><td class="fill"><input type="text" aria-label="Why we think so, row 2"></td></tr></table><p>This is plan B. Lines 14 to 19 are inside the <code>for</code> line: one side, then one measured turn. Put your own number on line 6.</p><pre class="py"><code><span class="hk">from</span> <span class="hc">hub</span> <span class="hk">import</span> <span class="hc">motion_sensor</span>, <span class="hc">port</span>
+<span class="hk">import</span> <span class="hc">motor_pair</span>
+<span class="hk">import</span> <span class="hc">runloop</span>
+
+<span class="hn">FORWARD</span> = <span class="hd">720</span>
+<span class="hn">QUARTER</span> = <span class="hd">900</span>
+
+
+<span class="hk">async</span> <span class="hs">def</span> <span class="hf">main</span>():
+<span class="ig">    </span><span class="hm"># The left drive motor is in port A. The right drive motor is in port E.</span>
+<span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">pair</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hc">port</span>.<span class="hn">A</span>, <span class="hc">port</span>.<span class="hn">E</span>)
+<span class="ig"></span>
+<span class="ig">    </span><span class="hk">for</span> <span class="hv">count</span> <span class="hs">in</span> <span class="hc">range</span>(<span class="hd">4</span>):
+<span class="ig">    </span><span class="ig">    </span><span class="hk">await</span> <span class="hc">motor_pair</span>.<span class="hf">move_for_degrees</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hn">FORWARD</span>, <span class="hd">0</span>, <span class="hv">velocity</span>=<span class="hd">250</span>)
+<span class="ig">    </span><span class="ig">    </span><span class="hc">motion_sensor</span>.<span class="hf">reset_yaw</span>(<span class="hd">0</span>)
+<span class="ig">    </span><span class="ig">    </span><span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">sleep_ms</span>(<span class="hd">100</span>)
+<span class="ig">    </span><span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">move</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hd">100</span>, <span class="hv">velocity</span>=<span class="hd">100</span>)
+<span class="ig">    </span><span class="ig">    </span><span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">until</span>(<span class="hs">lambda</span>: <span class="hf">abs</span>(<span class="hc">motion_sensor</span>.<span class="hf">tilt_angles</span>()[<span class="hd">0</span>]) &gt; <span class="hn">QUARTER</span>)
+<span class="ig">    </span><span class="ig">    </span><span class="hc">motor_pair</span>.<span class="hf">stop</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>)
+
+
+<span class="hc">runloop</span>.<span class="hf">run</span>(<span class="hf">main</span>())</code></pre><ol><li>Fill in the plan sheet with your guesses before any run.</li><li>Run plan B three times. After each run, measure how far each wheel is from its marker and write down the bigger of the two.</li><li>Run plan A three times and do the same.</li><li>Compare the six numbers. Which plan lands closer? Which plan lands in the same place each time?</li></ol><h3>Expected and measured</h3><p>Fill in the Expected column before each run. Fill in the rest of the row after it. One change per run.</p><table><tr><th>Run</th><th>Plan</th><th>Expected</th><th>Measured: cm from the markers</th><th>Touched the crate?</th></tr><tr><td class="mono">1</td><td class="mono">B</td><td class="fill"><input type="text" aria-label="Expected, row 1"></td><td class="fill"><input type="text" aria-label="Measured: cm from the markers, row 1"></td><td class="fill"><input type="text" aria-label="Touched the crate?, row 1"></td></tr><tr><td class="mono">2</td><td class="mono">B</td><td class="fill"><input type="text" aria-label="Expected, row 2"></td><td class="fill"><input type="text" aria-label="Measured: cm from the markers, row 2"></td><td class="fill"><input type="text" aria-label="Touched the crate?, row 2"></td></tr><tr><td class="mono">3</td><td class="mono">B</td><td class="fill"><input type="text" aria-label="Expected, row 3"></td><td class="fill"><input type="text" aria-label="Measured: cm from the markers, row 3"></td><td class="fill"><input type="text" aria-label="Touched the crate?, row 3"></td></tr><tr><td class="mono">4</td><td class="mono">A</td><td class="fill"><input type="text" aria-label="Expected, row 4"></td><td class="fill"><input type="text" aria-label="Measured: cm from the markers, row 4"></td><td class="fill"><input type="text" aria-label="Touched the crate?, row 4"></td></tr><tr><td class="mono">5</td><td class="mono">A</td><td class="fill"><input type="text" aria-label="Expected, row 5"></td><td class="fill"><input type="text" aria-label="Measured: cm from the markers, row 5"></td><td class="fill"><input type="text" aria-label="Touched the crate?, row 5"></td></tr><tr><td class="mono">6</td><td class="mono">A</td><td class="fill"><input type="text" aria-label="Expected, row 6"></td><td class="fill"><input type="text" aria-label="Measured: cm from the markers, row 6"></td><td class="fill"><input type="text" aria-label="Touched the crate?, row 6"></td></tr></table></section><section><h2>Where you can stop</h2><p>All three are real places to stop. Nobody is behind for finishing at the floor.</p><div class="exits"><div class="exit floor"><p class="tag">Floor</p><p>Your team has its own <code>QUARTER</code>, found by testing on the turn cross, and the measured turn ends along strip 2.</p></div><div class="exit middle"><p class="tag">Middle</p><p>Three runs of plan B are measured and written down, and the square does not touch the crate.</p></div><div class="exit stretch"><p class="tag">Stretch</p><p>All six runs are measured, and your team has written which plan it would choose and what the numbers say about it.</p></div></div></section><section><h2>Ledger card</h2><p>Copy this onto your card.</p><pre class="py"><code><span class="hc">motion_sensor</span>.<span class="hf">reset_yaw</span>(<span class="hd">0</span>)
+<span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">sleep_ms</span>(<span class="hd">100</span>)
+<span class="hc">motor_pair</span>.<span class="hf">move</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hd">100</span>, <span class="hv">velocity</span>=<span class="hd">100</span>)
+<span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">until</span>(<span class="hs">lambda</span>: <span class="hf">abs</span>(<span class="hc">motion_sensor</span>.<span class="hf">tilt_angles</span>()[<span class="hd">0</span>]) &gt; <span class="hn">QUARTER</span>)
+<span class="hc">motor_pair</span>.<span class="hf">stop</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>)</code></pre><p>Session 6. A measured turn: set the count to 0, start turning, wait until the count passes QUARTER, stop. Write your team's QUARTER beside it. The sensor counts in tenths.</p><p>To get today's stamp, tell your teacher why the robot ends a little past the angle it waited for.</p><p><a href="course_ledger_card.html?v=3">Open the ledger card</a></p></section><details class="teacher"><summary>Teacher panel</summary><h3>Before class</h3><ul><li>Charge every hub. The robots must be the same build as in session 2, or plan A's number no longer fits.</li><li>Lay out the turn crosses and the square spaces from session 2, with one crate for each team.</li><li>Each team needs its session 2 square program. If it is not on the device, the team types it again from the session 2 page with its own number.</li><li>Log three runs of each program on the reference robot, and the reference robot's own <code>QUARTER</code>.</li></ul><h3>Timing, 90 minutes</h3><ul><li>0:00 Robot check, 5 min</li><li>0:05 Opener, 10 min</li><li>0:15 Chunk 1, the hub counts its own turn, 10 min</li><li>0:25 Chunk 2, turn until the count, 10 min</li><li>0:35 Chunk 3, a slower turn and your own QUARTER, 13 min</li><li>0:48 Hinge question, 4 min</li><li>0:52 Mission, 31 min</li><li>1:23 Pack away, 5 min</li><li>1:28 Ledger stamp, 2 min</li></ul><p class="note">The mission is a comparison, and either answer is a good one if the numbers back it. Do not tell teams which plan should win. Stopping at the floor exit is a finish.</p><h3>What you will see, and what to do</h3><table><tr><th>In the room</th><th>Redirect</th></tr><tr><td>The robot spins and does not stop.</td><td>Check line 16 against the page: the <code>[0]</code>, the <code>abs</code>, and <code>&gt;</code>. Then check that line 13 is there.</td></tr><tr><td>The turn ends at once, before the robot has turned.</td><td>Line 14 may be missing. The count needs a moment after line 13 before it reads 0.</td></tr><tr><td>A student says the sensor is broken because the robot went past.</td><td>Ask what the wheels were doing at the moment the count passed 900. Then run chunk 3: the same sensor, slower wheels.</td></tr><tr><td>The printed count in chunk 1 is small, even after a good hand turn.</td><td>The robot was lifted or tilted while it was turned. Slide it flat on the table.</td></tr><tr><td>A team decides plan B must be better because it uses a sensor.</td><td>Ask for the six numbers. The plan sheet has their guess; the run sheet has the answer, and they may differ.</td></tr></table><h3>Mapped to</h3><table class="std"><tr><th>Code</th><th>Framework</th><th>Grade</th><th>Statement, as retrieved</th><th>CASE identifier</th><th>Mapped because</th></tr><tr><td><code>3-5-ETS1-2</code></td><td>New York State P-12 Science Learning Standards</td><td>4 and 5</td><td>Generate and compare multiple possible solutions to a problem based on how well each is likely to meet the criteria and constraints of the problem.</td><td>Grade 4: <code>46281f20-643c-4093-a34d-cd41d7aa02be</code><br>Grade 5: <code>4a149369-456b-45f1-b494-3ca247cd88f7</code></td><td>Teams write two plans for the delivery run and choose one before they type.</td></tr><tr><td><code>3-5-ETS1-3</code></td><td>New York State P-12 Science Learning Standards</td><td>4 and 5</td><td>Plan and carry out fair tests in which variables are controlled and failure points are considered to identify aspects of a model or prototype that can be improved.</td><td>Grade 4: <code>f9f9243b-9eff-43a3-9c15-5036ca8df270</code><br>Grade 5: <code>3f6f1ba6-3b02-42b3-9525-08fe3f98f552</code></td><td>The mission changes one number per run and records every run.</td></tr><tr><td><code>NY-4.MD.5.b</code></td><td>New York Next Generation Mathematics Learning Standards</td><td>4</td><td>Recognize an angle that turns through n one-degree angles is said to have an angle measure of n degrees.<br><i>The retrieved wording sets the letter n in italics. This page prints it plain.</i></td><td>Grade 4: <code>70d730ef-d7cc-11e8-824f-0242ac160002</code></td><td>A quarter turn is 90 degrees of the robot&#x27;s turn, and four of them make a full turn.</td></tr></table><h3>If time runs out</h3><p>If time is short, run plan B three times and plan A once. Keep the written sentence: comparing two solutions is what the session is mapped to.</p><h3>Deliberate</h3><p>The 900 for <code>QUARTER</code> is a first try that lands past strip 2 on purpose. Each team replaces it with its own number.</p><h3>Files</h3><p><a href="robot_advanced_driving_base.html?v=3">Robot page</a> &middot; <a href="field_test_field.html?v=3">Field page</a> &middot; <a href="course_constraints.html?v=3">Course constraints</a> &middot; <a href="runs.csv?v=3">Run log, runs.csv</a></p><p>Log each run on the reference robot in <code>runs.csv</code> with the program id below, then rebuild. A run counts only while its program id matches the program on this page.</p><table><tr><th>Result</th><th>Program id</th><th>Runs logged</th><th>On the page?</th></tr><tr><td>chunk1</td><td class="mono">8fa6ba16</td><td>0 of 3</td><td>Not yet</td></tr><tr><td>chunk2</td><td class="mono">3c91b0dc</td><td>0 of 3</td><td>Not yet</td></tr><tr><td>chunk3</td><td class="mono">8f447fe9</td><td>0 of 3</td><td>Not yet</td></tr><tr><td>mission</td><td class="mono">78fd22f1</td><td>0 of 3</td><td>Not yet</td></tr></table></details></div></main><nav class="pager"><a href="session05_count_the_lines.html?v=3">&larr; Session 5</a><a href="spike_course_hub.html?v=3">Course home</a><a href="session07_follow_the_line.html?v=3">Session 7 &rarr;</a></nav><footer><div class="wrap"><p>SPIKE Prime with Python, grades 4 and 5. Part 1 is sessions 1 to 4. Part 2 is sessions 5 to 8, for a class that continues. The class robot is LEGO's Advanced Driving Base. LEGO's building instructions are linked, not copied.</p><p>Mapped to the New York State P-12 Science Learning Standards and the New York Next Generation Mathematics Learning Standards. Codes retrieved through the Learning Commons Knowledge Graph (CASE Network) on 12 November 2026. <a href="standards_map.html?v=3">Full standards map</a> &middot; <a href="course_constraints.html?v=3">Course constraints, published 12 November 2026</a></p><p>LEGO and SPIKE are trademarks of the LEGO Group, which does not sponsor or endorse this course.</p></div></footer>
+<script>
+document.addEventListener('click', function(e){
+  var b = e.target.closest('button.rev');
+  if(!b) return;
+  var t = document.getElementById(b.getAttribute('data-target'));
+  if(!t) return;
+  var open = t.classList.toggle('open');
+  b.setAttribute('aria-expanded', open ? 'true' : 'false');
+  b.textContent = open ? b.getAttribute('data-hide') : b.getAttribute('data-show');
+});
+</script>
+</body>
+</html>
