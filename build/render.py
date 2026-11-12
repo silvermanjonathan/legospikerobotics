@@ -40,7 +40,7 @@ PART2 = [x for x in SESSIONS if x.get("part", 1) == 2]
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.environ.get("SPIKE_OUT", ROOT)
-VERSION = "4"
+VERSION = "5"
 COURSE = "SPIKE Prime with Python"
 HUB = "spike_course_hub"
 ROBOT = "robot_advanced_driving_base"
@@ -159,7 +159,7 @@ header.top h1,header.top h2{color:#FFFDF7}
 .pill b{color:#F2D89B; font-weight:700}
 a.pill{color:inherit; text-decoration:none}
 a.pill:hover,a.pill:focus{background:rgba(255,253,247,.22); border-color:#F2D89B}
-a.pill::after{content:" \2193"}
+a.pill::after{content:" \\2193"}
 main{padding:28px 22px 12px}
 section{
   background:var(--card); border:2px solid var(--rule); border-radius:6px;
