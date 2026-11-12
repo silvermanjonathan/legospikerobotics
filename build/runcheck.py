@@ -7,12 +7,15 @@ What it checks:
   1. Every program on a page is real Python and runs to the end against the stand-in
      SPIKE modules in build/spike_stub, and asks for exactly the moves its page says,
      in order. A move line without await, a wrong port, or steering out of range fails.
-  2. Every computed number is recomputed from wheel.py.
+     A program that reads the colour sensor is run against a scripted list of readings,
+     once for each branch its page describes.
+  2. Every computed number is recomputed from wheel.py and found on the built page.
   3. Every measured result has at least three runs in runs.csv, logged against the
      current text of its program. Until it does, the page prints no measured box for
      it and this guard lists it as pending.
 
-The stand-in modules are not a simulator. No distance or turn on a page comes from them.
+The stand-in modules are not a simulator. No distance, turn, or sensor reading on a
+page comes from them.
 """
 import json
 import os
@@ -24,21 +27,23 @@ sys.path.insert(0, HERE)
 
 import render
 import wheel
-from session01 import SESSION01, HINGE, TOP, END, ONE_TURN, TWO_TURNS, HINGE_CM
 import robot
 
 FAIL = []
 STUB = os.path.join(HERE, "spike_stub")
 
 
-def run_program(tag, code):
+def run_program(tag, code, script):
     env = dict(os.environ, PYTHONPATH=STUB, PYTHONWARNINGS="error")
+    if script:
+        env["SPIKE_READINGS"] = json.dumps(script)
     p = subprocess.run([sys.executable, "-X", "dev", "-c", code], capture_output=True,
                        text=True, env=env, timeout=30)
     if p.returncode != 0 or "never awaited" in p.stderr:
         FAIL.append("%s: program did not run cleanly: %s" % (tag, p.stderr.strip()[-300:]))
-        return None
-    return json.loads(p.stdout.strip().splitlines()[-1])
+        return None, None
+    lines = p.stdout.strip().splitlines()
+    return json.loads(lines[-1]), lines[:-1]
 
 
 def as_expect(calls):
@@ -46,67 +51,77 @@ def as_expect(calls):
     for c in calls:
         if c["call"] == "pair":
             out.append(("pair", c["left"], c["right"]))
-        else:
+        elif c["call"] == "move_for_degrees":
             out.append(("move", c["degrees"], c["steering"], c["velocity"]))
+        elif c["call"] == "start":
+            out.append(("start", c["steering"], c["velocity"]))
+        else:
+            out.append((c["call"],))
     return out
 
 
-def check_program(tag, code, expect):
-    calls = run_program(tag, code)
+def check_program(tag, code, expect, script=None, prints=None):
+    calls, printed = run_program(tag, code, script)
     if calls is None:
         return
     got = as_expect(calls)
-    if got != list(expect):
-        FAIL.append("%s: the program asks for %s, the page says %s" % (tag, got, expect))
+    if got != [tuple(e) for e in expect]:
+        FAIL.append("%s: the program asks for %s, the page says %s" % (tag, got, list(expect)))
+    elif prints is not None and printed != prints:
+        FAIL.append("%s: the program prints %s, expected %s" % (tag, printed, prints))
     else:
-        print("  ok  %-16s %s  %d calls match the page" % (tag, render.program_id(code), len(got)))
+        print("  ok  %-22s %s  %d calls match the page" % (tag, render.program_id(code), len(got)))
     for c in got:
         if c[0] == "pair" and (c[1], c[2]) != (robot.DRIVE_LEFT, robot.DRIVE_RIGHT):
             FAIL.append("%s: pairs ports %s+%s, the port map says %s+%s"
                         % (tag, c[1], c[2], robot.DRIVE_LEFT, robot.DRIVE_RIGHT))
+        if c[0] in ("move", "start") and abs(c[-1]) != 250:
+            FAIL.append("%s: a speed other than velocity=250" % tag)
 
 
 def main():
     release = "--release" in sys.argv
-    s = SESSION01
-    print("programs:")
-    for ch in s["chunks"]:
-        check_program("s1-" + ch["key"], ch["code"], ch["expect"])
-    check_program("s1-mission", s["brief"]["code"], s["brief"]["expect"])
-    check_program("s1-hinge", TOP + "\n    " + HINGE + END, [("pair", "A", "E"), ("move", -360, 0, 250)])
-
-    print("arithmetic:")
-    checks = [
-        ("one full turn, whole cm", ONE_TURN, round(wheel.WHEEL_CM)),
-        ("720 degrees of motor turn, nearest 5", TWO_TURNS, wheel.nearest5(wheel.cm(720))),
-        ("360 degrees of motor turn, nearest 5", HINGE_CM, wheel.nearest5(wheel.cm(360))),
-        ("far line", robot.FAR_CM, wheel.nearest5(wheel.cm(720))),
-    ]
-    for name, on_page, computed in checks:
-        if on_page != computed:
-            FAIL.append("arithmetic: %s is %s on the page, %s computed" % (name, on_page, computed))
-        else:
-            print("  ok  %-40s %s" % (name, on_page))
-    # the numbers must also be in the built page
-    page = open(os.path.join(render.OUT, s["slug"] + ".html")).read()
-    for needle in ("about %d cm" % ONE_TURN, "that is %d cm" % TWO_TURNS, "that is %d cm" % HINGE_CM):
-        if needle not in page:
-            FAIL.append("arithmetic: the built page does not say %r; rebuild" % needle)
-
-    print("run log:")
     pending = 0
-    progs = [(c["key"], c["code"]) for c in s["chunks"]] + [("mission", s["brief"]["code"])]
-    for key, code in progs:
-        rows = render.runs_for(1, key, code)
-        stale = [r for r in render.RUNS if r["session"] == "1" and r["chunk"] == key
-                 and r["program_id"] != render.program_id(code)]
-        state = "logged" if len(rows) >= render.RUNS_NEEDED else "PENDING"
-        pending += state == "PENDING"
-        print("  %-8s %-8s program id %s  %d of %d runs%s"
-              % (state, key, render.program_id(code), len(rows), render.RUNS_NEEDED,
-                 ("  (%d older runs no longer count)" % len(stale)) if stale else ""))
-        if len(rows) >= render.RUNS_NEEDED and 'On the reference robot' not in page:
-            FAIL.append("run log: %s is logged but the page was not rebuilt" % key)
+    for s in render.SESSIONS:
+        n = s["num"]
+        page = open(os.path.join(render.OUT, s["slug"] + ".html")).read()
+        print("session %d programs:" % n)
+        for ch in s["chunks"]:
+            check_program("s%d-%s" % (n, ch["key"]), ch["code"], ch["expect"],
+                          ch.get("script"), ch.get("prints"))
+            if ch.get("start"):
+                compile(ch["start"], "start", "exec")
+        br = s["brief"]
+        check_program("s%d-mission" % n, br["code"], br["expect"], br.get("script"))
+        for name, code, expect, script in s.get("checks", []):
+            check_program("s%d-%s" % (n, name), code, expect, script)
+
+        for name, on_page, needle, deg in s.get("arith", []):
+            exact = wheel.cm(deg)
+            want = wheel.whole_cm(deg) if "whole" in name else wheel.nearest5(exact)
+            if on_page != want:
+                FAIL.append("s%d arithmetic: %s is %s on the page, %s computed" % (n, name, on_page, want))
+            elif needle not in page:
+                FAIL.append("s%d arithmetic: the built page does not say %r; rebuild" % (n, needle))
+            else:
+                print("  ok  %-32s %s" % (name, on_page))
+
+        for key, code in render.session_programs(s):
+            rows = render.runs_for(n, key, code)
+            stale = [r for r in render.RUNS if r["session"] == str(n) and r["chunk"] == key
+                     and r["program_id"] != render.program_id(code)]
+            ok = len(rows) >= render.RUNS_NEEDED
+            pending += not ok
+            print("  %-8s %-8s program id %s  %d of %d runs%s"
+                  % ("logged" if ok else "PENDING", key, render.program_id(code), len(rows),
+                     render.RUNS_NEEDED,
+                     ("  (%d older runs no longer count)" % len(stale)) if stale else ""))
+
+    # the port map is the same wherever it is printed
+    for name in (render.ROBOT, render.LEDGER, render.CONSTRAINTS):
+        text = open(os.path.join(render.OUT, name + ".html")).read()
+        if "left" not in text or ">" + robot.DRIVE_LEFT + "<" not in text.replace("port " + robot.DRIVE_LEFT, ">A<"):
+            FAIL.append("port map: %s does not show port %s as the left drive motor" % (name, robot.DRIVE_LEFT))
 
     if FAIL:
         print("\n%d FAILURES" % len(FAIL))

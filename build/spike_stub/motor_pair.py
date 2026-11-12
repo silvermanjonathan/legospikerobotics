@@ -1,6 +1,7 @@
 """Stand-in for the SPIKE App 3 motor_pair module, used only by runcheck.py.
 
-Signatures follow the SPIKE App 3 API: pair(pair, left_motor, right_motor) and
+Signatures follow the SPIKE App 3 API: pair(pair, left_motor, right_motor), move(pair,
+steering, *, velocity=360, acceleration=1000), stop(pair, *, stop=motor.BRAKE), and
 move_for_degrees(pair, degrees, steering, *, velocity=360, stop=motor.BRAKE,
 acceleration=1000, deceleration=1000), which is awaitable. Each call is recorded so
 runcheck.py can compare the program with what its page says the program does.
@@ -30,6 +31,19 @@ async def move_for_degrees(pair, degrees, steering, *, velocity=360, stop=motor.
     assert -LARGE_MOTOR_MAX <= velocity <= LARGE_MOTOR_MAX, "velocity out of range"
     CALLS.append({"call": "move_for_degrees", "degrees": degrees, "steering": steering,
                   "velocity": velocity})
+
+
+def move(pair, steering, *, velocity=360, acceleration=1000):
+    """Starts the wheels. They keep turning until stop is called. Not awaitable."""
+    assert pair in _PAIRS, "move before motor_pair.pair"
+    assert -100 <= steering <= 100, "steering runs from -100 to 100"
+    assert -LARGE_MOTOR_MAX <= velocity <= LARGE_MOTOR_MAX, "velocity out of range"
+    CALLS.append({"call": "start", "steering": steering, "velocity": velocity})
+
+
+def stop(pair, *, stop=motor.BRAKE):
+    assert pair in _PAIRS, "stop before motor_pair.pair"
+    CALLS.append({"call": "stop"})
 
 
 def dump():

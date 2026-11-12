@@ -74,14 +74,15 @@ def _tape(cm, label, sub):
             + _text(x, 52, sub, size=13, weight=500, fill=SOFT, anchor="middle"))
 
 
-def field_figure(far=False, markers=False, caption=""):
+def field_figure(far=False, markers=False, caption="", far_cm=None, far_sub=None):
     """The test field from above, to scale: 8 pixels to 1 cm.
 
     The start line is always drawn. far adds the far line, markers adds the two wheel
     markers. The robot is an outline only and is labelled as not to scale, because
     its real size is on the reference robot, not in this file.
     """
-    right_cm = FAR_CM + 12
+    far_cm = FAR_CM if far_cm is None else far_cm
+    right_cm = max(FAR_CM, far_cm) + 12
     w = _x(right_cm) + 20
     h = 318
     p = ['<div class="figwrap"><svg class="fig" viewBox="0 0 %d %d" role="img" '
@@ -103,7 +104,7 @@ def field_figure(far=False, markers=False, caption=""):
         p.append(_text(rx + rw // 2, 236, "wheel marker", size=13, anchor="middle"))
     p.append(_tape(START_CM, "start line", "black tape, 0 cm"))
     if far:
-        p.append(_tape(FAR_CM, "far line", "black tape, %d cm" % FAR_CM))
+        p.append(_tape(far_cm, "far line", far_sub or "black tape, %d cm" % far_cm))
     # the measuring point: the robot's front edge
     fx = _x(0) - 8
     p.append('<circle cx="%d" cy="150" r="6" fill="%s"/>' % (fx, TEAL))
@@ -155,6 +156,152 @@ def turn_figure(caption=""):
     if caption:
         p.append('<p class="figcap">' + caption + '</p>')
     return "".join(p)
+
+
+# ------------------------------------------------------------------ session 2 figures
+SQUARE_ZONE_CM = 10       # how close each wheel must end to its marker after a square
+CRATE_CM = 10             # the crate is no more than this across
+
+
+def _arrow(x1, y1, x2, y2, color=TEAL, width=5):
+    """A straight arrow along the x or the y direction."""
+    import math
+    ang = math.atan2(y2 - y1, x2 - x1)
+    hx, hy = x2 - 22 * math.cos(ang), y2 - 22 * math.sin(ang)
+    px, py = 11 * math.sin(ang), -11 * math.cos(ang)
+    return ('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="%d"/>'
+            % (x1, y1, hx, hy, color, width)
+            + '<polygon points="%d,%d %d,%d %d,%d" fill="%s"/>'
+            % (x2, y2, hx + px, hy + py, hx - px, hy - py, color))
+
+
+def _open(w, h, caption):
+    return ['<div class="figwrap"><svg class="fig" viewBox="0 0 %d %d" role="img" '
+            'aria-label="%s" xmlns="http://www.w3.org/2000/svg">' % (w, h, caption),
+            '<rect x="1" y="1" width="%d" height="%d" fill="%s" stroke="#D3CBB8" stroke-width="2"/>'
+            % (w - 2, h - 2, CARD)]
+
+
+def _close(p, caption):
+    p.append('</svg></div>')
+    if caption:
+        p.append('<p class="figcap">' + caption + '</p>')
+    return "".join(p)
+
+
+def cross_figure(caption=""):
+    """The turn cross: two strips of black tape that cross at a right angle."""
+    w, h = 720, 360
+    p = _open(w, h, caption)
+    cx, cy = 300, 180
+    p.append('<rect x="80" y="%d" width="440" height="10" fill="%s" stroke="%s" stroke-width="2"/>'
+             % (cy - 5, TAPE, INK))
+    p.append('<rect x="%d" y="30" width="10" height="300" fill="%s" stroke="%s" stroke-width="2"/>'
+             % (cx - 5, TAPE, INK))
+    p.append('<rect x="%d" y="%d" width="150" height="90" fill="%s" fill-opacity="0.9" stroke="%s" '
+             'stroke-width="3"/>' % (cx - 75, cy - 45, CARD, INK))
+    p.append(_text(cx, cy - 8, "robot", anchor="middle"))
+    p.append(_text(cx, cy + 12, "(outline, not to scale)", size=13, weight=500, fill=SOFT,
+                   anchor="middle"))
+    p.append(_arrow(cx + 85, cy - 24, cx + 200, cy - 24))
+    p.append(_text(cx + 90, cy - 38, "before the turn: forward", fill=TEAL))
+    p.append(_arrow(cx + 30, cy + 55, cx + 30, cy + 140, color=INK))
+    p.append(_text(cx + 48, cy + 110, "after a quarter turn to the right:", size=14))
+    p.append(_text(cx + 48, cy + 128, "the robot faces along this strip", size=14))
+    p.append(_text(90, cy - 16, "strip 1, black tape", size=13, fill=SOFT))
+    p.append(_text(cx - 14, 48, "strip 2, black tape", size=13, fill=SOFT, anchor="end"))
+    return _close(p, caption)
+
+
+def square_figure(side_cm, crate=False, caption=""):
+    """The square the robot drives, from above, to scale: 4 pixels to 1 cm."""
+    s4 = 4
+    side = side_cm * s4
+    w, h = 720, side + 150
+    p = _open(w, h, caption)
+    x0, y0 = 250, 70
+    # the four sides, in the order the robot drives them
+    pts = [(x0, y0), (x0 + side, y0), (x0 + side, y0 + side), (x0, y0 + side), (x0, y0)]
+    for i in range(4):
+        (x1, y1), (x2, y2) = pts[i], pts[i + 1]
+        p.append(_arrow(x1, y1, x2, y2, width=4))
+    p.append(_text(x0 + side // 2, y0 - 12, "side 1, forward", fill=TEAL, anchor="middle"))
+    p.append(_text(x0 + side + 12, y0 + side // 2, "side 2", fill=TEAL))
+    p.append(_text(x0 + side // 2, y0 + side + 22, "side 3", fill=TEAL, anchor="middle"))
+    p.append(_text(x0 - 12, y0 + side // 2, "side 4", fill=TEAL, anchor="end"))
+    # start: the robot outline behind the first corner, and the wheel markers
+    p.append('<rect x="%d" y="%d" width="70" height="56" fill="none" stroke="%s" stroke-width="3"/>'
+             % (x0 - 78, y0 - 28, INK))
+    p.append(_text(x0 - 86, y0 - 2, "robot starts here", size=14, anchor="end"))
+    p.append(_text(x0 - 86, y0 + 16, "(outline, not to scale)", size=13, weight=500, fill=SOFT,
+                   anchor="end"))
+    for yy in (y0 - 42, y0 + 34):
+        p.append('<rect x="%d" y="%d" width="22" height="8" fill="%s" stroke="%s" stroke-width="2"/>'
+                 % (x0 - 54, yy, CARD, INK))
+    p.append(_text(x0 - 43, y0 - 50, "wheel markers", size=13, anchor="middle"))
+    if crate:
+        c = CRATE_CM * s4
+        p.append('<rect x="%d" y="%d" width="%d" height="%d" fill="#EDE7D9" stroke="%s" '
+                 'stroke-width="3"/>' % (x0 + side // 2 - c // 2, y0 + side // 2 - c // 2, c, c, INK))
+        p.append(_text(x0 + side // 2, y0 + side // 2 + c // 2 + 20, "crate", anchor="middle"))
+        p.append(_text(x0 + side // 2, y0 + side // 2 + c // 2 + 38,
+                       "no more than %d cm across" % CRATE_CM, size=13, weight=500, fill=SOFT,
+                       anchor="middle"))
+    sx, sy = 30, h - 30
+    p.append('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="4"/>'
+             % (sx, sy, sx + 10 * s4, sy, INK))
+    for t in (sx, sx + 10 * s4):
+        p.append('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="4"/>'
+                 % (t, sy - 8, t, sy + 8, INK))
+    p.append(_text(sx + 10 * s4 + 10, sy + 5, "10 cm", size=14))
+    p.append(_text(sx + 120, sy + 5, "Each side is about %d cm. Every turn is a quarter turn "
+                   "to the robot's right." % side_cm, size=13, weight=500, fill=SOFT))
+    return _close(p, caption)
+
+
+# ------------------------------------------------------------------ session 4 figure
+DROP_CM = 40              # the drop zone is a square of tape this many cm on a side
+FAR_MIN, FAR_MAX = 40, 70 # the teacher puts the far line somewhere in this range
+
+
+def delivery_figure(leg_cm, caption=""):
+    """The delivery run from above, to scale: 5 pixels to 1 cm, far line drawn at 55 cm."""
+    k = 5
+    w, h = 760, 480
+    p = _open(w, h, caption)
+    x0, y0 = 190, 110
+    xf = x0 + FAR_CM * k
+    for x, name, sub in ((x0, "start line", "black tape, 0 cm"),
+                         (xf, "far line", "black tape, %d to %d cm" % (FAR_MIN, FAR_MAX))):
+        p.append('<rect x="%d" y="50" width="10" height="130" fill="%s" stroke="%s" stroke-width="2"/>'
+                 % (x - 5, TAPE, INK))
+        p.append(_text(x, 24, name, anchor="middle"))
+        p.append(_text(x, 42, sub, size=13, weight=500, fill=SOFT, anchor="middle"))
+    p.append('<rect x="%d" y="%d" width="120" height="70" fill="none" stroke="%s" stroke-width="3"/>'
+             % (x0 - 128, y0 - 35, INK))
+    p.append(_text(x0 - 68, y0 - 2, "robot", anchor="middle"))
+    p.append(_text(x0 - 68, y0 + 16, "(not to scale)", size=13, weight=500, fill=SOFT, anchor="middle"))
+    p.append(_arrow(x0 + 14, y0, xf - 14, y0))
+    p.append(_text(x0 + 24, y0 - 12, "1. move until the far line", fill=TEAL))
+    p.append(_arrow(xf - 30, y0 + 20, xf - 30, y0 + 20 + leg_cm * k))
+    p.append(_text(xf - 44, y0 + 44, "2. quarter turn to the right", fill=TEAL, anchor="end"))
+    p.append(_text(xf - 44, y0 + 64, "3. forward about %d cm" % leg_cm, fill=TEAL, anchor="end"))
+    d = DROP_CM * k
+    zx, zy = xf - 30 - d // 2, y0 + 20 + leg_cm * k - 40
+    p.append('<rect x="%d" y="%d" width="%d" height="%d" fill="none" stroke="%s" stroke-width="4" '
+             'stroke-dasharray="14 8"/>' % (zx, zy, d, d, INK))
+    p.append(_text(zx + d + 12, zy + d // 2 - 6, "drop zone"))
+    p.append(_text(zx + d + 12, zy + d // 2 + 14, "%d cm by %d cm, tape" % (DROP_CM, DROP_CM),
+                   size=13, weight=500, fill=SOFT))
+    sx, sy = 30, h - 30
+    p.append('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="4"/>'
+             % (sx, sy, sx + 10 * k, sy, INK))
+    for t in (sx, sx + 10 * k):
+        p.append('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" stroke-width="4"/>'
+                 % (t, sy - 8, t, sy + 8, INK))
+    p.append(_text(sx + 10 * k + 10, sy + 5, "10 cm", size=14))
+    return _close(p, caption)
+
 
 
 WHEEL_NOTE = ("One full turn of the wheel moves the robot %.2f cm. LEGO's Python programs "

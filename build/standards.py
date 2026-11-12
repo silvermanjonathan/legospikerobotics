@@ -47,4 +47,36 @@ STANDARDS = {
         "why": "Full turns of the wheel are turned into centimetres before each run.",
         "deviation": "",
     },
+    "NY-4.MD.5.b": {
+        "framework": "New York Next Generation Mathematics Learning Standards",
+        "grades": "4",
+        "statement": ("Recognize an angle that turns through n one-degree angles is said to "
+                      "have an angle measure of n degrees."),
+        "uuids": [("Grade 4", "70d730ef-d7cc-11e8-824f-0242ac160002")],
+        "why": "A quarter turn is 90 degrees of the robot's turn, and four of them make a full turn.",
+        "deviation": ("The retrieved wording sets the letter n in italics. This page prints "
+                      "it plain."),
+    },
+    "3-5-ETS1-1": {
+        "framework": "New York State P-12 Science Learning Standards",
+        "grades": "4 and 5",
+        "statement": ("Define a simple design problem reflecting a need or a want that "
+                      "includes specified criteria for success and constraints on materials, "
+                      "time, or cost."),
+        "uuids": [("Grade 4", "2fb0cfd6-caa2-4224-8c1b-12144f8dd898"),
+                  ("Grade 5", "b7b9475e-16fc-49fc-9829-bc6ef6334d69")],
+        "why": "Each mission states what counts as done and what the team may not change.",
+        "deviation": "",
+    },
+    "3-5-ETS1-2": {
+        "framework": "New York State P-12 Science Learning Standards",
+        "grades": "4 and 5",
+        "statement": ("Generate and compare multiple possible solutions to a problem based on "
+                      "how well each is likely to meet the criteria and constraints of the "
+                      "problem."),
+        "uuids": [("Grade 4", "46281f20-643c-4093-a34d-cd41d7aa02be"),
+                  ("Grade 5", "4a149369-456b-45f1-b494-3ca247cd88f7")],
+        "why": "Teams write two plans for the delivery run and choose one before they type.",
+        "deviation": "",
+    },
 }

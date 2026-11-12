@@ -329,6 +329,11 @@ SESSION01 = {
         "expect": [("pair", "A", "E"), ("move", 720, 0, 250), ("move", 180, 100, 250)],
     },
 
+    "checks": [("hinge", TOP + "\n    " + HINGE + END, [("pair", "A", "E"), ("move", -360, 0, 250)], None)],
+    "arith": [("one full turn, whole cm", ONE_TURN, "about %d cm" % ONE_TURN, 360),
+              ("two full turns, nearest 5", TWO_TURNS, "that is %d cm" % TWO_TURNS, 720),
+              ("hinge, nearest 5", HINGE_CM, "that is %d cm" % HINGE_CM, 360)],
+
     "exits": {
         "floor": ("The robot moves forward to the far line and backward to the start line "
                   "with the program from chunk 2. Each builder can say what each of the "
