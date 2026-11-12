@@ -23,6 +23,7 @@ The site is served by GitHub Pages from the root of the `main` branch.
 | `session06_turns_that_measure_themselves.html` | Session 6. The motion sensor; a turn that ends on a measurement; counted and measured turns compared on the square. |
 | `session07_follow_the_line.html` | Session 7. `if`, `else`, `while`, and a line follower with a stop bar, then timed runs. |
 | `session08_your_own_functions_and_mission.html` | Session 8. The students' own functions; each team writes and runs its own mission; second demo. |
+| `builds_word_blocks.html` | More builds, in Word Blocks: the Game Master and the Grabbers, five block snippets each, with a prediction on each and a sheet to fill in. |
 | `robot_advanced_driving_base.html` | The class robot: links to LEGO's five building books, the port map, the wheel table. |
 | `field_test_field.html` | The test field for every session, drawn to scale. |
 | `course_constraints.html` | What the course uses and when each thing is first taught, what it never uses, the locked decisions. Dated. |
@@ -42,6 +43,8 @@ Pages are generated, never edited by hand.
 | Generator | Holds |
 |---|---|
 | `build/session01.py` to `build/session08.py` | One session each: its programs and every word on its page |
+| `build/blocks.py` | Draws Word Block stacks in HTML and CSS; holds the app's block colours and checks every one at 7:1 |
+| `build/builds.py` | The Game Master and Grabbers snippets and the words on their page |
 | `build/robot.py` | Port map, LEGO's links, every field and robot figure |
 | `build/wheel.py` | Wheel arithmetic: degrees of motor turn to centimetres |
 | `build/standards.py` | Standards, as retrieved, with CASE identifiers |
@@ -83,6 +86,36 @@ The constraints page carries the full list. The ones that differ from the style 
    only, retrieved through the Learning Commons Knowledge Graph on 12 November 2026.
 
 ## Release log
+
+### 12 November 2026, fifth printing (version pin 6)
+
+What changed: a new page, `builds_word_blocks.html`, with Word Block snippets for two
+more LEGO models, the Game Master and the Grabbers, five each. These are SPIKE App
+Word Blocks, not Python, by Jonathan's direction. The hub has a new section and pill
+for it, and the constraints page has a new section 7 listing the blocks it uses.
+
+How the blocks are drawn: in HTML and CSS by `build/blocks.py`, as section 9 of the
+style guide asks. Each category keeps the SPIKE App's own hue, sampled from LEGO's
+program images for these two models, lightened toward white only as far as black
+block words need to clear 7:1. The validator recomputes every ratio and checks every
+C block's arm.
+
+What came from LEGO: the ports (Game Master A and B, Grabbers A and E), the 2.1
+seconds and 95 degrees of motor turn on the Game Master, the motor directions on the
+Grabbers, the block words, and the sound names, all from LEGO's own block programs
+on its lesson pages. The snippets themselves are written for this course.
+
+What was checked: both guards pass on all 15 pages; the page was looked at in a
+browser at 1280px and 390px.
+
+What is not done:
+
+- **The snippets have not been run on a hub.** There is no runner for Word Blocks
+  here, so each stack was checked by hand against LEGO's published blocks.
+- **Check on a built Grabbers model that counterclockwise closes the claw**, and in
+  the app that the force sensor's question block offers "released".
+- **Check on a built Game Master that 95 degrees of motor turn moves the candy stick
+  one brick.**
 
 ### 12 November 2026, fourth printing (version pin 5)
 

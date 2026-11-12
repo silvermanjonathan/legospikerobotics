@@ -30,6 +30,8 @@ from session07 import SESSION07
 from session08 import SESSION08
 import robot
 import wheel
+import blocks as B
+from builds import BUILDS, BLOCKS_USED
 
 SESSIONS = [SESSION01, SESSION02, SESSION03, SESSION04,
             SESSION05, SESSION06, SESSION07, SESSION08]
@@ -40,7 +42,7 @@ PART2 = [x for x in SESSIONS if x.get("part", 1) == 2]
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.environ.get("SPIKE_OUT", ROOT)
-VERSION = "5"
+VERSION = "6"
 COURSE = "SPIKE Prime with Python"
 HUB = "spike_course_hub"
 ROBOT = "robot_advanced_driving_base"
@@ -48,6 +50,7 @@ FIELD = "field_test_field"
 CONSTRAINTS = "course_constraints"
 STDMAP = "standards_map"
 LEDGER = "course_ledger_card"
+BUILDSPAGE = "builds_word_blocks"
 PUBLISHED = "12 November 2026"
 RUNS_NEEDED = 3
 
@@ -426,6 +429,8 @@ table.strip pre{margin:0}
 td.mono,th.mono{font-family:'JetBrains Mono',monospace; font-weight:700}
 @media print{ td.fill input{border-bottom:1px solid #666} }
 """
+CSS += B.css()
+
 
 def page(title, body, hub_label="Course home", head_extra=""):
     return (
@@ -967,6 +972,7 @@ def render_hub():
              'what the robot will do, and then run it.</p>')
     b.append('<div class="dates"><a class="pill" href="#part1"><b>Part 1</b> sessions 1 to 4</a>'
              '<a class="pill" href="#part2"><b>Part 2</b> sessions 5 to 8</a>'
+             '<a class="pill" href="#builds"><b>More builds</b> Word Blocks</a>'
              '<span class="pill"><b>Dates</b> to be set</span>'
              '<span class="pill"><b>Teams</b> 4 builders, 1 robot</span>'
              '<span class="pill"><b>Demo days</b> sessions 4 and 8</span></div>')
@@ -978,6 +984,15 @@ def render_hub():
              'early or keeps going. The hub beeps and shows numbers, the robot measures its '
              'own turns and follows a line, and each team writes its own mission. Session 8 '
              'ends with a second demo.</p>' + listing(PART2) + '</section>')
+    b.append('<section id="builds"><h2>More builds, in Word Blocks</h2><p>Two more LEGO '
+             'models, each with five short programs in Word Blocks, the coloured blocks in the '
+             'SPIKE App. Use them on a day the class builds something new, or for a team that '
+             'finishes early.</p><div class="grid2">'
+             + "".join('<div class="card"><h3><a href="' + link(BUILDSPAGE) + '#' + bd["id"] + '">'
+                       + bd["title"] + '</a></h3><p>' + bd["intro"][0] + '</p></div>'
+                       for bd in BUILDS)
+             + '</div><div class="toolbar"><a class="btn" href="' + link(BUILDSPAGE)
+             + '">Open the Word Block snippets</a></div></section>')
     b.append('<section><h2>How a session runs</h2><div class="grid2">'
              '<div class="card"><h3>Robot check, then opener</h3><p>A week passes between '
              'sessions. Each session starts by checking the robot against the robot page, '
@@ -996,6 +1011,7 @@ def render_hub():
              '<a class="btn quiet" href="' + link(LEDGER) + '">Ledger card</a>'
              '<a class="btn quiet" href="' + link(CONSTRAINTS) + '">Course constraints</a>'
              '<a class="btn quiet" href="' + link(STDMAP) + '">Standards map</a>'
+             '<a class="btn quiet" href="' + link(BUILDSPAGE) + '">Word Block snippets</a>'
              '</div></section>')
     b.append('</div></main>' + footer())
     return page(COURSE, "".join(b))
@@ -1154,7 +1170,8 @@ NEVER_PART1 = [
 ]
 
 NEVER = [
-    "Word Blocks. This course is written in Python throughout.",
+    "Word Blocks in sessions 1 to 8. Every session is written in Python. Only the page of "
+    "more builds uses Word Blocks: see section 7.",
     "<code>while True</code> or any loop with no stop the student can name.",
     "<code>if</code> inside <code>if</code>. One <code>if</code> may sit inside one <code>while</code>, as in the line follower.",
     "Lists, and variables that change while the program runs.",
@@ -1221,6 +1238,14 @@ def render_constraints():
              '<li>Standards: New York science (engineering design) and New York mathematics '
              'only. No computer science codes: the graph returned none for New York on '
              + RESOLVED_ON + '.</li></ul></section>')
+    b.append('<section><h2>7. The page of more builds, in Word Blocks</h2><p>The Game Master and '
+             'Grabbers snippets are SPIKE App Word Blocks, not Python, by Jonathan\'s direction '
+             'on ' + PUBLISHED + '. They use only these blocks:</p><table><tr><th>Category</th>'
+             '<th>Blocks</th></tr>'
+             + "".join('<tr><td>' + c + '</td><td>' + w + '</td></tr>' for c, w in BLOCKS_USED)
+             + '</table><p>They never use forever, broadcast messages, lists, more than one '
+             'stack, or the More Motors and More Movement extensions. Every loop is a repeat '
+             'block with a number the student can read.</p></section>')
     return simple_page(COURSE + ' &middot; Constraints', 'Course constraints',
                        'What the course uses, what it never uses, and what is locked.', "".join(b))
 
@@ -1341,6 +1366,95 @@ def render_ledger():
                        "".join(b))
 
 
+# ------------------------------------------------------------ more builds page
+
+def render_builds():
+    b = ['<section><h2>These are Word Blocks, not Python</h2><p>Every program on this page '
+         'is made of Word Blocks, the coloured blocks in the SPIKE App. Start a new Word '
+         'Blocks project, not a Python project, and drag in the blocks in the same order, '
+         'from the top down.</p><p>Each block has the colour of its group in the app. '
+         'Blocks inside a C-shaped block, such as repeat or if, sit inside its arm, and run '
+         'only when that block says so.</p><p>Each snippet has a question. Say your answer '
+         'to your partner, run the program, then open the answer.</p>'
+         '<div class="toolbar">'
+         + "".join('<a class="btn" href="#' + bd["id"] + '">' + bd["title"] + '</a>' for bd in BUILDS)
+         + '</div></section>']
+    for bd in BUILDS:
+        b.append('<section class="opener" id="' + bd["id"] + '"><p class="chunk-no">Build</p><h2>'
+                 + bd["title"] + '</h2>' + paras(bd["intro"]))
+        b.append('<table><tr><th>Building book</th><th>Part of the model</th></tr>')
+        for n, part, url in bd["books"]:
+            b.append('<tr><td><a href="' + html.escape(url) + '">Book ' + str(n) + ' of '
+                     + str(len(bd["books"])) + '</a></td><td>' + part + '</td></tr>')
+        b.append('</table><p class="note">' + bd["team"] + ' The building books are LEGO\'s '
+                 'own files. Each link opens a PDF on LEGO\'s site.</p>')
+        b.append('<h3>Port map</h3><table><tr><th>Port</th><th>What is plugged in</th>'
+                 '<th>What it does</th></tr>')
+        for letter, what, does in bd["ports"]:
+            b.append('<tr><td class="mono">' + letter + '</td><td>' + what + '</td><td>'
+                     + does + '</td></tr>')
+        b.append('</table></section>')
+        for i, sn in enumerate(bd["snippets"]):
+            tag = "bw-" + sn["key"]
+            b.append('<section class="chunk snip" id="' + sn["key"] + '"><p class="chunk-no">'
+                     + bd["title"] + ' &middot; snippet ' + str(i + 1) + ' of '
+                     + str(len(bd["snippets"])) + '</p><h2>' + html.escape(sn["title"]) + '</h2>')
+            b.append('<p>' + sn["teach"] + '</p>')
+            b.append(B.stack(sn["stack"], label=bd["title"] + ", " + sn["title"]))
+            b.append('<p class="setup">' + sn["setup"] + '</p>')
+            b.append(reveal_block(tag, sn["q"], paras(sn["a"])))
+            b.append('</section>')
+        b.append('<section class="brief"><p class="chunk-no">' + bd["title"]
+                 + ' &middot; your turn</p><h2>' + html.escape(bd["sheet_title"]) + '</h2>'
+                 + paras(bd["game"]) + '<p>Fill in the Expected columns before each run.</p>'
+                 + sheet_table(bd["sheet_head"], bd["sheet_rows"], bd["id"]) + '</section>')
+
+    t = ['<details class="teacher"><summary>Teacher panel</summary>']
+    t.append('<h3>Before class</h3><ul>'
+             '<li>Both models are built from the SPIKE Prime set. LEGO\'s lessons for them '
+             'list the SPIKE Prime set only.</li>'
+             '<li>Build one of each model yourself and run every snippet on it before the '
+             'class does. These snippets have not been run on a hub yet.</li>'
+             '<li>On the Grabbers, check that counterclockwise closes the claw. If it opens it, '
+             'swap the two arrows in every Grabbers snippet.</li>'
+             '<li>In the SPIKE App, check that the force sensor\'s question block offers '
+             'released as well as pressed. If it does not, use LEGO\'s two-stack version from '
+             'its lesson.</li>'
+             '<li>On the Game Master, check that 95 degrees of motor turn moves the candy stick '
+             'on by exactly one brick, and that 2.1 seconds brings it to the first brick.</li>'
+             '</ul>')
+    t.append('<h3>Where each fact on this page comes from</h3><ul>'
+             '<li>Ports, the 2.1 seconds, the 95 degrees of motor turn, the motor directions, '
+             'the sound names, and the block words: LEGO\'s own block programs on its lesson '
+             'pages for these two models, read on ' + PUBLISHED + '.</li>'
+             '<li>The snippets: written for this course. LEGO\'s lesson for the Game Master uses '
+             'lists and broadcast messages, which this course never uses, so snippet 4 finds the '
+             'place of the red brick with a counter instead.</li>'
+             '<li>LEGO labels both lessons grades 6 to 8. It rates the Grabbers lesson '
+             'Beginner, 30 to 45 minutes, and the Game Master lesson Intermediate, 45 to 90 '
+             'minutes.</li></ul>')
+    t.append('<p><a href="' + BUILDS[0]["lesson"] + '">LEGO\'s lesson for the Game Master</a> '
+             '&middot; <a href="' + BUILDS[1]["lesson"] + '">LEGO\'s lesson for the Grabbers</a></p>')
+    t.append('<h3>Block colours</h3><p>Each colour is the app\'s own, sampled from LEGO\'s '
+             'program images, then lightened in the same hue until the black block words '
+             'clear 7:1. The build recomputes every ratio and stops if one falls short.</p>'
+             '<table><tr><th>Group</th><th>App colour</th><th>Colour on this page</th>'
+             '<th>Words against it</th></tr>')
+    for cat, c in B.COLOURS.items():
+        t.append('<tr><td>' + B.chip(cat, B.NAMES[cat]) + '</td><td class="mono">' + c["hue"]
+                 + '</td><td class="mono">' + c["fill"] + ' (' + str(c["lightened"])
+                 + '% toward white)</td><td class="mono">' + ("%.1f:1" % B.ratio(B.INK, c["fill"]))
+                 + '</td></tr>')
+    t.append('</table>')
+    t.append('<h3>Mapped to</h3>' + standards_table(["3-5-ETS1-3"]))
+    t.append('<p class="note">The Grabbers fair test changes only the claw, run to run.</p>')
+    t.append('</details>')
+    return simple_page(COURSE + ' &middot; More builds &middot; Word Blocks',
+                       'Word Block snippets: Game Master and Grabbers',
+                       'Two more LEGO models, five short block programs each.',
+                       "".join(b), "".join(t))
+
+
 def main():
     files = {}
     for i, s in enumerate(SESSIONS):
@@ -1354,6 +1468,7 @@ def main():
     files[CONSTRAINTS + ".html"] = render_constraints()
     files[STDMAP + ".html"] = render_standards()
     files[LEDGER + ".html"] = render_ledger()
+    files[BUILDSPAGE + ".html"] = render_builds()
     for name, text in files.items():
         with open(os.path.join(OUT, name), "w") as fh:
             fh.write(text)

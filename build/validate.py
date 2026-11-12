@@ -55,6 +55,8 @@ def visible(text, keep_code=False):
         t = re.sub(r"<pre\b.*?</pre>", " ", t, flags=re.S)
         t = re.sub(r"<code\b.*?</code>", " ", t, flags=re.S)
         t = re.sub(r'<table class="std">.*?</table>', " ", t, flags=re.S)
+        # drawn Word Block stacks: their words are the app's own, not ours to change
+        t = re.sub(r'<figure class="blocks".*?</figure>', " ", t, flags=re.S)
     t = re.sub(r"<[^>]+>", " ", t)
     return re.sub(r"\s+", " ", t)
 
@@ -237,6 +239,22 @@ def main():
     print("reveal buttons: %d" % revs)
     print("result boxes: %d" % outs)
     print("colored code blocks: %d" % pys)
+
+    # Word Block stacks: every colour clears 7:1, every C arm is 16px or wider, and
+    # every block inside a C block is drawn inside its arm
+    sys.path.insert(0, HERE)
+    import blocks
+    for f in blocks.check():
+        FAILURES.append("blocks: " + f)
+        print("      -> blocks: " + f)
+    stacks = 0
+    for n in names:
+        text = open(os.path.join(SITE, n)).read()
+        stacks += len(re.findall(r'<figure class="blocks"', text))
+        for cb in re.findall(r'<div class="cbody">(.*?)</div></div>', text, re.S):
+            if not cb.startswith('<div class="carm"></div><div class="cin">'):
+                FAILURES.append(n + ": a block inside a C block is drawn outside its arm")
+    print("word block stacks: %d" % stacks)
     if FAILURES:
         print("\n%d FAILURES" % len(FAILURES))
         sys.exit(1)
