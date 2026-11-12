@@ -4,7 +4,10 @@ LEGO SPIKE Prime robotics for grades 4 and 5, in four sessions of 90 minutes, wr
 in Python for the SPIKE App 3. The class robot is LEGO's Advanced Driving Base. The
 house style is the SPIKE Prime Course Style Guide, snapshot of 12 November 2026.
 
-Homepage: `spike_course_hub.html` at the repo root (there is no `index.html`).
+**Open the course: [silvermanjonathan.github.io/legospikerobotics/spike_course_hub.html](https://silvermanjonathan.github.io/legospikerobotics/spike_course_hub.html)**
+
+The homepage is `spike_course_hub.html` at the repo root (there is no `index.html`).
+The site is served by GitHub Pages from the root of the `main` branch.
 
 ## Pages
 
