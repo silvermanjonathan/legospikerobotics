@@ -84,6 +84,13 @@ The constraints page carries the full list. The ones that differ from the style 
 
 ## Release log
 
+### 12 November 2026, fourth printing (version pin 4)
+
+What changed: on the hub, the Part 1 and Part 2 pills at the top are now links that
+jump to their lists of sessions. Nothing else changed.
+
+What was checked: both guards pass.
+
 ### 12 November 2026, third printing (version pin 3)
 
 What changed: part 2 added, sessions 5 to 8. The hub, field page, constraints page,

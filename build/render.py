@@ -40,7 +40,7 @@ PART2 = [x for x in SESSIONS if x.get("part", 1) == 2]
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.environ.get("SPIKE_OUT", ROOT)
-VERSION = "3"
+VERSION = "4"
 COURSE = "SPIKE Prime with Python"
 HUB = "spike_course_hub"
 ROBOT = "robot_advanced_driving_base"
@@ -157,6 +157,9 @@ header.top h1,header.top h2{color:#FFFDF7}
   background:rgba(255,253,247,.08);
 }
 .pill b{color:#F2D89B; font-weight:700}
+a.pill{color:inherit; text-decoration:none}
+a.pill:hover,a.pill:focus{background:rgba(255,253,247,.22); border-color:#F2D89B}
+a.pill::after{content:" \2193"}
 main{padding:28px 22px 12px}
 section{
   background:var(--card); border:2px solid var(--rule); border-radius:6px;
@@ -962,16 +965,16 @@ def render_hub():
     b.append('<h1>' + COURSE + '</h1>')
     b.append('<p class="sub">Sessions of ninety minutes. You read a robot program, say '
              'what the robot will do, and then run it.</p>')
-    b.append('<div class="dates"><span class="pill"><b>Part 1</b> sessions 1 to 4</span>'
-             '<span class="pill"><b>Part 2</b> sessions 5 to 8</span>'
+    b.append('<div class="dates"><a class="pill" href="#part1"><b>Part 1</b> sessions 1 to 4</a>'
+             '<a class="pill" href="#part2"><b>Part 2</b> sessions 5 to 8</a>'
              '<span class="pill"><b>Dates</b> to be set</span>'
              '<span class="pill"><b>Teams</b> 4 builders, 1 robot</span>'
              '<span class="pill"><b>Demo days</b> sessions 4 and 8</span></div>')
     b.append('</div></header><main><div class="wrap">')
-    b.append('<section><h2>Part 1: sessions 1 to 4</h2><p>Build the robot, move it, turn it, '
+    b.append('<section id="part1"><h2>Part 1: sessions 1 to 4</h2><p>Build the robot, move it, turn it, '
              'stop it at a line, and make a delivery. Session 4 ends with a demo for '
              'families.</p>' + listing(PART1) + '</section>')
-    b.append('<section><h2>Part 2: sessions 5 to 8</h2><p>For a class that finishes part 1 '
+    b.append('<section id="part2"><h2>Part 2: sessions 5 to 8</h2><p>For a class that finishes part 1 '
              'early or keeps going. The hub beeps and shows numbers, the robot measures its '
              'own turns and follows a line, and each team writes its own mission. Session 8 '
              'ends with a second demo.</p>' + listing(PART2) + '</section>')
