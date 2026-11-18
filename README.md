@@ -24,6 +24,7 @@ The site is served by GitHub Pages from the root of the `main` branch.
 | `session07_follow_the_line.html` | Session 7. `if`, `else`, `while`, and a line follower with a stop bar, then timed runs. |
 | `session08_your_own_functions_and_mission.html` | Session 8. The students' own functions; each team writes and runs its own mission; second demo. |
 | `builds_word_blocks.html` | More builds, in Word Blocks: the Game Master and the Grabbers, five block snippets each, with a prediction on each and a sheet to fill in. |
+| `challenge_mat.html`, `challenge_mat.pdf` | The challenge mat: 12 sheets of letter paper to print and tape, four missions, and the match. |
 | `pieces_of_the_builds.html` | Every LEGO piece the three builds use, 61 of them: a drawing, a plain name, LEGO's own name and part number, and the builds that use it. Buttons show the pieces of one build. |
 | `robot_advanced_driving_base.html` | The class robot: links to LEGO's five building books, the port map, the wheel table. |
 | `field_test_field.html` | The test field for every session, drawn to scale. |
@@ -47,6 +48,8 @@ Pages are generated, never edited by hand.
 | `build/session01.py` to `build/session08.py` | One session each: its programs and every word on its page |
 | `build/blocks.py` | Draws Word Block stacks in HTML and CSS; holds the app's block colours and checks every one at 7:1 |
 | `build/builds.py` | The Game Master and Grabbers snippets and the words on their page |
+| `build/py2blocks.py` | Turns each Python program of sessions 1 to 4 into the same program in Word Blocks |
+| `build/mat.py`, `build/mat_pdf.py` | The challenge mat's geometry and missions; the tool that writes its PDF |
 | `build/parts.py` | Every piece the three builds use: plain name, LEGO's name and numbers, sets, builds, and how it is drawn |
 | `build/ldraw_render.py` | A tool, run by hand: draws each piece from the LDraw parts library into `parts/`. The page build does not need it or the library. |
 | `build/robot.py` | Port map, LEGO's links, every field and robot figure |
@@ -90,6 +93,49 @@ The constraints page carries the full list. The ones that differ from the style 
    only, retrieved through the Learning Commons Knowledge Graph on 12 November 2026.
 
 ## Release log
+
+### 18 November 2026, seventh printing (version pin 8)
+
+What changed:
+
+- **Python or Word Blocks.** Sessions 1 to 4 have two buttons under the masthead, Python
+  and Word Blocks. Word Blocks draws every program on the page as a block stack, 42
+  programs and snippets in all. Each block shows the number of the Python line it
+  matches, so the page's text ("line 12") still points at one block. A link ending in
+  `#wb` opens a page in Word Blocks, and the pager carries the choice to the next page.
+  Sessions 5 to 8 are Python only.
+- **`build/py2blocks.py`** turns each Python program into its block stack, so the two
+  cannot drift apart. The build stops if a program on a session 1 to 4 page has no stack.
+- **Challenge mat.** `challenge_mat.html` and `challenge_mat.pdf`: 12 sheets of letter
+  paper, taped 4 across and 3 down into a mat about 112 cm by 65 cm, with four missions
+  worth 80 points, one or two for each of sessions 2, 3, and 4, and a 2 minute match.
+  The hub and the three session pages link to it. `build/mat.py` draws it and
+  `build/mat_pdf.py` writes the PDF.
+
+Where the facts came from:
+
+- **Block words and the Movement colour**: read and sampled on 18 November 2026 from the
+  program image on LEGO's lesson page Training Camp 1: Driving Around.
+- **The speed**: Python's `velocity=250` is 250 degrees of motor turn each second. The
+  large motor's top speed is 1050, so the block is `set movement speed to 24 %`
+  (250 / 1050, to the nearest whole percent). About the same speed, not exactly.
+- **The mat**: the far line is 55 cm from start A (`robot.FAR_CM`); every other distance
+  comes from `build/wheel.py`.
+
+What was checked: both guards pass on all 17 pages. The PDF has 13 letter pages. The
+twelve sheets were rendered and laid side by side to check that no mark a mission needs
+falls in the blank strip at a sheet's edge. Pages were looked at at 1280px and 390px.
+
+What is not done:
+
+- **No block stack was built or run in the SPIKE App**, and no Python program has logged
+  runs either. In particular, a negative number of degrees in a move block (session 1,
+  moving backward) is assumed to move the robot backward, as it does in Python.
+- **Nobody has run a robot on the mat.** The drop zone, island, and home marks assume a
+  robot about 22 cm long with its wheels about 11 cm behind its front edge. The mat
+  page's teacher panel says what to test first.
+- **The page text still names Python lines** when Word Blocks is chosen.
+
 
 ### 13 November 2026, sixth printing (version pin 7)
 

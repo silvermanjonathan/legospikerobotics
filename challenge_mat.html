@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The challenge mat | SPIKE Prime with Python</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Lecture Light: built for a projector in a room with the lights on.
+   Light ground, near-black text, few accents, no hairlines. */
+:root{
+  --paper:#F4F0E6;
+  --card:#FFFDF7;
+  --ink:#17181B;
+  --ink-soft:#4A4D53;
+  --rule:#D3CBB8;
+  --teal:#0E4D52;
+  --teal-deep:#0A3A3E;
+  --clay:#9C2B22;
+  --ochre:#8A5A00;
+  --ochre-line:#D99B12;
+  --ochre-tint:#FBF2DC;
+  --green:#1D5B39;
+  --green-tint:#E8F1E9;
+  --green-ink:#122B1C;
+  --code-bg:#EDE7D9;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:'DM Sans',system-ui,sans-serif; font-size:18px; font-weight:500;
+  line-height:1.65;
+}
+header.top{
+  background:var(--teal); color:#FFFDF7;
+  border-bottom:6px solid var(--ochre-line); padding:30px 22px 26px;
+}
+.wrap{max-width:1080px; margin:0 auto}
+/* prose lines stay at reading length inside the wider column; code gets the width */
+p,li{max-width:72ch}
+.dates,.sessionlist li,.toolbar,.legend,.exits p,.card p,.stamp,.pill{max-width:none}
+.eyebrow{
+  font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:.14em;
+  text-transform:uppercase; color:#F2D89B; margin:0 0 10px; font-weight:700;
+}
+h1{
+  font-family:'Bricolage Grotesque','DM Sans',sans-serif; font-weight:800;
+  font-size:clamp(29px,4.8vw,44px); line-height:1.1; margin:0 0 10px;
+}
+h2{
+  font-family:'Bricolage Grotesque','DM Sans',sans-serif; font-weight:700;
+  font-size:25px; line-height:1.2; margin:0 0 12px; color:var(--teal-deep);
+}
+h3{
+  font-family:'Bricolage Grotesque','DM Sans',sans-serif; font-weight:700;
+  font-size:20px; margin:0 0 8px; color:var(--teal-deep);
+}
+header.top h1,header.top h2{color:#FFFDF7}
+.sub{color:#EAE3D2; margin:0 0 16px; font-size:19px; font-weight:400}
+.dates{
+  display:flex; flex-wrap:wrap; gap:10px; margin-top:16px;
+  font-family:'JetBrains Mono',monospace; font-size:13.5px;
+}
+.pill{
+  border:2px solid rgba(255,253,247,.4); border-radius:999px; padding:5px 13px;
+  background:rgba(255,253,247,.08);
+}
+.pill b{color:#F2D89B; font-weight:700}
+a.pill{color:inherit; text-decoration:none}
+a.pill:hover,a.pill:focus{background:rgba(255,253,247,.22); border-color:#F2D89B}
+a.pill::after{content:" \2193"}
+a.pill.plain::after{content:" \2192"}
+main{padding:28px 22px 12px}
+section{
+  background:var(--card); border:2px solid var(--rule); border-radius:6px;
+  padding:22px 24px; margin:0 0 20px;
+}
+section.opener{border-left:8px solid var(--green)}
+section.chunk{border-left:8px solid var(--ochre-line)}
+section.hinge{border-left:8px solid var(--clay)}
+section.brief{border-left:8px solid var(--teal)}
+section.extension{border-left:8px solid var(--clay)}
+.chunk-no{
+  font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ochre); margin:0 0 8px; font-weight:700;
+}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px; padding-left:24px}
+li{margin:0 0 8px}
+.sessionlist li{max-width:none}
+code,pre{
+  /* JetBrains Mono ligatures turn != into a slashed equals and <= into a single
+     glyph; students then type a character that does not exist. Keep every
+     operator as the keys that produce it. */
+  font-variant-ligatures:none; font-feature-settings:"liga" 0,"calt" 0,"dlig" 0;
+}
+code{
+  font-family:'JetBrains Mono',monospace; font-size:.9em; font-weight:700;
+  background:var(--code-bg); color:#1E2A2B;
+  padding:2px 6px; border-radius:3px;
+}
+pre{
+  /* 19px, a little over the 18px prose, so code reads from the back of the room */
+  font-family:'JetBrains Mono',monospace; font-size:19px; line-height:1.6;
+  background:var(--code-bg); color:var(--ink); border:2px solid var(--rule);
+  border-left:6px solid #B9AF96; border-radius:4px;
+  padding:16px 18px; overflow-x:auto; margin:0 0 16px; font-weight:500;
+}
+pre code{background:none; padding:0; border-radius:0; font-size:inherit; font-weight:inherit; color:inherit}
+/* Python code, colored the way VS Code's light theme colors it, on white. Each color
+   clears 7:1 on white (render.py checks), and the same colors print. Color only, never
+   bold or italic, so every character keeps its width. */
+pre.py{background:#FFFFFF; color:#1F1F1F}
+pre.py .hk{color:#8A00B0} pre.py .hs{color:#0000FF} pre.py .hf{color:#6A4E14} pre.py .hc{color:#135C70} pre.py .hv{color:#001080} pre.py .hn{color:#00579A} pre.py .hq{color:#A31515} pre.py .he{color:#B00000} pre.py .hd{color:#035F3E} pre.py .hm{color:#006400}
+/* Indent guides on every code block, the lines VS Code draws down each step of
+   indentation, so even a line shown on its own shows how far in it goes. Each
+   four-space step is one box with a thick dark bar down its left edge. The box holds
+   the step's four spaces, or on a blank line one space drawn by the CSS and not part
+   of the text, so it is exactly as tall as a line wherever it sits and the bars join
+   up from line to line. The spaces never wrap, even where the printed worksheets let
+   code wrap. A border rather than a shadow, so the bars print. */
+pre.py .ig{
+  display:inline-block; width:4ch; vertical-align:top; white-space:pre;
+  border-left:6px solid #595959;
+}
+pre.py .ig:empty::before{content:" "}
+pre.anatomy{background:#FFFDF7; border-left:6px solid var(--teal)}
+pre.anatomy .cond{background:#FBF2DC; border-bottom:3px solid var(--ochre-line); padding:1px 2px}
+pre.anatomy .blk{background:#E8F1E9; border-left:3px solid var(--green); padding:1px 2px}
+pre.anatomy .nm{background:#E3EDEE; border-bottom:3px solid var(--teal); padding:1px 2px}
+pre.anatomy .arg{background:#F7E4E1; border-bottom:3px solid var(--clay); padding:1px 2px}
+pre.anatomy .lbl{color:var(--ink-soft); font-weight:700}
+pre.anatomy .lbl-n{color:var(--teal)}
+pre.anatomy .lbl-a{color:var(--clay)}
+.legend i.n{background:#E3EDEE; border-bottom:3px solid var(--teal)}
+.legend i.a{background:#F7E4E1; border-bottom:3px solid var(--clay)}
+pre.anatomy .lbl-c{color:var(--ochre)}
+pre.anatomy .lbl-b{color:var(--green)}
+.legend{display:flex; flex-wrap:wrap; gap:10px 22px; font-size:16px; margin:0 0 16px}
+.legend span{display:inline-flex; align-items:center; gap:8px; margin-right:18px}
+.legend i{display:inline-block; width:22px; height:16px; border-radius:2px; margin-right:8px}
+.legend i.c{background:#FBF2DC; border-bottom:3px solid var(--ochre-line)}
+.legend i.b{background:#E8F1E9; border-left:3px solid var(--green)}
+pre.out{
+  background:var(--green-tint); border-color:#A9C6B2;
+  border-left:6px solid var(--green); color:var(--green-ink);
+}
+.outlabel{
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--green); margin:0 0 7px; font-weight:700;
+}
+.predict{
+  border:2px dashed var(--ochre); border-radius:5px;
+  padding:16px 18px; margin:0 0 16px; background:var(--ochre-tint);
+}
+.predict p{margin:0 0 12px}
+.predict .q{font-weight:700}
+button.rev{
+  font-family:'DM Sans',sans-serif; font-size:16px; font-weight:700;
+  background:var(--teal); color:#FFFDF7; border:0; border-radius:4px;
+  padding:10px 18px; cursor:pointer;
+}
+button.rev:hover{background:var(--teal-deep)}
+button.rev.hint{background:var(--card); color:var(--ochre); border:2px solid var(--ochre-line); margin:0 10px 10px 0}
+button.rev.hint:hover{background:var(--ochre-tint)}
+.hints .ans{margin:0 0 12px; padding-top:10px; border-top:2px solid var(--ochre-line)}
+.ladder .ans{margin:12px 0 0; padding-top:12px; border-top:2px solid var(--ochre-line)}
+.ladder .ans p{margin:0 0 12px}
+.ladder .ans pre{margin:0 0 12px}
+.ladder .q b{color:var(--clay)}
+.sofar,.whole{margin:0 0 16px}
+.sofar .ans,.whole .ans{margin-top:12px; padding-top:0; border-top:0}
+.ans{display:none; margin-top:16px; padding-top:16px; border-top:2px solid var(--rule)}
+.ans.open{display:block}
+table{border-collapse:collapse; width:100%; margin:0 0 16px; font-size:16.5px}
+th,td{border:2px solid var(--rule); padding:9px 11px; text-align:left; vertical-align:top}
+th{background:#EFE9DA; font-weight:700; font-size:15px; color:var(--teal-deep)}
+td.fill{background:#FBF9F3; min-width:100px}
+.exits{display:grid; gap:14px; grid-template-columns:1fr}
+@media(min-width:760px){.exits{grid-template-columns:repeat(3,1fr)}}
+.exit{border:2px solid var(--rule); border-radius:5px; padding:16px}
+.exit .tag{
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.1em;
+  text-transform:uppercase; margin:0 0 8px; font-weight:700;
+}
+.exit.floor{border-top:6px solid var(--green)}
+.exit.floor .tag{color:var(--green)}
+.exit.middle{border-top:6px solid var(--ochre-line)}
+.exit.middle .tag{color:var(--ochre)}
+.exit.stretch{border-top:6px solid var(--clay)}
+.exit.stretch .tag{color:var(--clay)}
+details.teacher{
+  background:var(--card); border:2px solid var(--rule);
+  border-left:8px solid var(--clay); border-radius:6px;
+  padding:18px 22px; margin:0 0 20px;
+}
+details.teacher summary{
+  cursor:pointer; font-family:'Bricolage Grotesque','DM Sans',sans-serif;
+  font-weight:700; font-size:21px; color:var(--clay);
+}
+details.teacher[open] summary{margin-bottom:14px}
+.note{
+  font-size:16.5px; color:var(--ink-soft); border-left:4px solid var(--rule);
+  padding-left:14px; margin:0 0 14px;
+}
+.pager{
+  max-width:1080px; margin:0 auto; padding:8px 22px 34px;
+  display:flex; justify-content:space-between; gap:12px;
+  font-family:'JetBrains Mono',monospace; font-size:14px;
+}
+.pager a{
+  color:var(--teal); text-decoration:none; font-weight:700;
+  border:2px solid var(--rule); background:var(--card);
+  border-radius:4px; padding:10px 14px;
+}
+.pager a:hover{background:#EFE9DA}
+footer{
+  background:#EAE4D5; border-top:4px solid var(--teal); padding:22px 22px 36px;
+  font-size:15px; color:var(--ink-soft);
+}
+footer a{color:var(--teal); font-weight:700}
+a{color:var(--teal)}
+.toolbar{display:flex; gap:12px; flex-wrap:wrap; margin:0 0 20px}
+a.btn{
+  display:inline-block; font-family:'DM Sans',sans-serif; font-size:17px; font-weight:700;
+  background:var(--teal); color:#FFFDF7; text-decoration:none; border-radius:4px;
+  padding:12px 20px; border:2px solid var(--teal);
+}
+a.btn:hover{background:var(--teal-deep)}
+a.btn.quiet{background:var(--card); color:var(--teal)}
+a.btn.quiet:hover{background:#EFE9DA}
+.grid2{display:grid; gap:16px; grid-template-columns:1fr}
+@media(min-width:760px){.grid2{grid-template-columns:1fr 1fr}}
+.card{border:2px solid var(--rule); border-radius:5px; padding:16px; background:#FFFDF7}
+.card h3{margin-bottom:8px}
+.sessionlist{list-style:none; padding:0; margin:0}
+.sessionlist li{
+  border:2px solid var(--rule); border-left:8px solid var(--teal);
+  border-radius:5px; margin:0 0 12px; padding:14px 16px;
+  display:flex; gap:16px; align-items:flex-start; background:#FFFDF7;
+}
+.sessionlist .n{
+  font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:700;
+  color:var(--teal); min-width:38px;
+}
+.sessionlist a{font-weight:700; text-decoration:none; font-size:19px}
+.sessionlist .meta{
+  font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--ink-soft);
+  display:block; margin-top:4px;
+}
+.bonus{border-left-color:var(--clay)}
+.bonus .n{color:var(--clay)}
+.flag{
+  background:#F7E4E1; border:2px solid var(--clay); border-left:8px solid var(--clay);
+  border-radius:5px; padding:14px 16px; margin:0 0 18px; font-size:16.5px;
+  color:#3A1512;
+}
+.stamp{
+  border:3px dashed #BFB49A; border-radius:5px; padding:14px;
+  font-size:15px; min-height:100px; background:#FFFDF7;
+}
+.stampgrid{display:grid; gap:12px; grid-template-columns:1fr 1fr}
+@media(min-width:820px){.stampgrid{grid-template-columns:repeat(3,1fr)}}
+.stamp .no{
+  font-family:'JetBrains Mono',monospace; color:var(--ochre); font-size:12.5px;
+  letter-spacing:.1em; text-transform:uppercase; display:block; margin-bottom:6px;
+  font-weight:700;
+}
+@media (max-width:760px){
+  pre{font-size:15px}
+  /* a wide table scrolls inside itself instead of widening the page */
+  table{display:block; overflow-x:auto; max-width:100%}
+  table tbody{display:table; width:100%}
+}
+@media print{
+  body{background:#fff; font-size:11pt}
+  header.top{background:#fff; color:#111; border-bottom:3px solid #111}
+  header.top h1,header.top .sub,header.top .eyebrow,.pill b{color:#111}
+  .pill{border-color:#666}
+  footer,.pager,details.teacher{background:#fff}
+  section,.stamp,.card{background:#fff; break-inside:avoid}
+  .noprint,.toolbar{display:none}
+  a{color:#111}
+  /* printed code keeps its old size, so printed pages and PDFs do not reflow */
+  pre{font-size:15.5px}
+  pre.py{background:#fff; border:1px solid #999}
+}
+
+.figwrap{overflow-x:auto; margin:0 0 6px}
+svg.fig{display:block; width:100%; min-width:560px; height:auto}
+.figcap{font-size:15.5px; color:var(--ink-soft); margin:0 0 16px}
+.outsrc{
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.06em;
+  color:var(--green-ink); margin:-2px 0 7px; font-weight:700;
+}
+.setup{border-left:6px solid var(--teal); padding:2px 0 2px 14px; margin:0 0 16px; font-weight:700}
+td.fill input{
+  width:100%; min-width:90px; border:0; border-bottom:2px solid #B9AF96; background:transparent;
+  font:inherit; color:var(--ink); padding:4px 2px;
+}
+td.fill input:focus{outline:3px solid var(--ochre-line); outline-offset:1px}
+ul.checklist{list-style:none; padding-left:0}
+ul.checklist li{padding-left:34px; position:relative}
+ul.checklist li::before{
+  content:""; position:absolute; left:0; top:4px; width:20px; height:20px;
+  border:3px solid var(--teal); border-radius:3px; background:#FFFDF7;
+}
+table.strip td:last-child,table.strip th:last-child{min-width:230px}
+table.strip pre{margin:0}
+td.mono,th.mono{font-family:'JetBrains Mono',monospace; font-weight:700}
+@media print{ td.fill input{border-bottom:1px solid #666} }
+.cat-events{--f:#F5C400;--e:#B08D00;--fd:#FAE48C}
+.cat-movement{--f:#FC6FD4;--e:#B54094;--fd:#FEBEEC}
+.cat-motors{--f:#3DABF7;--e:#0068B0;--fd:#A8D9FB}
+.cat-light{--f:#B691F8;--e:#6A43B0;--fd:#DECEFC}
+.cat-sound{--f:#CB8AEB;--e:#8A51A6;--fd:#E8CAF6}
+.cat-control{--f:#FFB515;--e:#B8820F;--fd:#FFDE96}
+.cat-sensors{--f:#1DCCF0;--e:#1593AD;--fd:#99E8F8}
+.cat-operators{--f:#0ABC54;--e:#008537;--fd:#91E1B2}
+.cat-variables{--f:#FF7E57;--e:#B84C2B;--fd:#FFC5B3}
+
+figure.blocks{margin:0 0 18px}
+.stackwrap{overflow-x:auto; padding:4px 2px 8px}
+.stack{display:inline-flex; flex-direction:column; align-items:flex-start; min-width:max-content}
+.bk{position:relative; display:inline-flex; align-items:center; gap:7px; flex-wrap:nowrap;
+  background:var(--f); border:2px solid var(--e); border-radius:7px;
+  padding:6px 14px 6px 12px; min-height:46px; color:#17181B;
+  font-family:'DM Sans',sans-serif; font-weight:600; font-size:19px; line-height:1.3;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact}
+.stack>*+*, .cin>*+*{margin-top:-2px}
+.bk.hat{border-radius:28px 28px 7px 7px; padding-top:18px; min-width:220px}
+.cb{display:flex; flex-direction:column; align-items:flex-start; min-width:max-content}
+.cb>.bk.chead{border-radius:7px 7px 7px 0}
+.cb>.bk.cmid{border-radius:0 7px 7px 0; min-height:34px; margin-top:-2px}
+.cb>.bk.cfoot{border-radius:0 7px 7px 7px; min-height:24px; min-width:150px; padding:0; margin-top:-2px}
+.cbody{display:flex; align-items:stretch; margin-top:-2px}
+.carm{width:20px; flex:none; background:var(--f);
+  border-left:2px solid var(--e); border-right:2px solid var(--e);
+  -webkit-print-color-adjust:exact; print-color-adjust:exact}
+.cin{display:flex; flex-direction:column; align-items:flex-start; padding:3px 0 3px 0; min-height:28px}
+.fd{display:inline-flex; align-items:center; gap:4px; border:2px solid var(--e);
+  border-radius:999px; padding:0 11px; min-height:32px; color:#17181B;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact}
+.fd.n,.fd.t{background:#FFFFFF; font-family:'JetBrains Mono',monospace; font-weight:700;
+  font-variant-ligatures:none}
+.fd.dd,.fd.pt{background:var(--fd); font-weight:700}
+.fd.dd{border-radius:7px}
+.fd.dd::after{content:"\25BE"; font-size:13px; margin-left:2px}
+.fd.pt{font-family:'JetBrains Mono',monospace; min-width:38px; justify-content:center}
+.fd.dir{font-size:21px}
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+.rep{display:inline-flex; align-items:center; gap:6px; background:var(--f);
+  border:2px solid var(--e); border-radius:999px; padding:2px 13px; min-height:34px;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact}
+.bool{display:inline-flex; background:var(--e); padding:2px;
+  clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,16px 100%,0 50%);
+  -webkit-print-color-adjust:exact; print-color-adjust:exact}
+.bool .bin{display:inline-flex; align-items:center; gap:6px; background:var(--f);
+  padding:3px 22px; min-height:36px;
+  clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,15px 100%,0 50%);
+  -webkit-print-color-adjust:exact; print-color-adjust:exact}
+.pyln{margin-left:8px; background:#FFFFFF; border:2px solid var(--e); border-radius:4px;
+  padding:0 6px; font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:700;
+  color:#17181B; white-space:nowrap; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+.bkey{font-size:15.5px; color:var(--ink-soft); margin:4px 0 0}
+.chip{display:inline-block; background:var(--f); border-left:6px solid var(--e);
+  padding:0 8px; border-radius:3px; color:#17181B; font-weight:600;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact}
+.dirkey{font-size:19px}
+.bchip{display:inline; background:#EDE7D9; border-left:4px solid var(--e); padding:1px 7px;
+  border-radius:3px; font-family:'DM Sans',sans-serif; font-weight:600; font-size:.9em; color:#17181B}
+@media (max-width:760px){
+  .bk{font-size:15px; min-height:38px; padding:5px 10px}
+  .fd{min-height:26px; padding:0 8px}
+  .bk.hat{min-width:170px}
+}
+@media print{
+  .bk{font-size:15.5px}
+  .stackwrap{overflow:visible}
+  figure.blocks{break-inside:avoid}
+}
+
+.lang-wb{display:none}
+body.wb .lang-wb{display:block}
+body.wb .code2 .lang-py{display:none}
+.langbar{
+  position:sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+  background:var(--paper); border-bottom:2px solid var(--rule); padding:10px 0; margin:0 0 18px;
+}
+.langlabel{font-weight:700; color:var(--teal-deep)}
+button.lang{
+  font-family:'DM Sans',sans-serif; font-size:17px; font-weight:700; cursor:pointer;
+  background:var(--card); color:var(--teal); border:2px solid var(--teal); border-radius:4px;
+  padding:9px 16px;
+}
+button.lang[aria-pressed="true"]{background:var(--teal); color:#FFFDF7}
+.wbnote{
+  background:var(--card); border:2px solid var(--rule); border-left:8px solid #B54094;
+  border-radius:6px; padding:16px 20px 4px; margin:0 0 20px;
+}
+
+.pfilter{display:flex; gap:10px; flex-wrap:wrap; margin:0 0 6px}
+button.pf{
+  font-family:'DM Sans',sans-serif; font-size:17px; font-weight:700; cursor:pointer;
+  background:var(--card); color:var(--teal); border:2px solid var(--teal); border-radius:4px;
+  padding:11px 18px;
+}
+button.pf:hover{background:#EFE9DA}
+button.pf[aria-pressed="true"]{background:var(--teal); color:#FFFDF7}
+.pcount{font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; color:var(--ink-soft); margin:10px 0 0}
+.pgrid{display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(236px,1fr)); margin-top:6px}
+.piece{
+  background:#FFFDF7; border:2px solid var(--rule); border-radius:5px; padding:12px;
+  display:flex; flex-direction:column; break-inside:avoid;
+}
+.piece[hidden],section.pgroup[hidden]{display:none}
+.piece figure{
+  margin:0 0 10px; height:172px; display:flex; align-items:center; justify-content:center;
+  background:#FFFFFF; border:2px solid var(--rule); border-radius:4px;
+}
+.piece img{display:block; max-width:90%; max-height:150px; width:auto; height:auto}
+.piece h3{font-size:19px; line-height:1.25; margin:0 0 4px}
+.piece p{margin:0 0 8px; font-size:16px; line-height:1.45; max-width:none}
+.piece .pcol{font-weight:700; color:var(--ink)}
+.piece .plego{font-size:14px; color:var(--ink-soft); margin-top:auto}
+.piece .plego code{font-size:13.5px; white-space:normal; overflow-wrap:anywhere}
+.pused{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 0; padding:0; list-style:none}
+.pused li{
+  font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; max-width:none;
+  border:2px solid var(--teal); color:var(--teal-deep); border-radius:999px; padding:1px 9px;
+  background:#E3EDEE;
+}
+table.ptable{font-size:15px}
+table.ptable code{font-size:13px; white-space:normal; overflow-wrap:anywhere}
+.tscroll{overflow-x:auto}
+@media print{
+  .piece[hidden],section.pgroup[hidden]{display:flex}
+  section.pgroup[hidden]{display:block}
+  .pgrid{grid-template-columns:repeat(3,1fr)}
+  .piece figure{height:120px}
+  .piece img{max-height:104px}
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap"><p class="eyebrow">SPIKE Prime with Python &middot; Challenge mat</p><h1>The challenge mat</h1><p class="sub">Twelve sheets of paper, four missions, 80 points.</p></div></header><main><div class="wrap"><section><h2>The mat</h2><p>The challenge mat is a field for the class robot. It is made of 12 sheets of letter paper taped together, 4 sheets across and 3 sheets down. It is about 112 cm wide and 65 cm tall. It has four missions, and each mission scores points. There are 80 points in all.</p><div class="figwrap"><svg class="fig" viewBox="-1.50 -1.50 114.76 67.77" role="img" aria-label="The challenge mat from above, drawn to scale. The dashed grey lines are the edges of the 12 sheets. The robot starts on the left and moves forward to the right." xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="111.76" height="64.77" fill="#FFFFFF" stroke="#17181B" stroke-width="0.25"/><line x1="27.94" y1="0.00" x2="27.94" y2="64.77" stroke="#B9AF96" stroke-width="0.12" stroke-dasharray="0.8 0.6"/><line x1="55.88" y1="0.00" x2="55.88" y2="64.77" stroke="#B9AF96" stroke-width="0.12" stroke-dasharray="0.8 0.6"/><line x1="83.82" y1="0.00" x2="83.82" y2="64.77" stroke="#B9AF96" stroke-width="0.12" stroke-dasharray="0.8 0.6"/><line x1="0.00" y1="21.59" x2="111.76" y2="21.59" stroke="#B9AF96" stroke-width="0.12" stroke-dasharray="0.8 0.6"/><line x1="0.00" y1="43.18" x2="111.76" y2="43.18" stroke="#B9AF96" stroke-width="0.12" stroke-dasharray="0.8 0.6"/><line x1="22.00" y1="1.00" x2="22.00" y2="1.90" stroke="#4A4D53" stroke-width="0.12"/><text x="22.00" y="2.55" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="middle">0</text><line x1="23.00" y1="1.00" x2="23.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="24.00" y1="1.00" x2="24.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="25.00" y1="1.00" x2="25.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="26.00" y1="1.00" x2="26.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="27.00" y1="1.00" x2="27.00" y2="1.90" stroke="#4A4D53" stroke-width="0.12"/><text x="27.00" y="2.55" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="middle">5</text><line x1="28.00" y1="1.00" x2="28.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="29.00" y1="1.00" x2="29.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="30.00" y1="1.00" x2="30.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="31.00" y1="1.00" x2="31.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="32.00" y1="1.00" x2="32.00" y2="1.90" stroke="#4A4D53" stroke-width="0.12"/><text x="32.00" y="2.55" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="middle">10</text><line x1="33.00" y1="1.00" x2="33.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="34.00" y1="1.00" x2="34.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="35.00" y1="1.00" x2="35.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="36.00" y1="1.00" x2="36.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="37.00" y1="1.00" x2="37.00" y2="1.90" stroke="#4A4D53" stroke-width="0.12"/><text x="37.00" y="2.55" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="middle">15</text><line x1="38.00" y1="1.00" x2="38.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="39.00" y1="1.00" x2="39.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="40.00" y1="1.00" x2="40.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="41.00" y1="1.00" x2="41.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="42.00" y1="1.00" x2="42.00" y2="1.90" stroke="#4A4D53" stroke-width="0.12"/><text x="42.00" y="2.55" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="middle">20</text><line x1="43.00" y1="1.00" x2="43.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="44.00" y1="1.00" x2="44.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="45.00" y1="1.00" x2="45.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="46.00" y1="1.00" x2="46.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="47.00" y1="1.00" x2="47.00" y2="1.90" stroke="#4A4D53" stroke-width="0.12"/><text x="47.00" y="2.55" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="middle">25</text><line x1="48.00" y1="1.00" x2="48.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="49.00" y1="1.00" x2="49.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="50.00" y1="1.00" x2="50.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="51.00" y1="1.00" x2="51.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="52.00" y1="1.00" x2="52.00" y2="1.90" stroke="#4A4D53" stroke-width="0.12"/><text x="52.00" y="2.55" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="middle">30</text><line x1="53.00" y1="1.00" x2="53.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="54.00" y1="1.00" x2="54.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="55.00" y1="1.00" x2="55.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="56.00" y1="1.00" x2="56.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="57.00" y1="1.00" x2="57.00" y2="1.90" stroke="#4A4D53" stroke-width="0.12"/><text x="57.00" y="2.55" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="middle">35</text><line x1="58.00" y1="1.00" x2="58.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="59.00" y1="1.00" x2="59.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="60.00" y1="1.00" x2="60.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="61.00" y1="1.00" x2="61.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="62.00" y1="1.00" x2="62.00" y2="1.90" stroke="#4A4D53" stroke-width="0.12"/><text x="62.00" y="2.55" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="middle">40</text><line x1="63.00" y1="1.00" x2="63.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="64.00" y1="1.00" x2="64.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="65.00" y1="1.00" x2="65.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="66.00" y1="1.00" x2="66.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="67.00" y1="1.00" x2="67.00" y2="1.90" stroke="#4A4D53" stroke-width="0.12"/><text x="67.00" y="2.55" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="middle">45</text><line x1="68.00" y1="1.00" x2="68.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="69.00" y1="1.00" x2="69.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="70.00" y1="1.00" x2="70.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="71.00" y1="1.00" x2="71.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="72.00" y1="1.00" x2="72.00" y2="1.90" stroke="#4A4D53" stroke-width="0.12"/><text x="72.00" y="2.55" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="middle">50</text><line x1="73.00" y1="1.00" x2="73.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="74.00" y1="1.00" x2="74.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="75.00" y1="1.00" x2="75.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="76.00" y1="1.00" x2="76.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="77.00" y1="1.00" x2="77.00" y2="1.90" stroke="#4A4D53" stroke-width="0.12"/><text x="77.00" y="2.55" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="middle">55</text><line x1="78.00" y1="1.00" x2="78.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="79.00" y1="1.00" x2="79.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="80.00" y1="1.00" x2="80.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="81.00" y1="1.00" x2="81.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="82.00" y1="1.00" x2="82.00" y2="1.90" stroke="#4A4D53" stroke-width="0.12"/><text x="82.00" y="2.55" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="middle">60</text><line x1="83.00" y1="1.00" x2="83.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="84.00" y1="1.00" x2="84.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="85.00" y1="1.00" x2="85.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="86.00" y1="1.00" x2="86.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="87.00" y1="1.00" x2="87.00" y2="1.90" stroke="#4A4D53" stroke-width="0.12"/><text x="87.00" y="2.55" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="middle">65</text><line x1="88.00" y1="1.00" x2="88.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><line x1="89.00" y1="1.00" x2="89.00" y2="1.50" stroke="#4A4D53" stroke-width="0.08"/><text x="21.40" y="1.75" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="end">cm from start A</text><line x1="2.00" y1="10.80" x2="19.50" y2="10.80" stroke="#4A4D53" stroke-width="0.08" stroke-dasharray="0.6 0.5"/><text x="2.00" y="10.30" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#4A4D53" text-anchor="start">middle of the robot goes on this line</text><line x1="3.00" y1="14.20" x2="11.00" y2="14.20" stroke="#0E4D52" stroke-width="0.35"/><polygon points="11,13.5 12.6,14.2 11,14.9" fill="#0E4D52"/><text x="3.00" y="13.60" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.70" font-weight="700" fill="#0E4D52" text-anchor="start">forward</text><line x1="17.00" y1="3.00" x2="17.00" y2="5.60" stroke="#4A4D53" stroke-width="0.35"/><line x1="17.00" y1="16.00" x2="17.00" y2="18.60" stroke="#4A4D53" stroke-width="0.35"/><text x="17.00" y="19.60" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.62" font-weight="700" fill="#4A4D53" text-anchor="middle">home</text><line x1="22.00" y1="3.00" x2="22.00" y2="5.60" stroke="#0E4D52" stroke-width="0.35"/><line x1="22.00" y1="16.00" x2="22.00" y2="18.60" stroke="#0E4D52" stroke-width="0.35"/><text x="22.00" y="19.60" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.62" font-weight="700" fill="#0E4D52" text-anchor="middle">START A</text><line x1="27.00" y1="3.00" x2="27.00" y2="5.60" stroke="#4A4D53" stroke-width="0.35"/><line x1="27.00" y1="16.00" x2="27.00" y2="18.60" stroke="#4A4D53" stroke-width="0.35"/><text x="27.00" y="19.60" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.62" font-weight="700" fill="#4A4D53" text-anchor="end">home</text><line x1="36.00" y1="3.00" x2="36.00" y2="5.60" stroke="#8A5A00" stroke-width="0.35"/><line x1="36.00" y1="16.00" x2="36.00" y2="18.60" stroke="#8A5A00" stroke-width="0.35"/><text x="36.00" y="19.60" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.62" font-weight="700" fill="#8A5A00" text-anchor="middle">START B</text><rect x="77.00" y="3.0" width="2" height="16.6" fill="#17181B"/><text x="79.90" y="11.30" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.62" font-weight="700" fill="#17181B" text-anchor="middle" transform="rotate(90 79.90 11.30)">FAR LINE</text><line x1="89.00" y1="3.00" x2="89.00" y2="19.60" stroke="#9C2B22" stroke-width="0.25" stroke-dasharray="1 0.7"/><text x="90.00" y="11.30" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.62" font-weight="700" fill="#9C2B22" text-anchor="middle" transform="rotate(90 90.00 11.30)">TOO FAR PAST THIS LINE</text><circle cx="24.50" cy="25.00" r="1.6" fill="none" stroke="#8A5A00" stroke-width="0.3"/><line x1="22.30" y1="25.00" x2="26.70" y2="25.00" stroke="#8A5A00" stroke-width="0.20"/><line x1="24.50" y1="22.80" x2="24.50" y2="27.20" stroke="#8A5A00" stroke-width="0.20"/><text x="24.50" y="28.60" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.80" font-weight="800" fill="#8A5A00" text-anchor="middle">ISLAND</text><text x="24.50" y="29.60" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.50" font-weight="500" fill="#8A5A00" text-anchor="middle">put the crate on the cross</text><rect x="58.50" y="24.00" width="21.00" height="38.00" fill="none" stroke="#0E4D52" stroke-width="0.5"/><text x="69.00" y="26.60" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="1.30" font-weight="800" fill="#0E4D52" text-anchor="middle">DROP ZONE</text><text x="69.00" y="28.00" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.62" font-weight="500" fill="#0E4D52" text-anchor="middle">park with both big wheels inside</text><text x="85.20" y="24.40" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="1.25" font-weight="800" fill="#0E4D52" text-anchor="start">CHALLENGE MAT</text><text x="85.20" y="25.50" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.70" font-weight="500" fill="#4A4D53" text-anchor="start">80 points in all</text><text x="85.20" y="27.60" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.85" font-weight="800" fill="#17181B" text-anchor="start">1  The dock</text><text x="110.60" y="27.60" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.85" font-weight="800" fill="#0E4D52" text-anchor="end">10</text><text x="85.80" y="28.60" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.52" font-weight="500" fill="#4A4D53" text-anchor="start">10: Front edge between the far line and the</text><text x="85.80" y="29.35" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.52" font-weight="500" fill="#4A4D53" text-anchor="start">     dashed line</text><text x="85.20" y="31.10" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.85" font-weight="800" fill="#17181B" text-anchor="start">2  Around the crate</text><text x="110.60" y="31.10" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.85" font-weight="800" fill="#0E4D52" text-anchor="end">20</text><text x="85.80" y="32.10" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.52" font-weight="500" fill="#4A4D53" text-anchor="start">10: The robot goes all the way around and</text><text x="85.80" y="32.85" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.52" font-weight="500" fill="#4A4D53" text-anchor="start">     never touches the crate</text><text x="85.80" y="33.60" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.52" font-weight="500" fill="#4A4D53" text-anchor="start">10: Its front edge ends between the two home</text><text x="85.80" y="34.35" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.52" font-weight="500" fill="#4A4D53" text-anchor="start">     marks</text><text x="85.20" y="36.10" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.85" font-weight="800" fill="#17181B" text-anchor="start">3  The dock that moves</text><text x="110.60" y="36.10" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.85" font-weight="800" fill="#0E4D52" text-anchor="end">20</text><text x="85.80" y="37.10" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.52" font-weight="500" fill="#4A4D53" text-anchor="start">10: Stops in the right place from start A</text><text x="85.80" y="37.85" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.52" font-weight="500" fill="#4A4D53" text-anchor="start">10: Stops in the right place from start B,</text><text x="85.80" y="38.60" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.52" font-weight="500" fill="#4A4D53" text-anchor="start">     with no change to the program</text><text x="85.20" y="45.58" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.85" font-weight="800" fill="#17181B" text-anchor="start">4  The delivery run</text><text x="110.60" y="45.58" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.85" font-weight="800" fill="#0E4D52" text-anchor="end">30</text><text x="85.80" y="46.58" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.52" font-weight="500" fill="#4A4D53" text-anchor="start">20: Both big wheels inside the drop zone</text><text x="85.80" y="47.33" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.52" font-weight="500" fill="#4A4D53" text-anchor="start">10: It parks from start A and from start B,</text><text x="85.80" y="48.08" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.52" font-weight="500" fill="#4A4D53" text-anchor="start">     with no change to the program</text><text x="26.74" y="20.49" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.90" font-weight="800" fill="#8C836C" text-anchor="end">A1</text><text x="26.74" y="42.08" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.90" font-weight="800" fill="#8C836C" text-anchor="end">A2</text><text x="26.74" y="63.67" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.90" font-weight="800" fill="#8C836C" text-anchor="end">A3</text><text x="54.68" y="20.49" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.90" font-weight="800" fill="#8C836C" text-anchor="end">B1</text><text x="54.68" y="42.08" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.90" font-weight="800" fill="#8C836C" text-anchor="end">B2</text><text x="54.68" y="63.67" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.90" font-weight="800" fill="#8C836C" text-anchor="end">B3</text><text x="82.62" y="20.49" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.90" font-weight="800" fill="#8C836C" text-anchor="end">C1</text><text x="82.62" y="42.08" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.90" font-weight="800" fill="#8C836C" text-anchor="end">C2</text><text x="82.62" y="63.67" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.90" font-weight="800" fill="#8C836C" text-anchor="end">C3</text><text x="110.56" y="20.49" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.90" font-weight="800" fill="#8C836C" text-anchor="end">D1</text><text x="110.56" y="42.08" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.90" font-weight="800" fill="#8C836C" text-anchor="end">D2</text><text x="110.56" y="63.67" font-family="DM Sans, Arial, Helvetica, sans-serif" font-size="0.90" font-weight="800" fill="#8C836C" text-anchor="end">D3</text></svg></div><p class="figcap">The challenge mat from above, drawn to scale. The dashed grey lines are the edges of the 12 sheets. The robot starts on the left and moves forward to the right.</p><div class="toolbar noprint"><a class="btn" href="challenge_mat.pdf?v=8">Download the mat to print (PDF, 13 pages)</a></div></section><section><h2>Make the mat</h2><ol><li>Print the file at 100 % size on letter paper, with the paper on its side. In the print window choose Actual size, not Fit to page.</li><li>Check one sheet with a ruler. The bar in its bottom left corner is 5 cm long.</li><li>Page 1 is a picture of the finished mat. The other 12 pages are the sheets. Each sheet has its name in its bottom right corner: a letter for its column and a number for its row.</li><li>Lay the sheets out face up, edge to edge, like the picture. Do not cut anything off and do not overlap the sheets. The white strip around each sheet is part of the mat.</li><li>Turn the sheets over two at a time and tape every seam on the back. Tape on the front can catch a wheel.</li><li>Put the mat on a hard, flat floor or table and tape its corners down.</li></ol></section><section><h2>What is on the mat</h2><table><tr><th>Mark</th><th>What it is</th></tr><tr><td>Start A</td><td>Two teal marks. The robot sits behind them with its front edge level with the marks, and the middle of the robot over the dashed grey line.</td></tr><tr><td>Start B</td><td>Two brown marks, 14 cm nearer the far line than start A.</td></tr><tr><td>Home marks</td><td>Two grey marks, 5 cm behind start A and 5 cm past it.</td></tr><tr><td>Far line</td><td>A black line 2 cm wide, 55 cm from start A. It is the only black mark the colour sensor passes over.</td></tr><tr><td>Dashed red line</td><td>12 cm past the far line. A robot whose front edge passes it has gone too far.</td></tr><tr><td>Island</td><td>A brown cross. The crate sits on it. The crate is no more than 10 cm across.</td></tr><tr><td>Drop zone</td><td>A teal rectangle, 21 cm wide and 38 cm long.</td></tr><tr><td>Ruler</td><td>Along the top edge. It counts cm from start A, so you can read how far the front edge moved.</td></tr></table></section><section class="brief" id="mission1"><p class="chunk-no">Mission 1 &middot; 10 points &middot; uses session 2</p><h2>The dock</h2><table><tr><th>Start</th><td>Start A</td></tr><tr><th>Goal</th><td>The robot stops with its front edge between the far line and the dashed line.</td></tr><tr><th>Rule</th><td>Use a number for the distance. Do not use the colour sensor yet.</td></tr></table><h3>Points</h3><table><tr><th>What the robot does</th><th>Points</th></tr><tr><td>Front edge between the far line and the dashed line</td><td class="mono">10</td></tr></table></section><section class="brief" id="mission2"><p class="chunk-no">Mission 2 &middot; 20 points &middot; uses session 2</p><h2>Around the crate</h2><table><tr><th>Start</th><td>Start A, with a crate on the island</td></tr><tr><th>Goal</th><td>The robot drives a square around the crate and comes back to where it started.</td></tr><tr><th>Rule</th><td>Each side of the square is one full turn of the wheel, about 28 cm.</td></tr></table><h3>Points</h3><table><tr><th>What the robot does</th><th>Points</th></tr><tr><td>The robot goes all the way around and never touches the crate</td><td class="mono">10</td></tr><tr><td>Its front edge ends between the two home marks</td><td class="mono">10</td></tr></table></section><section class="brief" id="mission3"><p class="chunk-no">Mission 3 &middot; 20 points &middot; uses session 3</p><h2>The dock that moves</h2><table><tr><th>Start</th><td>Start A or start B. The teacher says which, just before the run.</td></tr><tr><th>Goal</th><td>The same program stops the robot between the far line and the dashed line from both starts.</td></tr><tr><th>Rule</th><td>Start B is 14 cm nearer the far line, so a distance cannot work for both.</td></tr></table><h3>Points</h3><table><tr><th>What the robot does</th><th>Points</th></tr><tr><td>Stops in the right place from start A</td><td class="mono">10</td></tr><tr><td>Stops in the right place from start B, with no change to the program</td><td class="mono">10</td></tr></table></section><section class="brief" id="mission4"><p class="chunk-no">Mission 4 &middot; 30 points &middot; uses session 4</p><h2>The delivery run</h2><table><tr><th>Start</th><td>Start A or start B. The teacher says which, just before the run.</td></tr><tr><th>Goal</th><td>The robot finds the far line, makes a quarter turn to the right, and parks in the drop zone.</td></tr><tr><th>Rule</th><td>The robot is parked when both big wheels are inside the drop zone.</td></tr></table><h3>Points</h3><table><tr><th>What the robot does</th><th>Points</th></tr><tr><td>Both big wheels inside the drop zone</td><td class="mono">20</td></tr><tr><td>It parks from start A and from start B, with no change to the program</td><td class="mono">10</td></tr></table></section><section><h2>The match</h2><p>In the last session each team plays a match. A match is 2 minutes long.</p><ul><li>The team runs the missions in any order.</li><li>Between missions a builder may pick the robot up, put it back at a start, and choose another program on the hub.</li><li>Once a program starts, nobody touches the robot until it stops.</li><li>A mission can be tried again. Its best run counts.</li><li>A second team keeps the score on a sheet and reads the ruler.</li></ul></section><details class="teacher"><summary>Teacher panel</summary><h3>Three sessions</h3><table><tr><th>Session</th><th>Missions</th><th>What the session teaches that the mission needs</th></tr><tr><td><a href="session02_quarter_turn_and_square.html?v=8">Session 2</a></td><td>1 and 2</td><td>A name for a number, the quarter turn, and repeating two moves four times. Allow about 15 minutes to tape the mat.</td></tr><tr><td><a href="session03_stop_at_the_line.html?v=8">Session 3</a></td><td>3</td><td>Start the wheels, wait for the colour sensor to pass the black line, stop.</td></tr><tr><td><a href="session04_delivery_run_and_demo.html?v=8">Session 4</a></td><td>4, then the match</td><td>The stop at the line, then a quarter turn and a move.</td></tr></table><h3>How the mat differs from the session pages</h3><ul><li>Session 2's mission square has sides of about 55 cm. That square does not fit this mat. On the mat the square has sides of about 28 cm, which is <code>FORWARD = 360</code>.</li><li>Session 3 moves the far line between runs. The mat cannot move its line, so the robot starts from A or B instead. The far line is 55 cm from start A and 41 cm from start B.</li><li>Session 4's drop zone is a square of tape 40 cm on a side. The mat's drop zone is 21 cm by 38 cm, so that it fits inside two sheets.</li></ul><h3>Not yet checked on a robot</h3><ul><li>The mat was drawn from the wheel arithmetic: one full turn of the wheel moves the robot 27.63 cm. The places of the drop zone, the island, and the home marks also assume a robot about 22 cm long whose wheels are about 11 cm behind its front edge. Nobody has run a robot on this mat.</li><li>Before session 2, run session 4's chunk 1 program from start A on a taped mat. If the big wheels do not end inside the drop zone, change <code>FORWARD</code> in that program and tell the class the new number.</li><li>Read the colour sensor over the white paper and over the printed far line, as session 3 does for the floor and the tape. Printed black can read higher than tape. If the two readings are close, lay black tape over the printed line.</li><li>Each sheet keeps a blank strip about 1 cm wide at its edges, because most printers cannot print there. No mark that a mission depends on crosses a seam, except the long sides of the drop zone, where a gap does no harm.</li><li>There are 22 cm of mat behind start A. A longer robot hangs over the mat's left edge at the start, which does no harm on a flat floor.</li></ul><h3>Files</h3><p>The mat is drawn by <code>build/mat.py</code>. <code>build/mat_pdf.py</code> writes the PDF.</p></details></div></main><nav class="pager noprint"><span></span><a href="spike_course_hub.html?v=8">Course home</a><span></span></nav><footer><div class="wrap"><p>SPIKE Prime with Python, grades 4 and 5. Part 1 is sessions 1 to 4. Part 2 is sessions 5 to 8, for a class that continues. The class robot is LEGO's Advanced Driving Base. LEGO's building instructions are linked, not copied.</p><p>Mapped to the New York State P-12 Science Learning Standards and the New York Next Generation Mathematics Learning Standards. Codes retrieved through the Learning Commons Knowledge Graph (CASE Network) on 12 November 2026. <a href="standards_map.html?v=8">Full standards map</a> &middot; <a href="course_constraints.html?v=8">Course constraints, published 12 November 2026</a></p><p>LEGO and SPIKE are trademarks of the LEGO Group, which does not sponsor or endorse this course.</p></div></footer>
+<script>
+document.addEventListener('click', function(e){
+  var b = e.target.closest('button.rev');
+  if(!b) return;
+  var t = document.getElementById(b.getAttribute('data-target'));
+  if(!t) return;
+  var open = t.classList.toggle('open');
+  b.setAttribute('aria-expanded', open ? 'true' : 'false');
+  b.textContent = open ? b.getAttribute('data-hide') : b.getAttribute('data-show');
+});
+</script>
+</body>
+</html>

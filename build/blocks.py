@@ -24,6 +24,7 @@ ARM_PX = 20               # width of a C block's left arm; the guide asks for 16
 # The app's hue for each category, sampled from LEGO's program images.
 APP_HUE = {
     "events":    ("#F5C400", "a 'when' block on LEGO's Grabbers and Game Master programs"),
+    "movement":  ("#FB59CE", "a 'move' block on LEGO's Training Camp 1 program, sampled 18 November 2026"),
     "motors":    ("#0090F5", "a motor 'run' block on the same two programs"),
     "light":     ("#935DF5", "a 'turn off pixels' block on the Game Master program"),
     "sound":     ("#BF70E7", "a 'play sound' block on the Game Master program"),
@@ -34,7 +35,7 @@ APP_HUE = {
 }
 
 NAMES = {
-    "events": "Events", "motors": "Motors", "light": "Light", "sound": "Sound",
+    "events": "Events", "movement": "Movement", "motors": "Motors", "light": "Light", "sound": "Sound",
     "control": "Control", "sensors": "Sensors", "operators": "Operators",
     "variables": "Variables",
 }
@@ -182,14 +183,21 @@ def _parts(parts):
     return "".join(out)
 
 
+def _ln(b):
+    """The line of the Python program this block matches, when the page has both."""
+    if not b.get("line"):
+        return ""
+    return '<span class="pyln">line ' + str(b["line"]) + '</span>'
+
+
 def _block(b):
     if b["kind"] == "hat":
-        return '<div class="bk hat cat-' + b["cat"] + '">' + _parts(b["parts"]) + '</div>'
+        return '<div class="bk hat cat-' + b["cat"] + '">' + _parts(b["parts"]) + _ln(b) + '</div>'
     if b["kind"] == "stack":
-        return '<div class="bk cat-' + b["cat"] + '">' + _parts(b["parts"]) + '</div>'
+        return '<div class="bk cat-' + b["cat"] + '">' + _parts(b["parts"]) + _ln(b) + '</div>'
     cat = b["cat"]
     out = ['<div class="cb cat-' + cat + '">',
-           '<div class="bk chead">' + _parts(b["head"]) + '</div>',
+           '<div class="bk chead">' + _parts(b["head"]) + _ln(b) + '</div>',
            '<div class="cbody"><div class="carm"></div><div class="cin">'
            + "".join(_block(x) for x in b["body"]) + '</div></div>']
     if b["else"] is not None:
@@ -231,9 +239,9 @@ def _cats(blocks, found=None):
     return found
 
 
-def stack(blocks, label=""):
+def stack(blocks, label="", note=""):
     """One drawn stack, with a key that names its categories and any arrows."""
-    key = ['<p class="bkey">']
+    key = ['<p class="bkey">' + note]
     key.append("Colours: " + ", ".join(
         '<span class="chip cat-' + c + '">' + NAMES[c] + '</span>' for c in _cats(blocks)) + ".")
     if _uses_dir(blocks):
@@ -294,6 +302,9 @@ figure.blocks{margin:0 0 18px}
   padding:3px 22px; min-height:36px;
   clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,15px 100%,0 50%);
   -webkit-print-color-adjust:exact; print-color-adjust:exact}
+.pyln{margin-left:8px; background:#FFFFFF; border:2px solid var(--e); border-radius:4px;
+  padding:0 6px; font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:700;
+  color:#17181B; white-space:nowrap; -webkit-print-color-adjust:exact; print-color-adjust:exact}
 .bkey{font-size:15.5px; color:var(--ink-soft); margin:4px 0 0}
 .chip{display:inline-block; background:var(--f); border-left:6px solid var(--e);
   padding:0 8px; border-radius:3px; color:#17181B; font-weight:600;

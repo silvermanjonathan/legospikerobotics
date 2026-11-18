@@ -33,6 +33,8 @@ import wheel
 import blocks as B
 from builds import BUILDS, BLOCKS_USED
 import parts as PT
+import py2blocks
+import mat as MAT
 
 SESSIONS = [SESSION01, SESSION02, SESSION03, SESSION04,
             SESSION05, SESSION06, SESSION07, SESSION08]
@@ -43,7 +45,7 @@ PART2 = [x for x in SESSIONS if x.get("part", 1) == 2]
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.environ.get("SPIKE_OUT", ROOT)
-VERSION = "7"
+VERSION = "8"
 COURSE = "SPIKE Prime with Python"
 HUB = "spike_course_hub"
 ROBOT = "robot_advanced_driving_base"
@@ -53,6 +55,8 @@ STDMAP = "standards_map"
 LEDGER = "course_ledger_card"
 BUILDSPAGE = "builds_word_blocks"
 PIECESPAGE = "pieces_of_the_builds"
+MATPAGE = "challenge_mat"
+MATPDF = "challenge_mat.pdf"
 PUBLISHED = "12 November 2026"
 RUNS_NEEDED = 3
 
@@ -434,6 +438,28 @@ td.mono,th.mono{font-family:'JetBrains Mono',monospace; font-weight:700}
 """
 CSS += B.css()
 
+# ------------------------------------------------ added for the Python / Word Blocks choice
+CSS += """
+.lang-wb{display:none}
+body.wb .lang-wb{display:block}
+body.wb .code2 .lang-py{display:none}
+.langbar{
+  position:sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+  background:var(--paper); border-bottom:2px solid var(--rule); padding:10px 0; margin:0 0 18px;
+}
+.langlabel{font-weight:700; color:var(--teal-deep)}
+button.lang{
+  font-family:'DM Sans',sans-serif; font-size:17px; font-weight:700; cursor:pointer;
+  background:var(--card); color:var(--teal); border:2px solid var(--teal); border-radius:4px;
+  padding:9px 16px;
+}
+button.lang[aria-pressed="true"]{background:var(--teal); color:#FFFDF7}
+.wbnote{
+  background:var(--card); border:2px solid var(--rule); border-left:8px solid #B54094;
+  border-radius:6px; padding:16px 20px 4px; margin:0 0 20px;
+}
+"""
+
 # ------------------------------------------------------ added for the pieces page
 CSS += """
 .pfilter{display:flex; gap:10px; flex-wrap:wrap; margin:0 0 6px}
@@ -503,7 +529,53 @@ def code_block(code, context=None):
     is colored by what it is in the whole program. Output boxes (out_block) and the
     expected/got sheets stay plain: they are not code.
     """
-    return '<pre class="py"><code>' + indent_guides(highlight(code, context)) + '</code></pre>'
+    py = '<pre class="py"><code>' + indent_guides(highlight(code, context)) + '</code></pre>'
+    if not DUAL["on"]:
+        return py
+    try:
+        stack, whole = py2blocks.translate(code, context)
+    except py2blocks.Unsupported:
+        return py
+    DUAL["count"] += 1
+    note = ("The small numbers are the lines of the Python program. " if whole else "")
+    return ('<div class="code2"><div class="lang-py">' + py + '</div><div class="lang-wb">'
+            + B.stack(stack, label="The same program in Word Blocks", note=note) + '</div></div>')
+
+
+# Session pages 1 to 4 show every program two ways. code_block draws both while this
+# is on, and the reader picks one with the buttons at the top of the page.
+DUAL = {"on": False, "count": 0}
+
+LANG_BAR = ('<div class="langbar noprint" role="group" aria-label="Show the programs as">'
+            '<span class="langlabel">Show the programs as</span>'
+            '<button class="lang" type="button" data-lang="py" aria-pressed="true">Python</button>'
+            '<button class="lang" type="button" data-lang="wb" aria-pressed="false">Word Blocks</button>'
+            '</div>'
+            '<div class="lang-wb wbnote"><p>You chose Word Blocks, the coloured blocks in the '
+            'SPIKE App. Every program on this page is drawn as blocks. The words on this page '
+            'still name the lines of the Python program, so each block shows the number of the '
+            'line it matches.</p><p>Three things differ. Blocks have no tool lines at the top '
+            'and no frame: the <b>when program starts</b> block takes their place. Blocks set '
+            'the speed once, near the top: 24 % means about a quarter of the motor\'s top '
+            'speed, which is about the speed the Python programs use. A name for a number, '
+            'such as FORWARD, is a variable in Word Blocks: make it in the Variables part of '
+            'the app before you build the stack.</p></div>')
+
+LANG_JS = """
+(function(){
+  var btns = document.querySelectorAll('button.lang');
+  function set(lang){
+    document.body.classList.toggle('wb', lang === 'wb');
+    btns.forEach(function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false'); });
+    document.querySelectorAll('.pager a').forEach(function(a){
+      var h = a.getAttribute('href').split('#')[0];
+      if(/session0[1-4]_/.test(h)) a.setAttribute('href', lang === 'wb' ? h + '#wb' : h);
+    });
+  }
+  btns.forEach(function(b){ b.addEventListener('click', function(){ set(b.getAttribute('data-lang')); }); });
+  if(location.hash === '#wb') set('wb');
+})();
+"""
 
 
 def indent_guides(colored):
@@ -784,6 +856,8 @@ def session_programs(s):
 def render_session(s, prev_s, next_s):
     n = s["num"]
     first_code = s["chunks"][0]["code"]
+    dual = s.get("part", 1) == 1
+    DUAL["on"], DUAL["count"] = dual, 0
     b = ['<header class="top"><div class="wrap">']
     part2 = s.get("part", 1) == 2
     b.append('<p class="eyebrow">' + COURSE + ' &middot; Grades 4 and 5 &middot; '
@@ -799,6 +873,8 @@ def render_session(s, prev_s, next_s):
                                                 else 'nothing new') + '</span>')
     b.append('</div></div></header>')
     b.append('<main><div class="wrap">')
+    if dual:
+        b.append(LANG_BAR)
 
     b.append('<section><h2>What is new today</h2><p>' + s["new_text"] + '</p>')
     b.append('<p><b>Deliberately re-used:</b> ' + s["reuse"] + '</p>')
@@ -912,6 +988,11 @@ def render_session(s, prev_s, next_s):
     b.append(sheet_table(br["sheet_head"], br["sheet_rows"], "mission"))
     # the mission's runs are logged too; its result shows in the teacher panel only
     measured_block(n, "mission", br["code"], "runs inside the target")
+    on_mat = [m for m in MAT.MISSIONS if m["session"] == n]
+    if on_mat:
+        b.append('<p class="note">On the <a href="' + link(MATPAGE) + '">challenge mat</a>: '
+                 + " and ".join('mission ' + str(m["n"]) + ', ' + m["name"] for m in on_mat)
+                 + '.</p>')
     b.append('</section>')
 
     # ---- exits
@@ -986,7 +1067,13 @@ def render_session(s, prev_s, next_s):
              if next_s else '<span></span>')
     b.append('</nav>')
     b.append(footer())
-    return page(s["title"] + " | " + COURSE, "".join(b))
+    DUAL["on"] = False
+    out = "".join(b)
+    if dual:
+        assert DUAL["count"] and out.count('<pre class="py">') == DUAL["count"], (
+            "session %d: %d programs, %d drawn as blocks" % (n, out.count('<pre class="py">'), DUAL["count"]))
+        out += '<script>' + LANG_JS + '</script>'
+    return page(s["title"] + " | " + COURSE, out)
 
 
 def simple_page(eyebrow, title, sub, body, teacher=""):
@@ -1022,6 +1109,7 @@ def render_hub():
              '<a class="pill" href="#part2"><b>Part 2</b> sessions 5 to 8</a>'
              '<a class="pill" href="#builds"><b>More builds</b> Word Blocks</a>'
              '<a class="pill plain" href="' + link(PIECESPAGE) + '"><b>Pieces</b> names and pictures</a>'
+             '<a class="pill plain" href="' + link(MATPAGE) + '"><b>Challenge mat</b> 4 missions</a>'
              '<span class="pill"><b>Dates</b> to be set</span>'
              '<span class="pill"><b>Teams</b> 4 builders, 1 robot</span>'
              '<span class="pill"><b>Demo days</b> sessions 4 and 8</span></div>')
@@ -1058,6 +1146,7 @@ def render_hub():
              '<a class="btn" href="' + link(ROBOT) + '">Robot page</a>'
              '<a class="btn" href="' + link(FIELD) + '">Field page</a>'
              '<a class="btn" href="' + link(PIECESPAGE) + '">Pieces: names and pictures</a>'
+             '<a class="btn" href="' + link(MATPAGE) + '">Challenge mat</a>'
              '<a class="btn quiet" href="' + link(LEDGER) + '">Ledger card</a>'
              '<a class="btn quiet" href="' + link(CONSTRAINTS) + '">Course constraints</a>'
              '<a class="btn quiet" href="' + link(STDMAP) + '">Standards map</a>'
@@ -1669,6 +1758,110 @@ def render_pieces():
     return page('The pieces of the builds | ' + COURSE, "".join(out))
 
 
+# ------------------------------------------------------------- challenge mat page
+
+def render_mat():
+    one = MAT.whole_cm(360)
+    b = []
+    b.append('<section><h2>The mat</h2>'
+             '<p>The challenge mat is a field for the class robot. It is made of 12 sheets of '
+             'letter paper taped together, 4 sheets across and 3 sheets down. It is about 112 '
+             'cm wide and 65 cm tall. It has four missions, and each mission scores points. '
+             'There are ' + str(MAT.TOTAL) + ' points in all.</p>'
+             + MAT.overview_svg("The challenge mat from above, drawn to scale. The dashed grey "
+                                "lines are the edges of the 12 sheets. The robot starts on the "
+                                "left and moves forward to the right.")
+             + '<div class="toolbar noprint"><a class="btn" href="' + MATPDF + '?v=' + VERSION
+             + '">Download the mat to print (PDF, 13 pages)</a></div></section>')
+    b.append('<section><h2>Make the mat</h2><ol>'
+             '<li>Print the file at 100 % size on letter paper, with the paper on its side. In '
+             'the print window choose Actual size, not Fit to page.</li>'
+             '<li>Check one sheet with a ruler. The bar in its bottom left corner is 5 cm long.</li>'
+             '<li>Page 1 is a picture of the finished mat. The other 12 pages are the sheets. '
+             'Each sheet has its name in its bottom right corner: a letter for its column and a '
+             'number for its row.</li>'
+             '<li>Lay the sheets out face up, edge to edge, like the picture. Do not cut '
+             'anything off and do not overlap the sheets. The white strip around each sheet is '
+             'part of the mat.</li>'
+             '<li>Turn the sheets over two at a time and tape every seam on the back. Tape on '
+             'the front can catch a wheel.</li>'
+             '<li>Put the mat on a hard, flat floor or table and tape its corners down.</li>'
+             '</ol></section>')
+    b.append('<section><h2>What is on the mat</h2><table><tr><th>Mark</th><th>What it is</th></tr>'
+             '<tr><td>Start A</td><td>Two teal marks. The robot sits behind them with its front '
+             'edge level with the marks, and the middle of the robot over the dashed grey line.</td></tr>'
+             '<tr><td>Start B</td><td>Two brown marks, 14 cm nearer the far line than start A.</td></tr>'
+             '<tr><td>Home marks</td><td>Two grey marks, 5 cm behind start A and 5 cm past it.</td></tr>'
+             '<tr><td>Far line</td><td>A black line 2 cm wide, ' + str(MAT.FAR_CM) + ' cm from '
+             'start A. It is the only black mark the colour sensor passes over.</td></tr>'
+             '<tr><td>Dashed red line</td><td>12 cm past the far line. A robot whose front edge '
+             'passes it has gone too far.</td></tr>'
+             '<tr><td>Island</td><td>A brown cross. The crate sits on it. The crate is no more '
+             'than ' + str(MAT.CRATE_CM) + ' cm across.</td></tr>'
+             '<tr><td>Drop zone</td><td>A teal rectangle, 21 cm wide and 38 cm long.</td></tr>'
+             '<tr><td>Ruler</td><td>Along the top edge. It counts cm from start A, so you can '
+             'read how far the front edge moved.</td></tr></table></section>')
+    for m in MAT.MISSIONS:
+        rows = "".join('<tr><td>' + w + '</td><td class="mono">' + str(pts) + '</td></tr>'
+                       for w, pts in m["score"])
+        b.append('<section class="brief" id="mission' + str(m["n"]) + '"><p class="chunk-no">Mission '
+                 + str(m["n"]) + ' &middot; ' + str(m["points"]) + ' points &middot; uses session '
+                 + str(m["session"]) + '</p><h2>' + m["name"] + '</h2>'
+                 '<table><tr><th>Start</th><td>' + m["start"] + '</td></tr>'
+                 '<tr><th>Goal</th><td>' + m["goal"] + '</td></tr>'
+                 '<tr><th>Rule</th><td>' + m["rule"] + '</td></tr></table>'
+                 '<h3>Points</h3><table><tr><th>What the robot does</th><th>Points</th></tr>'
+                 + rows + '</table></section>')
+    b.append('<section><h2>The match</h2><p>In the last session each team plays a match. A '
+             'match is 2 minutes long.</p><ul>'
+             '<li>The team runs the missions in any order.</li>'
+             '<li>Between missions a builder may pick the robot up, put it back at a start, and '
+             'choose another program on the hub.</li>'
+             '<li>Once a program starts, nobody touches the robot until it stops.</li>'
+             '<li>A mission can be tried again. Its best run counts.</li>'
+             '<li>A second team keeps the score on a sheet and reads the ruler.</li></ul></section>')
+    t = ('<details class="teacher"><summary>Teacher panel</summary>'
+         '<h3>Three sessions</h3><table><tr><th>Session</th><th>Missions</th><th>What the session '
+         'teaches that the mission needs</th></tr>'
+         '<tr><td><a href="' + link(SESSION02["slug"]) + '">Session 2</a></td><td>1 and 2</td>'
+         '<td>A name for a number, the quarter turn, and repeating two moves four times. Allow '
+         'about 15 minutes to tape the mat.</td></tr>'
+         '<tr><td><a href="' + link(SESSION03["slug"]) + '">Session 3</a></td><td>3</td>'
+         '<td>Start the wheels, wait for the colour sensor to pass the black line, stop.</td></tr>'
+         '<tr><td><a href="' + link(SESSION04["slug"]) + '">Session 4</a></td><td>4, then the match</td>'
+         '<td>The stop at the line, then a quarter turn and a move.</td></tr></table>'
+         '<h3>How the mat differs from the session pages</h3><ul>'
+         '<li>Session 2\'s mission square has sides of about 55 cm. That square does not fit this '
+         'mat. On the mat the square has sides of about ' + str(one) + ' cm, which is '
+         '<code>FORWARD = 360</code>.</li>'
+         '<li>Session 3 moves the far line between runs. The mat cannot move its line, so the '
+         'robot starts from A or B instead. The far line is ' + str(MAT.FAR_CM) + ' cm from start '
+         'A and ' + str(MAT.FAR_CM - 14) + ' cm from start B.</li>'
+         '<li>Session 4\'s drop zone is a square of tape 40 cm on a side. The mat\'s drop zone is '
+         '21 cm by 38 cm, so that it fits inside two sheets.</li></ul>'
+         '<h3>Not yet checked on a robot</h3><ul>'
+         '<li>The mat was drawn from the wheel arithmetic: one full turn of the wheel moves the '
+         'robot ' + ("%.2f" % MAT.WHEEL_CM) + ' cm. The places of the drop zone, the island, and '
+         'the home marks also assume a robot about 22 cm long whose wheels are about 11 cm '
+         'behind its front edge. Nobody has run a robot on this mat.</li>'
+         '<li>Before session 2, run session 4\'s chunk 1 program from start A on a taped mat. If '
+         'the big wheels do not end inside the drop zone, change <code>FORWARD</code> in that '
+         'program and tell the class the new number.</li>'
+         '<li>Read the colour sensor over the white paper and over the printed far line, as '
+         'session 3 does for the floor and the tape. Printed black can read higher than tape. '
+         'If the two readings are close, lay black tape over the printed line.</li>'
+         '<li>Each sheet keeps a blank strip about 1 cm wide at its edges, because most '
+         'printers cannot print there. No mark that a mission depends on crosses a seam, '
+         'except the long sides of the drop zone, where a gap does no harm.</li>'
+         '<li>There are 22 cm of mat behind start A. A longer robot hangs over the mat\'s left '
+         'edge at the start, which does no harm on a flat floor.</li></ul>'
+         '<h3>Files</h3><p>The mat is drawn by <code>build/mat.py</code>. '
+         '<code>build/mat_pdf.py</code> writes the PDF.</p></details>')
+    return simple_page(COURSE + ' &middot; Challenge mat', 'The challenge mat',
+                       'Twelve sheets of paper, four missions, ' + str(MAT.TOTAL) + ' points.',
+                       "".join(b), t)
+
+
 def main():
     files = {}
     for i, s in enumerate(SESSIONS):
@@ -1684,6 +1877,7 @@ def main():
     files[LEDGER + ".html"] = render_ledger()
     files[BUILDSPAGE + ".html"] = render_builds()
     files[PIECESPAGE + ".html"] = render_pieces()
+    files[MATPAGE + ".html"] = render_mat()
     for name, text in files.items():
         with open(os.path.join(OUT, name), "w") as fh:
             fh.write(text)
