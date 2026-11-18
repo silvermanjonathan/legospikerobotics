@@ -45,7 +45,7 @@ PART2 = [x for x in SESSIONS if x.get("part", 1) == 2]
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.environ.get("SPIKE_OUT", ROOT)
-VERSION = "8"
+VERSION = "9"
 COURSE = "SPIKE Prime with Python"
 HUB = "spike_course_hub"
 ROBOT = "robot_advanced_driving_base"
@@ -1109,7 +1109,7 @@ def render_hub():
              '<a class="pill" href="#part2"><b>Part 2</b> sessions 5 to 8</a>'
              '<a class="pill" href="#builds"><b>More builds</b> Word Blocks</a>'
              '<a class="pill plain" href="' + link(PIECESPAGE) + '"><b>Pieces</b> names and pictures</a>'
-             '<a class="pill plain" href="' + link(MATPAGE) + '"><b>Challenge mat</b> 4 missions</a>'
+             '<a class="pill plain" href="' + link(MATPAGE) + '"><b>Challenge mat</b> 3 robots</a>'
              '<span class="pill"><b>Dates</b> to be set</span>'
              '<span class="pill"><b>Teams</b> 4 builders, 1 robot</span>'
              '<span class="pill"><b>Demo days</b> sessions 4 and 8</span></div>')
@@ -1762,103 +1762,132 @@ def render_pieces():
 
 def render_mat():
     one = MAT.whole_cm(360)
+    wcm, hcm = int(round(MAT.W)), int(round(MAT.H))
+    n_sheets = MAT.COLS * MAT.ROWS
     b = []
     b.append('<section><h2>The mat</h2>'
-             '<p>The challenge mat is a field for the class robot. It is made of 12 sheets of '
-             'letter paper taped together, 4 sheets across and 3 sheets down. It is about 112 '
-             'cm wide and 65 cm tall. It has four missions, and each mission scores points. '
-             'There are ' + str(MAT.TOTAL) + ' points in all.</p>'
+             '<p>The challenge mat is a field for three robots at once. It is made of '
+             + str(n_sheets) + ' sheets of letter paper taped together, ' + str(MAT.COLS)
+             + ' sheets across and ' + str(MAT.ROWS) + ' sheets down. It is about ' + str(wcm)
+             + ' cm wide and ' + str(hcm) + ' cm tall.</p>'
+             '<p>The mat has three lanes, one for each robot. Every lane has the same marks, so '
+             'one program works in any lane. There are four missions. Each robot that does a '
+             'mission scores points. When all three robots do it on the same run, the class '
+             'scores a bonus. There are ' + str(MAT.TOTAL) + ' points in all.</p>'
              + MAT.overview_svg("The challenge mat from above, drawn to scale. The dashed grey "
-                                "lines are the edges of the 12 sheets. The robot starts on the "
-                                "left and moves forward to the right.")
+                                "lines are the edges of the sheets. Each robot starts on the "
+                                "left of its lane and moves forward to the right.")
              + '<div class="toolbar noprint"><a class="btn" href="' + MATPDF + '?v=' + VERSION
-             + '">Download the mat to print (PDF, 13 pages)</a></div></section>')
+             + '">Download the mat to print (PDF, ' + str(n_sheets + 1) + ' pages)</a></div></section>')
     b.append('<section><h2>Make the mat</h2><ol>'
-             '<li>Print the file at 100 % size on letter paper, with the paper on its side. In '
+             '<li>Print the file at 100 % size on letter paper, with the paper upright. In '
              'the print window choose Actual size, not Fit to page.</li>'
              '<li>Check one sheet with a ruler. The bar in its bottom left corner is 5 cm long.</li>'
-             '<li>Page 1 is a picture of the finished mat. The other 12 pages are the sheets. '
-             'Each sheet has its name in its bottom right corner: a letter for its column and a '
-             'number for its row.</li>'
-             '<li>Lay the sheets out face up, edge to edge, like the picture. Do not cut '
-             'anything off and do not overlap the sheets. The white strip around each sheet is '
-             'part of the mat.</li>'
+             '<li>Page 1 is a picture of the finished mat. The other ' + str(n_sheets) + ' pages '
+             'are the sheets. Each sheet has its name in its bottom right corner: a letter for '
+             'its column and a number for its row.</li>'
+             '<li>Each team tapes one lane. Lane 1 is rows 1 and 2, lane 2 is rows 3 and 4, and '
+             'lane 3 is rows 5 and 6. Lay the 8 sheets out face up, edge to edge, like the '
+             'picture. Do not cut anything off and do not overlap the sheets. The white strip '
+             'around each sheet is part of the mat.</li>'
              '<li>Turn the sheets over two at a time and tape every seam on the back. Tape on '
              'the front can catch a wheel.</li>'
-             '<li>Put the mat on a hard, flat floor or table and tape its corners down.</li>'
-             '</ol></section>')
-    b.append('<section><h2>What is on the mat</h2><table><tr><th>Mark</th><th>What it is</th></tr>'
+             '<li>Join the three lanes, lane 1 at the top. Put the mat on a hard, flat floor '
+             'and tape its corners down.</li></ol></section>')
+    b.append('<section><h2>What is in each lane</h2><table><tr><th>Mark</th><th>What it is</th></tr>'
              '<tr><td>Start A</td><td>Two teal marks. The robot sits behind them with its front '
              'edge level with the marks, and the middle of the robot over the dashed grey line.</td></tr>'
              '<tr><td>Start B</td><td>Two brown marks, 14 cm nearer the far line than start A.</td></tr>'
              '<tr><td>Home marks</td><td>Two grey marks, 5 cm behind start A and 5 cm past it.</td></tr>'
              '<tr><td>Far line</td><td>A black line 2 cm wide, ' + str(MAT.FAR_CM) + ' cm from '
              'start A. It is the only black mark the colour sensor passes over.</td></tr>'
-             '<tr><td>Dashed red line</td><td>12 cm past the far line. A robot whose front edge '
-             'passes it has gone too far.</td></tr>'
+             '<tr><td>Dashed red line</td><td>' + str(int(MAT.LIMIT - MAT.FAR)) + ' cm past the '
+             'far line. A robot whose front edge passes it has gone too far.</td></tr>'
              '<tr><td>Island</td><td>A brown cross. The crate sits on it. The crate is no more '
              'than ' + str(MAT.CRATE_CM) + ' cm across.</td></tr>'
-             '<tr><td>Drop zone</td><td>A teal rectangle, 21 cm wide and 38 cm long.</td></tr>'
-             '<tr><td>Ruler</td><td>Along the top edge. It counts cm from start A, so you can '
-             'read how far the front edge moved.</td></tr></table></section>')
+             '<tr><td>Drop zone</td><td>A teal rectangle, ' + str(MAT.ZONE_W) + ' cm wide and '
+             + str(MAT.ZONE_H) + ' cm long.</td></tr>'
+             '<tr><td>Ruler</td><td>Along the top of the lane. It counts cm from start A, so '
+             'you can read how far the front edge moved.</td></tr></table></section>')
+    b.append('<section><h2>Three teams, one score</h2><p>The three teams are not playing '
+             'against each other. The class has one score, and the biggest points come only '
+             'when all three robots do a mission on the same run.</p><ul>'
+             '<li>A run starts when the teacher counts down. All three teams press the button '
+             'on their hub at the same moment.</li>'
+             '<li>A team that has its robot working helps the next team: read their numbers, '
+             'watch their run, and say what you saw.</li>'
+             '<li>Teams may share numbers such as <code>QUARTER_TURN</code>, but each team '
+             'tests a shared number on its own robot before a scored run. Two robots built from '
+             'the same book can still need different numbers.</li></ul></section>')
     for m in MAT.MISSIONS:
-        rows = "".join('<tr><td>' + w + '</td><td class="mono">' + str(pts) + '</td></tr>'
-                       for w, pts in m["score"])
         b.append('<section class="brief" id="mission' + str(m["n"]) + '"><p class="chunk-no">Mission '
                  + str(m["n"]) + ' &middot; ' + str(m["points"]) + ' points &middot; uses session '
                  + str(m["session"]) + '</p><h2>' + m["name"] + '</h2>'
                  '<table><tr><th>Start</th><td>' + m["start"] + '</td></tr>'
                  '<tr><th>Goal</th><td>' + m["goal"] + '</td></tr>'
                  '<tr><th>Rule</th><td>' + m["rule"] + '</td></tr></table>'
-                 '<h3>Points</h3><table><tr><th>What the robot does</th><th>Points</th></tr>'
-                 + rows + '</table></section>')
-    b.append('<section><h2>The match</h2><p>In the last session each team plays a match. A '
-             'match is 2 minutes long.</p><ul>'
-             '<li>The team runs the missions in any order.</li>'
-             '<li>Between missions a builder may pick the robot up, put it back at a start, and '
+                 '<h3>Points</h3><table><tr><th>What happens</th><th>Points</th></tr>'
+                 '<tr><td>Each robot that ' + m["does"] + '</td><td class="mono">' + str(m["each"])
+                 + ' each, up to ' + str(MAT.LANES * m["each"]) + '</td></tr>'
+                 '<tr><td>All three robots do it on the same run</td><td class="mono">'
+                 + str(m["bonus"]) + ' more</td></tr></table></section>')
+    b.append('<section><h2>The match</h2><p>In the last session the class plays a match. A '
+             'match is 3 minutes long, and all three robots are on the mat for all of it.</p><ul>'
+             '<li>The class runs the missions in any order, one mission at a time.</li>'
+             '<li>Between missions each team may pick its robot up, put it back at a start, and '
              'choose another program on the hub.</li>'
-             '<li>Once a program starts, nobody touches the robot until it stops.</li>'
-             '<li>A mission can be tried again. Its best run counts.</li>'
-             '<li>A second team keeps the score on a sheet and reads the ruler.</li></ul></section>')
+             '<li>Once a run starts, nobody touches a robot until all three have stopped.</li>'
+             '<li>A mission can be run again. Its best run counts.</li>'
+             '<li>One builder from each team keeps the score for another team\'s lane and reads '
+             'its ruler.</li></ul></section>')
     t = ('<details class="teacher"><summary>Teacher panel</summary>'
          '<h3>Three sessions</h3><table><tr><th>Session</th><th>Missions</th><th>What the session '
          'teaches that the mission needs</th></tr>'
          '<tr><td><a href="' + link(SESSION02["slug"]) + '">Session 2</a></td><td>1 and 2</td>'
          '<td>A name for a number, the quarter turn, and repeating two moves four times. Allow '
-         'about 15 minutes to tape the mat.</td></tr>'
+         'about 15 minutes for each team to tape its lane.</td></tr>'
          '<tr><td><a href="' + link(SESSION03["slug"]) + '">Session 3</a></td><td>3</td>'
          '<td>Start the wheels, wait for the colour sensor to pass the black line, stop.</td></tr>'
          '<tr><td><a href="' + link(SESSION04["slug"]) + '">Session 4</a></td><td>4, then the match</td>'
          '<td>The stop at the line, then a quarter turn and a move.</td></tr></table>'
+         '<h3>Room for three robots</h3><ul>'
+         '<li>The robots\' paths are ' + ("%.0f" % MAT.LANE_H) + ' cm apart. In mission 2 a robot '
+         'reaches about 38 cm below its start, and in mission 4 its front edge reaches the '
+         'bottom edge of its own lane. Neither reaches the next robot, which sits about 7 cm '
+         'inside its own lane.</li>'
+         '<li>Every robot turns to the right, so no two robots turn toward each other.</li>'
+         '<li>If the room cannot fit a mat ' + str(hcm) + ' cm long, leave the lanes apart. '
+         'Each lane is a complete field ' + str(wcm) + ' cm by ' + ("%.0f" % MAT.LANE_H) + ' cm.</li></ul>'
          '<h3>How the mat differs from the session pages</h3><ul>'
-         '<li>Session 2\'s mission square has sides of about 55 cm. That square does not fit this '
-         'mat. On the mat the square has sides of about ' + str(one) + ' cm, which is '
+         '<li>Session 2\'s mission square has sides of about 55 cm. That square does not fit a '
+         'lane. On the mat the square has sides of about ' + str(one) + ' cm, which is '
          '<code>FORWARD = 360</code>.</li>'
          '<li>Session 3 moves the far line between runs. The mat cannot move its line, so the '
          'robot starts from A or B instead. The far line is ' + str(MAT.FAR_CM) + ' cm from start '
          'A and ' + str(MAT.FAR_CM - 14) + ' cm from start B.</li>'
-         '<li>Session 4\'s drop zone is a square of tape 40 cm on a side. The mat\'s drop zone is '
-         '21 cm by 38 cm, so that it fits inside two sheets.</li></ul>'
+         '<li>Session 4\'s drop zone is a square of tape 40 cm on a side. A lane\'s drop zone is '
+         + str(MAT.ZONE_W) + ' cm by ' + str(MAT.ZONE_H) + ' cm.</li></ul>'
          '<h3>Not yet checked on a robot</h3><ul>'
          '<li>The mat was drawn from the wheel arithmetic: one full turn of the wheel moves the '
          'robot ' + ("%.2f" % MAT.WHEEL_CM) + ' cm. The places of the drop zone, the island, and '
-         'the home marks also assume a robot about 22 cm long whose wheels are about 11 cm '
-         'behind its front edge. Nobody has run a robot on this mat.</li>'
-         '<li>Before session 2, run session 4\'s chunk 1 program from start A on a taped mat. If '
-         'the big wheels do not end inside the drop zone, change <code>FORWARD</code> in that '
-         'program and tell the class the new number.</li>'
+         'the home marks also assume a robot about 22 cm long and 20 cm wide whose wheels are '
+         'about 11 cm behind its front edge. Nobody has run a robot on this mat.</li>'
+         '<li>Print and tape one lane first. Run session 2\'s chunk 3 program and session 4\'s '
+         'chunk 1 program on it from start A. If the robot touches a crate on the island, or '
+         'its big wheels do not end inside the drop zone, change <code>FORWARD</code> and tell '
+         'the class the new number.</li>'
          '<li>Read the colour sensor over the white paper and over the printed far line, as '
          'session 3 does for the floor and the tape. Printed black can read higher than tape. '
          'If the two readings are close, lay black tape over the printed line.</li>'
          '<li>Each sheet keeps a blank strip about 1 cm wide at its edges, because most '
          'printers cannot print there. No mark that a mission depends on crosses a seam, '
-         'except the long sides of the drop zone, where a gap does no harm.</li>'
-         '<li>There are 22 cm of mat behind start A. A longer robot hangs over the mat\'s left '
+         'except the top and bottom of a drop zone, where a gap does no harm.</li>'
+         '<li>There are 23 cm of mat behind start A. A longer robot hangs over the mat\'s left '
          'edge at the start, which does no harm on a flat floor.</li></ul>'
          '<h3>Files</h3><p>The mat is drawn by <code>build/mat.py</code>. '
          '<code>build/mat_pdf.py</code> writes the PDF.</p></details>')
     return simple_page(COURSE + ' &middot; Challenge mat', 'The challenge mat',
-                       'Twelve sheets of paper, four missions, ' + str(MAT.TOTAL) + ' points.',
+                       'Three lanes, three robots, four missions, ' + str(MAT.TOTAL) + ' points.',
                        "".join(b), t)
 
 

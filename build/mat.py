@@ -1,75 +1,80 @@
-"""The challenge mat: twelve sheets of letter paper taped into one field.
+"""The challenge mat: 24 sheets of letter paper taped into one field for three robots.
 
 Everything is in centimetres from the mat's top left corner, x to the right and y
-down. The mat is 4 sheets wide and 3 sheets tall, each sheet on its side, so it is
-111.76 cm by 64.77 cm.
+down. The mat is 4 sheets wide and 6 sheets tall, each sheet upright, so it is
+86.36 cm by 167.64 cm. It holds three lanes, one for each robot, one under the other.
+A lane is two sheets tall, 55.88 cm, which leaves room for a robot to drive its
+square and to park without reaching the next lane.
 
 Nothing that matters is drawn within SAFE cm of a sheet's edge, because most printers
 leave that strip blank. The sheets are taped edge to edge with no trimming, and the
-blank strips become part of the mat. The far line, which the colour sensor has to
+blank strips become part of the mat. Each far line, which the colour sensor has to
 find, sits wholly inside one sheet.
 
 Where the numbers come from:
   - 55 cm from start A to the far line is the course's own far line (robot.FAR_CM),
     about two full turns of the wheel (wheel.py).
   - Start B is 14 cm nearer the far line, about half a turn of the wheel.
-  - The drop zone and the home marks are placed from the wheel arithmetic and a robot
-    about 22 cm long. They have NOT been checked on a built robot. The drop zone is
-    21 cm by 38 cm so that a robot a few cm off still parks inside it.
+  - The drop zone, the island, and the home marks are placed from the wheel arithmetic
+    and a robot about 22 cm long and 20 cm wide whose wheels are about 11 cm behind its
+    front edge. They have NOT been checked on a built robot.
 """
 import html
 
 from robot import FAR_CM, CRATE_CM
 from wheel import WHEEL_CM, whole_cm
 
-SHEET_W, SHEET_H = 27.94, 21.59          # one letter sheet on its side
-COLS, ROWS = 4, 3
+SHEET_W, SHEET_H = 21.59, 27.94          # one letter sheet, upright
+COLS, ROWS = 4, 6
 W, H = SHEET_W * COLS, SHEET_H * ROWS
 SAFE = 0.8                                # nothing is drawn this close to a sheet's edge
 
-LANE_Y = 10.8                             # the middle of the lane, along the top row
-START_A = 22.0
-START_B = 36.0
-FAR = START_A + FAR_CM                    # 79
-LIMIT = FAR + 12                          # the dashed line: past this is too far
+LANES = 3
+LANE_H = 2 * SHEET_H                      # each lane is two sheets tall
+LANE_Y = 17.0                             # the middle of the robot's path, from the lane's top
+START_A = 23.0
+START_B = 37.0
+FAR = START_A + FAR_CM                    # 78
+LIMIT = FAR + 7                           # the dashed line: past this is too far
 HOME = (START_A - 5, START_A + 5)         # the robot's front edge ends between these
-ISLAND = (24.5, 25.0)                     # where the middle of the crate goes
-ZONE = (58.5, 24.0, 79.5, 62.0)           # the drop zone: x0, y0, x1, y1
-LEGEND = (85.2, 23.2)
+ISLAND = (26.0, 31.0)                     # where the middle of the crate goes, in a lane
+ZONE = (58.0, 30.0, 85.0, 52.5)           # the drop zone in a lane: x0, y0, x1, y1
+ZONE_W, ZONE_H = int(ZONE[2] - ZONE[0]), int(round(ZONE[3] - ZONE[1]))
 
 INK, TEAL, OCHRE, SOFT, CLAY = "#17181B", "#0E4D52", "#8A5A00", "#4A4D53", "#9C2B22"
 
+# Each mission scores for every robot that does it, and scores a team bonus when all
+# three robots do it on the same run.
 MISSIONS = [
-    dict(n=1, name="The dock", session=2, points=10,
-         start="Start A",
-         goal="The robot stops with its front edge between the far line and the dashed line.",
+    dict(n=1, name="The dock", session=2, each=10, bonus=10,
+         start="Start A, in all three lanes",
+         goal="Each robot stops with its front edge between its far line and its dashed line.",
          rule="Use a number for the distance. Do not use the colour sensor yet.",
-         score=[("Front edge between the far line and the dashed line", 10)]),
-    dict(n=2, name="Around the crate", session=2, points=20,
-         start="Start A, with a crate on the island",
-         goal="The robot drives a square around the crate and comes back to where it started.",
-         rule="Each side of the square is one full turn of the wheel, about %d cm."
-              % whole_cm(360),
-         score=[("The robot goes all the way around and never touches the crate", 10),
-                ("Its front edge ends between the two home marks", 10)]),
-    dict(n=3, name="The dock that moves", session=3, points=20,
-         start="Start A or start B. The teacher says which, just before the run.",
-         goal="The same program stops the robot between the far line and the dashed line "
-              "from both starts.",
-         rule="Start B is 14 cm nearer the far line, so a distance cannot work for both.",
-         score=[("Stops in the right place from start A", 10),
-                ("Stops in the right place from start B, with no change to the program", 10)]),
-    dict(n=4, name="The delivery run", session=4, points=30,
-         start="Start A or start B. The teacher says which, just before the run.",
-         goal="The robot finds the far line, makes a quarter turn to the right, and parks "
-              "in the drop zone.",
-         rule="The robot is parked when both big wheels are inside the drop zone.",
-         score=[("Both big wheels inside the drop zone", 20),
-                ("It parks from start A and from start B, with no change to the program", 10)]),
+         does="stops with its front edge between the far line and the dashed line"),
+    dict(n=2, name="Around the crate", session=2, each=10, bonus=10,
+         start="Start A, with a crate on each island",
+         goal="Each robot drives a square around its crate and comes back to where it started.",
+         rule="Each side of the square is one full turn of the wheel, about %d cm. A robot "
+              "that touches its crate does not score." % whole_cm(360),
+         does="goes around its crate without touching it and ends with its front edge "
+              "between the home marks"),
+    dict(n=3, name="The dock that moves", session=3, each=10, bonus=10,
+         start="Start A or start B. The teacher says which for each lane, just before the run.",
+         goal="Each robot stops between its far line and its dashed line, from whichever "
+              "start it was given.",
+         rule="Start B is 14 cm nearer the far line, so a distance cannot work for both. "
+              "Nobody changes a program after the teacher has spoken.",
+         does="stops with its front edge between the far line and the dashed line"),
+    dict(n=4, name="The delivery run", session=4, each=10, bonus=20,
+         start="Start A or start B. The teacher says which for each lane, just before the run.",
+         goal="Each robot finds its far line, makes a quarter turn to the right, and parks "
+              "in its drop zone.",
+         rule="A robot is parked when both big wheels are inside the drop zone.",
+         does="parks with both big wheels inside its drop zone"),
 ]
-TOTAL = sum(m["points"] for m in MISSIONS)
 for _m in MISSIONS:
-    assert sum(p for _, p in _m["score"]) == _m["points"], _m["name"]
+    _m["points"] = LANES * _m["each"] + _m["bonus"]
+TOTAL = sum(m["points"] for m in MISSIONS)
 
 
 def sheet_name(col, row):
@@ -89,73 +94,66 @@ def _line(x1, y1, x2, y2, stroke=INK, w=0.2, dash=None):
             % (x1, y1, x2, y2, stroke, w, d))
 
 
-def _ticks(x, colour, label, anchor="middle"):
-    """A start or home mark: two short ticks at the lane's edges. The middle of the
-    lane stays blank, so the colour sensor never passes over a mark."""
-    return (_line(x, 3.0, x, 5.6, colour, 0.35) + _line(x, 16.0, x, 18.6, colour, 0.35)
-            + _t(x, 19.6, label, 0.62, colour, anchor=anchor))
+def _ticks(x, lane, colour, label, anchor="middle"):
+    """A start or home mark: two short ticks at the edges of the robot's path. The
+    middle stays blank, so the colour sensor never passes over a mark."""
+    return (_line(x, lane - 7.8, x, lane - 5.2, colour, 0.35)
+            + _line(x, lane + 5.2, x, lane + 7.8, colour, 0.35)
+            + _t(x, lane - 8.5, label, 0.62, colour, anchor=anchor))
 
 
-def features():
-    """Every mark on the mat, as SVG in centimetres."""
-    p = []
+def lane_features(k):
+    """Every mark in lane k (0, 1, 2), as SVG in centimetres."""
+    oy = k * LANE_H
+    lane = oy + LANE_Y
+    p = [_t(2.2, oy + 4.6, "LANE %d" % (k + 1), 1.5, TEAL, 800)]
     # ruler along the top of the lane, in cm from start A
     for c in range(0, int(LIMIT - START_A) + 1):
         x = START_A + c
         long_ = c % 5 == 0
-        p.append(_line(x, 1.0, x, 1.9 if long_ else 1.5, SOFT, 0.08 if not long_ else 0.12))
+        p.append(_line(x, oy + 1.0, x, oy + (1.9 if long_ else 1.5), SOFT, 0.12 if long_ else 0.08))
         if long_:
-            p.append(_t(x, 2.55, str(c), 0.5, SOFT, 500, "middle"))
-    p.append(_t(START_A - 0.6, 1.75, "cm from start A", 0.5, SOFT, 500, "end"))
+            p.append(_t(x, oy + 2.55, str(c), 0.5, SOFT, 500, "middle"))
+    p.append(_t(START_A + 12, oy + 3.6, "the ruler counts cm from start A", 0.5, SOFT, 500))
     # centre guide behind start A, to line the robot up
-    p.append(_line(2.0, LANE_Y, START_A - 2.5, LANE_Y, SOFT, 0.08, "0.6 0.5"))
-    p.append(_t(2.0, LANE_Y - 0.5, "middle of the robot goes on this line", 0.5, SOFT, 500))
+    p.append(_line(2.0, lane, START_A - 2.5, lane, SOFT, 0.08, "0.6 0.5"))
+    p.append(_t(2.0, lane - 0.5, "middle of the robot goes on this line", 0.5, SOFT, 500))
     # forward arrow
-    p.append(_line(3.0, 14.2, 11.0, 14.2, TEAL, 0.35))
-    p.append('<polygon points="11,13.5 12.6,14.2 11,14.9" fill="%s"/>' % TEAL)
-    p.append(_t(3.0, 13.6, "forward", 0.7, TEAL))
+    p.append(_line(3.0, lane + 3.4, 11.0, lane + 3.4, TEAL, 0.35))
+    p.append('<polygon points="11,%.2f 12.6,%.2f 11,%.2f" fill="%s"/>'
+             % (lane + 2.7, lane + 3.4, lane + 4.1, TEAL))
+    p.append(_t(3.0, lane + 2.8, "forward", 0.7, TEAL))
     # starts and home marks
-    p.append(_ticks(HOME[0], SOFT, "home"))
-    p.append(_ticks(START_A, TEAL, "START A"))
-    p.append(_ticks(HOME[1], SOFT, "home", "end"))
-    p.append(_ticks(START_B, OCHRE, "START B"))
+    p.append(_ticks(HOME[0], lane, SOFT, "home"))
+    p.append(_ticks(START_A, lane, TEAL, "START A", "start"))
+    p.append(_ticks(HOME[1], lane, SOFT, "home", "start"))
+    p.append(_ticks(START_B, lane, OCHRE, "START B"))
     # the far line, black, and the dashed limit
-    p.append('<rect x="%.2f" y="3.0" width="2" height="16.6" fill="%s"/>' % (FAR, INK))
-    p.append(_t(FAR + 2.9, 11.3, "FAR LINE", 0.62, INK, anchor="middle", rot=90))
-    p.append(_line(LIMIT, 3.0, LIMIT, 19.6, CLAY, 0.25, "1 0.7"))
-    p.append(_t(LIMIT + 1.0, 11.3, "TOO FAR PAST THIS LINE", 0.62, CLAY, anchor="middle", rot=90))
-    # the island: a target for the middle of the crate, wholly inside sheet A2
-    ix, iy = ISLAND
+    p.append('<rect x="%.2f" y="%.2f" width="2" height="16.6" fill="%s"/>' % (FAR, lane - 7.8, INK))
+    p.append(_t(FAR + 2.9, lane + 0.5, "FAR LINE", 0.62, INK, anchor="middle", rot=90))
+    p.append(_line(LIMIT, lane - 7.8, LIMIT, lane + 8.8, CLAY, 0.25, "1 0.7"))
+    p.append(_t(LIMIT - 0.9, lane + 0.5, "TOO FAR", 0.62, CLAY, anchor="middle", rot=90))
+    # the island: a target for the middle of the crate, wholly inside one sheet
+    ix, iy = ISLAND[0], oy + ISLAND[1]
     p.append('<circle cx="%.2f" cy="%.2f" r="1.6" fill="none" stroke="%s" stroke-width="0.3"/>'
              % (ix, iy, OCHRE))
     p.append(_line(ix - 2.2, iy, ix + 2.2, iy, OCHRE, 0.2) + _line(ix, iy - 2.2, ix, iy + 2.2, OCHRE, 0.2))
-    p.append(_t(ix, iy + 3.6, "ISLAND", 0.8, OCHRE, 800, "middle"))
+    p.append(_t(ix, iy + 3.6, "ISLAND %d" % (k + 1), 0.8, OCHRE, 800, "middle"))
     p.append(_t(ix, iy + 4.6, "put the crate on the cross", 0.5, OCHRE, 500, "middle"))
     # the drop zone
-    x0, y0, x1, y1 = ZONE
+    x0, y0, x1, y1 = ZONE[0], oy + ZONE[1], ZONE[2], oy + ZONE[3]
     p.append('<rect x="%.2f" y="%.2f" width="%.2f" height="%.2f" fill="none" stroke="%s" '
              'stroke-width="0.5"/>' % (x0, y0, x1 - x0, y1 - y0, TEAL))
-    p.append(_t((x0 + x1) / 2, y0 + 2.6, "DROP ZONE", 1.3, TEAL, 800, "middle"))
-    p.append(_t((x0 + x1) / 2, y0 + 4.0, "park with both big wheels inside", 0.62, TEAL, 500, "middle"))
-    # the missions, printed on the mat
-    lx, ly = LEGEND
-    p.append(_t(lx, ly + 1.2, "CHALLENGE MAT", 1.25, TEAL, 800))
-    p.append(_t(lx, ly + 2.3, "%d points in all" % TOTAL, 0.7, SOFT, 500))
-    y = ly + 4.4
-    for m in MISSIONS:
-        lines = sum(len(_wrap(w, 40)) for w, _ in m["score"])
-        seam = SHEET_H * 2
-        if y - 1 < seam + SAFE and y + 1.0 + 0.75 * lines > seam - SAFE:
-            y = seam + SAFE + 1.6          # this mission would cross a seam: start it on the next sheet
-        p.append(_t(lx, y, "%d  %s" % (m["n"], m["name"]), 0.85, INK, 800))
-        p.append(_t(lx + 25.4, y, "%d" % m["points"], 0.85, TEAL, 800, "end"))
-        y += 1.0
-        for words, pts in m["score"]:
-            for k, ln in enumerate(_wrap(words, 40)):
-                p.append(_t(lx + 0.6, y, ("%d: " % pts if k == 0 else "     ") + ln, 0.52, SOFT, 500))
-                y += 0.75
-        y += 1.0
+    p.append(_t((x0 + x1) / 2, y0 + 2.6, "DROP ZONE %d" % (k + 1), 1.2, TEAL, 800, "middle"))
+    p.append(_t((x0 + x1) / 2, y0 + 3.9, "park with both big wheels inside", 0.62, TEAL, 500, "middle"))
+    # where one lane ends and the next begins
+    if k:
+        p.append(_line(1.5, oy, W - 1.5, oy, "#B9AF96", 0.15, "0.3 0.6"))
     return "".join(p)
+
+
+def features():
+    return "".join(lane_features(k) for k in range(LANES))
 
 
 def _wrap(s, n):
@@ -170,11 +168,11 @@ def _wrap(s, n):
 
 
 def sheet_svg(col, row):
-    """One sheet at its real size: 11 by 8.5 in the printer's units."""
+    """One sheet at its real size."""
     sx, sy = col * SHEET_W, row * SHEET_H
     cid = "clip%d%d" % (col, row)
     name = sheet_name(col, row)
-    p = ['<svg xmlns="http://www.w3.org/2000/svg" width="27.94cm" height="21.59cm" '
+    p = ['<svg xmlns="http://www.w3.org/2000/svg" width="21.59cm" height="27.94cm" '
          'viewBox="%.2f %.2f %.2f %.2f">' % (sx, sy, SHEET_W, SHEET_H),
          '<defs><clipPath id="%s"><rect x="%.2f" y="%.2f" width="%.2f" height="%.2f"/></clipPath></defs>'
          % (cid, sx + SAFE, sy + SAFE, SHEET_W - 2 * SAFE, SHEET_H - 2 * SAFE),
@@ -196,7 +194,7 @@ def sheet_svg(col, row):
 
 
 def overview_svg(caption):
-    """The whole mat from above, with its twelve sheets marked."""
+    """The whole mat from above, with its sheets marked."""
     pad = 1.5
     p = ['<div class="figwrap"><svg class="fig" viewBox="%.2f %.2f %.2f %.2f" role="img" '
          'aria-label="%s" xmlns="http://www.w3.org/2000/svg">'

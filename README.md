@@ -24,7 +24,7 @@ The site is served by GitHub Pages from the root of the `main` branch.
 | `session07_follow_the_line.html` | Session 7. `if`, `else`, `while`, and a line follower with a stop bar, then timed runs. |
 | `session08_your_own_functions_and_mission.html` | Session 8. The students' own functions; each team writes and runs its own mission; second demo. |
 | `builds_word_blocks.html` | More builds, in Word Blocks: the Game Master and the Grabbers, five block snippets each, with a prediction on each and a sheet to fill in. |
-| `challenge_mat.html`, `challenge_mat.pdf` | The challenge mat: 12 sheets of letter paper to print and tape, four missions, and the match. |
+| `challenge_mat.html`, `challenge_mat.pdf` | The challenge mat for three robots: 24 sheets of letter paper to print and tape, three lanes, four missions, and the match. |
 | `pieces_of_the_builds.html` | Every LEGO piece the three builds use, 61 of them: a drawing, a plain name, LEGO's own name and part number, and the builds that use it. Buttons show the pieces of one build. |
 | `robot_advanced_driving_base.html` | The class robot: links to LEGO's five building books, the port map, the wheel table. |
 | `field_test_field.html` | The test field for every session, drawn to scale. |
@@ -93,6 +93,23 @@ The constraints page carries the full list. The ones that differ from the style 
    only, retrieved through the Learning Commons Knowledge Graph on 12 November 2026.
 
 ## Release log
+
+### 18 November 2026, eighth printing (version pin 9)
+
+What changed: the challenge mat is now for three robots at once. It is 24 upright letter
+sheets, 4 across and 6 down, about 86 cm by 168 cm, with three identical lanes, each two
+sheets tall. Each lane has its own starts, far line, island, and drop zone, so one
+program works in any lane and each team can tape its own lane. The class has one score:
+each mission gives 10 points to every robot that does it and a bonus when all three do
+it on the same run, 170 points in all. The match is 3 minutes with all three robots on
+the mat. The PDF is 25 pages.
+
+What was checked: both guards pass. The 24 sheets were rendered and laid side by side to
+check that no label is cut off and no mark a mission needs falls in a sheet's blank edge.
+
+What is not done: nobody has run a robot on the mat. The space between lanes assumes a
+robot about 22 cm long and 20 cm wide. Tape one lane and try it before printing all three.
+
 
 ### 18 November 2026, seventh printing (version pin 8)
 
