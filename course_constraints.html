@@ -69,6 +69,7 @@ header.top h1,header.top h2{color:#FFFDF7}
 a.pill{color:inherit; text-decoration:none}
 a.pill:hover,a.pill:focus{background:rgba(255,253,247,.22); border-color:#F2D89B}
 a.pill::after{content:" \2193"}
+a.pill.plain::after{content:" \2192"}
 main{padding:28px 22px 12px}
 section{
   background:var(--card); border:2px solid var(--rule); border-radius:6px;
@@ -374,6 +375,48 @@ figure.blocks{margin:0 0 18px}
   .stackwrap{overflow:visible}
   figure.blocks{break-inside:avoid}
 }
+
+.pfilter{display:flex; gap:10px; flex-wrap:wrap; margin:0 0 6px}
+button.pf{
+  font-family:'DM Sans',sans-serif; font-size:17px; font-weight:700; cursor:pointer;
+  background:var(--card); color:var(--teal); border:2px solid var(--teal); border-radius:4px;
+  padding:11px 18px;
+}
+button.pf:hover{background:#EFE9DA}
+button.pf[aria-pressed="true"]{background:var(--teal); color:#FFFDF7}
+.pcount{font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; color:var(--ink-soft); margin:10px 0 0}
+.pgrid{display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(236px,1fr)); margin-top:6px}
+.piece{
+  background:#FFFDF7; border:2px solid var(--rule); border-radius:5px; padding:12px;
+  display:flex; flex-direction:column; break-inside:avoid;
+}
+.piece[hidden],section.pgroup[hidden]{display:none}
+.piece figure{
+  margin:0 0 10px; height:172px; display:flex; align-items:center; justify-content:center;
+  background:#FFFFFF; border:2px solid var(--rule); border-radius:4px;
+}
+.piece img{display:block; max-width:90%; max-height:150px; width:auto; height:auto}
+.piece h3{font-size:19px; line-height:1.25; margin:0 0 4px}
+.piece p{margin:0 0 8px; font-size:16px; line-height:1.45; max-width:none}
+.piece .pcol{font-weight:700; color:var(--ink)}
+.piece .plego{font-size:14px; color:var(--ink-soft); margin-top:auto}
+.piece .plego code{font-size:13.5px; white-space:normal; overflow-wrap:anywhere}
+.pused{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 0; padding:0; list-style:none}
+.pused li{
+  font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; max-width:none;
+  border:2px solid var(--teal); color:var(--teal-deep); border-radius:999px; padding:1px 9px;
+  background:#E3EDEE;
+}
+table.ptable{font-size:15px}
+table.ptable code{font-size:13px; white-space:normal; overflow-wrap:anywhere}
+.tscroll{overflow-x:auto}
+@media print{
+  .piece[hidden],section.pgroup[hidden]{display:flex}
+  section.pgroup[hidden]{display:block}
+  .pgrid{grid-template-columns:repeat(3,1fr)}
+  .piece figure{height:120px}
+  .piece img{max-height:104px}
+}
 </style>
 </head>
 <body>
@@ -392,7 +435,7 @@ figure.blocks{margin:0 0 18px}
 
 <span class="hc">runloop</span>.<span class="hf">run</span>(<span class="hf">main</span>())</code></pre><p>One way to move until the sensor says stop:</p><pre class="py"><code><span class="hc">motor_pair</span>.<span class="hf">move</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>, <span class="hd">0</span>, <span class="hv">velocity</span>=<span class="hd">250</span>)
 <span class="hk">await</span> <span class="hc">runloop</span>.<span class="hf">until</span>(<span class="hs">lambda</span>: <span class="hc">color_sensor</span>.<span class="hf">reflection</span>(<span class="hn">LINE_SENSOR</span>) &lt; <span class="hn">DARK</span>)
-<span class="hc">motor_pair</span>.<span class="hf">stop</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>)</code></pre><p>One start, one forward direction, one measuring point: behind the start line, front edge on the line, and every distance measured to the front edge.</p></section><section><h2>4. Standing rules</h2><ul><li>One change per run.</li><li>Predict before you run.</li><li>The Expected column is filled in before the run.</li><li>The robot starts in the same place, facing forward, every run.</li><li>Names say what they do: <code>QUARTER_TURN</code>, not <code>x</code>.</li><li>The frame at the top and bottom of every program.</li></ul></section><section><h2>5. Locked hardware and software</h2><ul><li>The robot: LEGO's Advanced Driving Base, one for each team of four, built from the SPIKE Prime set and the SPIKE Prime Expansion Set.</li><li>The port map: port A left drive motor, port E right drive motor. See the robot page.</li><li>The wheel: one full turn moves the robot about 28 cm.</li><li>The field: see the field page.</li><li>The SPIKE App, version 3, and the hub's software, frozen at the versions on the reference robot. Write both version numbers here when the reference robot is set up.</li></ul><p>LEGO adds no new features to the SPIKE App after 30 June 2026 and supports it until 30 June 2031 (<a href="https://education.lego.com/en-us/spike-update-2026/">LEGO Education</a>).</p></section><section><h2>6. Locked decisions</h2><ul><li>Part 1 is four sessions and stands on its own. Session 4 is its demo for families. Part 2 is four more, for a class that continues, and session 8 is a second demo.</li><li>Session 1 has no opener. That time goes to building the robot.</li><li>The final mission of part 1 is told to students in session 2.</li><li>Machinery handed over, then opened: the frame (<code>async def main():</code>, <code>runloop.run(main())</code>) is handed over in session 1 and explained in session 8. A class that stops after part 1 never sees it opened.</li><li>Machinery handed over and not opened: the word <code>lambda</code>, from session 3, and <code>[0]</code> after <code>tilt_angles()</code>, from session 6.</li><li>Deliberate errors: <code>DARK = 0</code> in session 3, chunk 3, and two lines in the wrong order in session 4, chunk 2. First tries that every team replaces: 180 for the turn, 50 for <code>DARK</code>, <code>port.B</code> and <code>port.F</code>, 900 for <code>QUARTER</code>, and 30 and 150 in the line follower. Session 5, chunk 3, shows numbers that start at 0 on purpose.</li><li>Standards: New York science (engineering design) and New York mathematics only. No computer science codes: the graph returned none for New York on 12 November 2026.</li></ul></section><section><h2>7. The page of more builds, in Word Blocks</h2><p>The Game Master and Grabbers snippets are SPIKE App Word Blocks, not Python, by Jonathan's direction on 12 November 2026. They use only these blocks:</p><table><tr><th>Category</th><th>Blocks</th></tr><tr><td>Events</td><td>when program starts</td></tr><tr><td>Motors</td><td>run for, in seconds or in degrees of motor turn; start motor; set speed to %</td></tr><tr><td>Control</td><td>wait, wait until, repeat, if then, if then else</td></tr><tr><td>Sensors</td><td>is color ?, is pressed or released ?</td></tr><tr><td>Sound</td><td>play sound until done, play beep</td></tr><tr><td>Light</td><td>write</td></tr><tr><td>Variables</td><td>set to, change by, and the variable itself</td></tr></table><p>They never use forever, broadcast messages, lists, more than one stack, or the More Motors and More Movement extensions. Every loop is a repeat block with a number the student can read.</p></section></div></main><nav class="pager noprint"><span></span><a href="spike_course_hub.html?v=6">Course home</a><span></span></nav><footer><div class="wrap"><p>SPIKE Prime with Python, grades 4 and 5. Part 1 is sessions 1 to 4. Part 2 is sessions 5 to 8, for a class that continues. The class robot is LEGO's Advanced Driving Base. LEGO's building instructions are linked, not copied.</p><p>Mapped to the New York State P-12 Science Learning Standards and the New York Next Generation Mathematics Learning Standards. Codes retrieved through the Learning Commons Knowledge Graph (CASE Network) on 12 November 2026. <a href="standards_map.html?v=6">Full standards map</a> &middot; <a href="course_constraints.html?v=6">Course constraints, published 12 November 2026</a></p><p>LEGO and SPIKE are trademarks of the LEGO Group, which does not sponsor or endorse this course.</p></div></footer>
+<span class="hc">motor_pair</span>.<span class="hf">stop</span>(<span class="hc">motor_pair</span>.<span class="hn">PAIR_1</span>)</code></pre><p>One start, one forward direction, one measuring point: behind the start line, front edge on the line, and every distance measured to the front edge.</p></section><section><h2>4. Standing rules</h2><ul><li>One change per run.</li><li>Predict before you run.</li><li>The Expected column is filled in before the run.</li><li>The robot starts in the same place, facing forward, every run.</li><li>Names say what they do: <code>QUARTER_TURN</code>, not <code>x</code>.</li><li>The frame at the top and bottom of every program.</li></ul></section><section><h2>5. Locked hardware and software</h2><ul><li>The robot: LEGO's Advanced Driving Base, one for each team of four, built from the SPIKE Prime set and the SPIKE Prime Expansion Set.</li><li>The port map: port A left drive motor, port E right drive motor. See the robot page.</li><li>The wheel: one full turn moves the robot about 28 cm.</li><li>The field: see the field page.</li><li>The SPIKE App, version 3, and the hub's software, frozen at the versions on the reference robot. Write both version numbers here when the reference robot is set up.</li></ul><p>LEGO adds no new features to the SPIKE App after 30 June 2026 and supports it until 30 June 2031 (<a href="https://education.lego.com/en-us/spike-update-2026/">LEGO Education</a>).</p></section><section><h2>6. Locked decisions</h2><ul><li>Part 1 is four sessions and stands on its own. Session 4 is its demo for families. Part 2 is four more, for a class that continues, and session 8 is a second demo.</li><li>Session 1 has no opener. That time goes to building the robot.</li><li>The final mission of part 1 is told to students in session 2.</li><li>Machinery handed over, then opened: the frame (<code>async def main():</code>, <code>runloop.run(main())</code>) is handed over in session 1 and explained in session 8. A class that stops after part 1 never sees it opened.</li><li>Machinery handed over and not opened: the word <code>lambda</code>, from session 3, and <code>[0]</code> after <code>tilt_angles()</code>, from session 6.</li><li>Deliberate errors: <code>DARK = 0</code> in session 3, chunk 3, and two lines in the wrong order in session 4, chunk 2. First tries that every team replaces: 180 for the turn, 50 for <code>DARK</code>, <code>port.B</code> and <code>port.F</code>, 900 for <code>QUARTER</code>, and 30 and 150 in the line follower. Session 5, chunk 3, shows numbers that start at 0 on purpose.</li><li>Standards: New York science (engineering design) and New York mathematics only. No computer science codes: the graph returned none for New York on 12 November 2026.</li></ul></section><section><h2>7. The page of more builds, in Word Blocks</h2><p>The Game Master and Grabbers snippets are SPIKE App Word Blocks, not Python, by Jonathan's direction on 12 November 2026. They use only these blocks:</p><table><tr><th>Category</th><th>Blocks</th></tr><tr><td>Events</td><td>when program starts</td></tr><tr><td>Motors</td><td>run for, in seconds or in degrees of motor turn; start motor; set speed to %</td></tr><tr><td>Control</td><td>wait, wait until, repeat, if then, if then else</td></tr><tr><td>Sensors</td><td>is color ?, is pressed or released ?</td></tr><tr><td>Sound</td><td>play sound until done, play beep</td></tr><tr><td>Light</td><td>write</td></tr><tr><td>Variables</td><td>set to, change by, and the variable itself</td></tr></table><p>They never use forever, broadcast messages, lists, more than one stack, or the More Motors and More Movement extensions. Every loop is a repeat block with a number the student can read.</p></section></div></main><nav class="pager noprint"><span></span><a href="spike_course_hub.html?v=7">Course home</a><span></span></nav><footer><div class="wrap"><p>SPIKE Prime with Python, grades 4 and 5. Part 1 is sessions 1 to 4. Part 2 is sessions 5 to 8, for a class that continues. The class robot is LEGO's Advanced Driving Base. LEGO's building instructions are linked, not copied.</p><p>Mapped to the New York State P-12 Science Learning Standards and the New York Next Generation Mathematics Learning Standards. Codes retrieved through the Learning Commons Knowledge Graph (CASE Network) on 12 November 2026. <a href="standards_map.html?v=7">Full standards map</a> &middot; <a href="course_constraints.html?v=7">Course constraints, published 12 November 2026</a></p><p>LEGO and SPIKE are trademarks of the LEGO Group, which does not sponsor or endorse this course.</p></div></footer>
 <script>
 document.addEventListener('click', function(e){
   var b = e.target.closest('button.rev');

@@ -14,7 +14,7 @@ The site is served by GitHub Pages from the root of the `main` branch.
 
 | File | What it is |
 |---|---|
-| `spike_course_hub.html` | Course home. The four sessions, how a session runs, links to everything else. |
+| `spike_course_hub.html` | Course home. The sessions, how a session runs, links to everything else. |
 | `session01_advanced_driving_base.html` | Session 1. A team of four builds the robot, then moves it forward, backward, and through a turn. Adapted from LEGO's lesson "Assembling an Advanced Driving Base". |
 | `session02_quarter_turn_and_square.html` | Session 2. Names for numbers, the quarter turn found by testing, a square the long way and with a `for` line. Tells students the final mission. |
 | `session03_stop_at_the_line.html` | Session 3. The colour sensor's reflected light, and moving until a line. |
@@ -24,12 +24,14 @@ The site is served by GitHub Pages from the root of the `main` branch.
 | `session07_follow_the_line.html` | Session 7. `if`, `else`, `while`, and a line follower with a stop bar, then timed runs. |
 | `session08_your_own_functions_and_mission.html` | Session 8. The students' own functions; each team writes and runs its own mission; second demo. |
 | `builds_word_blocks.html` | More builds, in Word Blocks: the Game Master and the Grabbers, five block snippets each, with a prediction on each and a sheet to fill in. |
+| `pieces_of_the_builds.html` | Every LEGO piece the three builds use, 61 of them: a drawing, a plain name, LEGO's own name and part number, and the builds that use it. Buttons show the pieces of one build. |
 | `robot_advanced_driving_base.html` | The class robot: links to LEGO's five building books, the port map, the wheel table. |
 | `field_test_field.html` | The test field for every session, drawn to scale. |
 | `course_constraints.html` | What the course uses and when each thing is first taught, what it never uses, the locked decisions. Dated. |
 | `standards_map.html` | Every standards code used, its full statement, CASE identifiers, and sessions. |
 | `course_ledger_card.html` | The printable card: four stamps, the team's numbers, a reference strip, the port map, a fault table. |
 | `runs.csv` | The run log for the reference robot. Empty so far. |
+| `parts/` | One PNG drawing for each piece on the pieces page, made by `build/ldraw_render.py`. |
 
 ## Build
 
@@ -45,6 +47,8 @@ Pages are generated, never edited by hand.
 | `build/session01.py` to `build/session08.py` | One session each: its programs and every word on its page |
 | `build/blocks.py` | Draws Word Block stacks in HTML and CSS; holds the app's block colours and checks every one at 7:1 |
 | `build/builds.py` | The Game Master and Grabbers snippets and the words on their page |
+| `build/parts.py` | Every piece the three builds use: plain name, LEGO's name and numbers, sets, builds, and how it is drawn |
+| `build/ldraw_render.py` | A tool, run by hand: draws each piece from the LDraw parts library into `parts/`. The page build does not need it or the library. |
 | `build/robot.py` | Port map, LEGO's links, every field and robot figure |
 | `build/wheel.py` | Wheel arithmetic: degrees of motor turn to centimetres |
 | `build/standards.py` | Standards, as retrieved, with CASE identifiers |
@@ -86,6 +90,44 @@ The constraints page carries the full list. The ones that differ from the style 
    only, retrieved through the Learning Commons Knowledge Graph on 12 November 2026.
 
 ## Release log
+
+### 13 November 2026, sixth printing (version pin 7)
+
+What changed: a new page, `pieces_of_the_builds.html`, with a card for each of the 61
+LEGO pieces that the Advanced Driving Base, the Game Master, and the Grabbers use.
+Each card has a drawing, a plain name, the colour, LEGO's own name and part number,
+and the builds that use the piece. Buttons show one build's pieces; a link ending in
+`#adb`, `#gm`, or `#gr` opens the page already filtered. The hub, the robot page, and
+the Word Block page link to it. The teacher panel has a table with LEGO's name, part
+number, element number, the set each piece comes in, and LDraw's name for it.
+
+Where the facts came from:
+
+- **Which pieces each build uses**: read from LEGO's ten building books, page by page
+  in a browser, on 13 November 2026 (the first four pages of book 3 on 18 November). Pieces that look alike at page size (black peg
+  and black axle peg, grey long peg with a stop, the cross blocks, the rubber joiner)
+  were read again at twice the size.
+- **LEGO's names, part numbers, and element numbers**: LEGO's parts lists for sets
+  45678 and 45681 as Brickset publishes them. Names are copied letter for letter.
+- **Second check**: every part number was looked up in the LDraw parts library and
+  its name there had to describe the same piece. Every piece and colour read from a
+  book also had to be on the parts list of a set that build needs. All 61 passed, and
+  `build/parts.py` stops the build if a Game Master or Grabbers piece is not in the
+  SPIKE Prime set.
+- **Drawings**: made by `build/ldraw_render.py` from LDraw geometry (CC BY 4.0), not
+  copied from LEGO.
+
+What was checked: both guards pass on all 16 pages. `validate.py` now also checks that
+every picture has alt text and its file, and that the cards match `build/parts.py`. The
+page was looked at in a browser at 1280px and 390px with the teacher panel open, and
+the filter buttons and `#gm` link were tried.
+
+What is not done:
+
+- **No counts.** The page says which pieces a build uses, not how many.
+- **Not checked against a built model.** Check the list against the reference robot
+  when it is built.
+
 
 ### 12 November 2026, fifth printing (version pin 6)
 

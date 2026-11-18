@@ -32,6 +32,7 @@ import robot
 import wheel
 import blocks as B
 from builds import BUILDS, BLOCKS_USED
+import parts as PT
 
 SESSIONS = [SESSION01, SESSION02, SESSION03, SESSION04,
             SESSION05, SESSION06, SESSION07, SESSION08]
@@ -42,7 +43,7 @@ PART2 = [x for x in SESSIONS if x.get("part", 1) == 2]
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.environ.get("SPIKE_OUT", ROOT)
-VERSION = "6"
+VERSION = "7"
 COURSE = "SPIKE Prime with Python"
 HUB = "spike_course_hub"
 ROBOT = "robot_advanced_driving_base"
@@ -51,6 +52,7 @@ CONSTRAINTS = "course_constraints"
 STDMAP = "standards_map"
 LEDGER = "course_ledger_card"
 BUILDSPAGE = "builds_word_blocks"
+PIECESPAGE = "pieces_of_the_builds"
 PUBLISHED = "12 November 2026"
 RUNS_NEEDED = 3
 
@@ -163,6 +165,7 @@ header.top h1,header.top h2{color:#FFFDF7}
 a.pill{color:inherit; text-decoration:none}
 a.pill:hover,a.pill:focus{background:rgba(255,253,247,.22); border-color:#F2D89B}
 a.pill::after{content:" \\2193"}
+a.pill.plain::after{content:" \\2192"}
 main{padding:28px 22px 12px}
 section{
   background:var(--card); border:2px solid var(--rule); border-radius:6px;
@@ -430,6 +433,51 @@ td.mono,th.mono{font-family:'JetBrains Mono',monospace; font-weight:700}
 @media print{ td.fill input{border-bottom:1px solid #666} }
 """
 CSS += B.css()
+
+# ------------------------------------------------------ added for the pieces page
+CSS += """
+.pfilter{display:flex; gap:10px; flex-wrap:wrap; margin:0 0 6px}
+button.pf{
+  font-family:'DM Sans',sans-serif; font-size:17px; font-weight:700; cursor:pointer;
+  background:var(--card); color:var(--teal); border:2px solid var(--teal); border-radius:4px;
+  padding:11px 18px;
+}
+button.pf:hover{background:#EFE9DA}
+button.pf[aria-pressed="true"]{background:var(--teal); color:#FFFDF7}
+.pcount{font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; color:var(--ink-soft); margin:10px 0 0}
+.pgrid{display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(236px,1fr)); margin-top:6px}
+.piece{
+  background:#FFFDF7; border:2px solid var(--rule); border-radius:5px; padding:12px;
+  display:flex; flex-direction:column; break-inside:avoid;
+}
+.piece[hidden],section.pgroup[hidden]{display:none}
+.piece figure{
+  margin:0 0 10px; height:172px; display:flex; align-items:center; justify-content:center;
+  background:#FFFFFF; border:2px solid var(--rule); border-radius:4px;
+}
+.piece img{display:block; max-width:90%; max-height:150px; width:auto; height:auto}
+.piece h3{font-size:19px; line-height:1.25; margin:0 0 4px}
+.piece p{margin:0 0 8px; font-size:16px; line-height:1.45; max-width:none}
+.piece .pcol{font-weight:700; color:var(--ink)}
+.piece .plego{font-size:14px; color:var(--ink-soft); margin-top:auto}
+.piece .plego code{font-size:13.5px; white-space:normal; overflow-wrap:anywhere}
+.pused{display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 0; padding:0; list-style:none}
+.pused li{
+  font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; max-width:none;
+  border:2px solid var(--teal); color:var(--teal-deep); border-radius:999px; padding:1px 9px;
+  background:#E3EDEE;
+}
+table.ptable{font-size:15px}
+table.ptable code{font-size:13px; white-space:normal; overflow-wrap:anywhere}
+.tscroll{overflow-x:auto}
+@media print{
+  .piece[hidden],section.pgroup[hidden]{display:flex}
+  section.pgroup[hidden]{display:block}
+  .pgrid{grid-template-columns:repeat(3,1fr)}
+  .piece figure{height:120px}
+  .piece img{max-height:104px}
+}
+"""
 
 
 def page(title, body, hub_label="Course home", head_extra=""):
@@ -973,6 +1021,7 @@ def render_hub():
     b.append('<div class="dates"><a class="pill" href="#part1"><b>Part 1</b> sessions 1 to 4</a>'
              '<a class="pill" href="#part2"><b>Part 2</b> sessions 5 to 8</a>'
              '<a class="pill" href="#builds"><b>More builds</b> Word Blocks</a>'
+             '<a class="pill plain" href="' + link(PIECESPAGE) + '"><b>Pieces</b> names and pictures</a>'
              '<span class="pill"><b>Dates</b> to be set</span>'
              '<span class="pill"><b>Teams</b> 4 builders, 1 robot</span>'
              '<span class="pill"><b>Demo days</b> sessions 4 and 8</span></div>')
@@ -1008,6 +1057,7 @@ def render_hub():
     b.append('<section><h2>Everything else</h2><div class="toolbar">'
              '<a class="btn" href="' + link(ROBOT) + '">Robot page</a>'
              '<a class="btn" href="' + link(FIELD) + '">Field page</a>'
+             '<a class="btn" href="' + link(PIECESPAGE) + '">Pieces: names and pictures</a>'
              '<a class="btn quiet" href="' + link(LEDGER) + '">Ledger card</a>'
              '<a class="btn quiet" href="' + link(CONSTRAINTS) + '">Course constraints</a>'
              '<a class="btn quiet" href="' + link(STDMAP) + '">Standards map</a>'
@@ -1029,7 +1079,8 @@ def render_robot():
                  + ' of 5</a></td><td>' + part + '</td></tr>')
     b.append('</table><p class="note">These are LEGO\'s own files, linked from '
              '<a href="' + robot.LEGO_INDEX + '">LEGO\'s building instructions page</a>. '
-             'They are not copied here.</p></section>')
+             'They are not copied here.</p><div class="toolbar"><a class="btn quiet" href="'
+             + link(PIECESPAGE) + '#adb">The pieces of this robot, with names and pictures</a></div></section>')
     b.append('<section><h2>Port map</h2><p>The port map is the same in every session. Left and '
              'right are the robot\'s left and right, as if you were sitting in the robot '
              'facing forward.</p>')
@@ -1387,7 +1438,8 @@ def render_builds():
             b.append('<tr><td><a href="' + html.escape(url) + '">Book ' + str(n) + ' of '
                      + str(len(bd["books"])) + '</a></td><td>' + part + '</td></tr>')
         b.append('</table><p class="note">' + bd["team"] + ' The building books are LEGO\'s '
-                 'own files. Each link opens a PDF on LEGO\'s site.</p>')
+                 'own files. Each link opens a PDF on LEGO\'s site.</p><div class="toolbar"><a class="btn quiet" href="'
+                 + link(PIECESPAGE) + '#' + PT.BUILD_ANCHOR[bd["id"]] + '">The pieces of this build, with names and pictures</a></div>')
         b.append('<h3>Port map</h3><table><tr><th>Port</th><th>What is plugged in</th>'
                  '<th>What it does</th></tr>')
         for letter, what, does in bd["ports"]:
@@ -1455,6 +1507,168 @@ def render_builds():
                        "".join(b), "".join(t))
 
 
+# ----------------------------------------------------------------- pieces page
+
+PIECES_JS = """
+(function(){
+  var btns = document.querySelectorAll('button.pf');
+  var cards = document.querySelectorAll('.piece');
+  var groups = document.querySelectorAll('section.pgroup');
+  var count = document.getElementById('pcount');
+  function show(which){
+    var n = 0;
+    cards.forEach(function(c){
+      var on = which === 'all' || (' ' + c.getAttribute('data-builds') + ' ').indexOf(' ' + which + ' ') > -1;
+      c.hidden = !on; if(on) n++;
+    });
+    groups.forEach(function(g){ g.hidden = !g.querySelector('.piece:not([hidden])'); });
+    btns.forEach(function(b){
+      var on = b.getAttribute('data-build') === which;
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      if(on && count) count.textContent = 'Showing ' + n + ' of ' + cards.length + ' pieces: ' + b.getAttribute('data-say') + '.';
+    });
+  }
+  btns.forEach(function(b){
+    b.addEventListener('click', function(){ show(b.getAttribute('data-build')); });
+  });
+  var h = (location.hash || '').replace('#', '');
+  show(h === 'adb' || h === 'gm' || h === 'gr' ? h : 'all');
+})();
+"""
+
+
+def _sets_words(sets):
+    if len(sets) == 2:
+        return "both sets"
+    return "the " + PT.SET_NAMES[sets[0]]
+
+
+def piece_card(p):
+    used = "".join('<li>' + PT.BUILD_SHORT[b] + '</li>' for b in p["builds"])
+    alt = p["name"] + ", " + p["colour"]
+    out = ['<article class="piece" id="' + p["id"] + '" data-builds="' + " ".join(p["builds"]) + '">',
+           '<figure><img src="parts/' + p["id"] + '.png?v=' + VERSION + '" alt="Drawing of the piece: '
+           + html.escape(alt) + '"></figure>',
+           '<h3>' + html.escape(p["name"]) + '</h3>',
+           '<p class="pcol">' + html.escape(p["colour"][0].upper() + p["colour"][1:]) + '</p>']
+    if p["tell"]:
+        out.append('<p>' + p["tell"] + '</p>')
+    out.append('<p class="plego">LEGO\'s name: <code>' + html.escape(p["lego"]) + '</code><br>'
+               'Part number: <code>' + p["design"] + '</code></p>')
+    out.append('<ul class="pused" aria-label="Used in">' + used + '</ul>')
+    out.append('</article>')
+    return "".join(out)
+
+
+def render_pieces():
+    n = len(PT.PIECES)
+    per = {b: sum(1 for p in PT.PIECES if b in p["builds"]) for b in (PT.ADB, PT.GM, PT.GR)}
+    b = []
+    b.append('<section><h2>How to read a card</h2>'
+             '<p>Each card is one LEGO piece. This page has every piece that the three builds '
+             'of this course use: the Advanced Driving Base, the Game Master, and the '
+             'Grabbers. That is ' + str(n) + ' pieces.</p>'
+             '<p>The name in large letters is a plain name for the class to say. Under it is '
+             'the colour the piece has in these builds. The same shape can come in other '
+             'colours in the box.</p>'
+             '<p>LEGO\'s name is the name LEGO gives the piece in its own parts lists, copied '
+             'letter for letter. LEGO writes these names in a short way. A number followed by '
+             'M is a length counted in holes, so a 9M beam is a beam with 9 holes. CROSS means '
+             'shaped like a plus sign, and W. or W/ means with. LEGO calls a peg a connector '
+             'peg, and many builders call it a pin.</p>'
+             '<p>The labels at the bottom of a card name the builds that use the piece. Each '
+             'picture is a drawing. A small piece is drawn larger than a big piece, so that '
+             'its holes show.</p>'
+             '<h3>Show the pieces of one build</h3>'
+             '<div class="pfilter noprint">'
+             '<button class="pf" type="button" data-build="all" data-say="all three builds" '
+             'aria-pressed="true">All pieces (' + str(n) + ')</button>'
+             + "".join('<button class="pf" type="button" data-build="' + k + '" data-say="the '
+                       + PT.BUILD_NAMES[k] + '" aria-pressed="false">' + PT.BUILD_NAMES[k]
+                       + ' (' + str(per[k]) + ')</button>' for k in (PT.ADB, PT.GM, PT.GR))
+             + '</div><p class="pcount noprint" id="pcount" aria-live="polite">Showing ' + str(n)
+             + ' of ' + str(n) + ' pieces: all three builds.</p></section>')
+    for gid, gtitle, gintro in PT.GROUPS:
+        cards = [p for p in PT.PIECES if p["group"] == gid]
+        b.append('<section class="pgroup" id="group-' + gid + '"><h2>' + gtitle + '</h2>'
+                 + ('<p>' + gintro + '</p>' if gintro else '')
+                 + '<div class="pgrid">' + "".join(piece_card(p) for p in cards)
+                 + '</div></section>')
+
+    t = ['<details class="teacher"><summary>Teacher panel</summary>']
+    t.append('<h3>Where each fact on this page comes from</h3><ul>'
+             '<li>Which pieces a build uses: read from LEGO\'s own building books on '
+             + PT.CHECKED + ', every page of all ten books. Pieces that look alike in the '
+             'books, such as the black peg and the black axle peg, were read again at twice '
+             'the size.</li>'
+             '<li>LEGO\'s names and numbers: LEGO\'s parts lists for the SPIKE Prime set, '
+             'number 45678, and the SPIKE Prime Expansion Set, number 45681, as Brickset '
+             'publishes them (<a href="' + PT.SOURCE_CORE + '">45678</a>, <a href="'
+             + PT.SOURCE_EXP + '">45681</a>). Misspellings such as CROSSALE are LEGO\'s own.</li>'
+             '<li>The names and numbers LEGO sells the hub, the motors, and the sensors under: '
+             '<a href="' + PT.SOURCE_PRODUCTS + '">LEGO Education\'s product list for SPIKE Prime</a>. '
+             'The hub battery is the Technic Large Hub Battery, number 45610.</li>'
+             '<li>The second check: each part number was looked up in the LDraw parts library, '
+             'which names pieces on its own. The two names had to describe the same piece. '
+             'Every piece and colour read from a book also had to be on the parts list of a '
+             'set that build needs. All ' + str(n) + ' were. The table below shows both names '
+             'side by side.</li>'
+             '<li>The drawings: made by this course\'s build from the '
+             '<a href="' + PT.SOURCE_LDRAW + '">LDraw parts library</a>, which its authors '
+             'license under CC BY 4.0. They are not LEGO\'s pictures, and nothing from LEGO\'s '
+             'building books is copied here.</li></ul>')
+    only_exp = [p["name"].lower() + " (" + p["colour"] + ")" for p in PT.PIECES
+                if p["sets"] == [PT.EXP]]
+    t.append('<h3>What this page does not tell you</h3><ul>'
+             '<li>How many of each piece a build needs. LEGO\'s books show the count at every '
+             'step.</li>'
+             '<li>The pieces in the sets that no build here uses, such as the distance sensor.</li>'
+             '</ul>')
+    t.append('<h3>Which set a piece comes in</h3><ul>'
+             '<li>The Game Master and the Grabbers are each built from the SPIKE Prime set '
+             'alone.</li>'
+             '<li>The Advanced Driving Base needs both sets. Its second large motor and its '
+             'second colour sensor come from the Expansion Set. So do ' + str(len(only_exp))
+             + ' pieces that are not in the SPIKE Prime set at all: ' + ", ".join(only_exp)
+             + '. The red long peg with a stop is in the Expansion Set only.</li></ul>')
+    t.append('<h3>Every piece, with both names</h3>'
+             '<p>The part number names the shape. The element number names the shape in one '
+             'colour.</p><div class="tscroll"><table class="ptable"><tr><th>Piece</th>'
+             '<th>LEGO\'s name</th><th>Part number</th><th>Element number</th><th>Comes in</th>'
+             '<th>LDraw\'s name for the same piece</th><th>Used in</th></tr>')
+    for p in PT.PIECES:
+        ld = '<code>' + p["ldraw"] + '</code> <code>' + html.escape(p["ldname"]) + '</code>'
+        if p.get("ldnote"):
+            ld += '<br>' + p["ldnote"]
+        t.append('<tr><td><a href="#' + p["id"] + '">' + html.escape(p["name"]) + '</a>, '
+                 + html.escape(p["colour"]) + '</td><td><code>' + html.escape(p["lego"])
+                 + '</code></td><td class="mono">' + p["design"] + '</td><td><code>'
+                 + html.escape(p["element"]) + '</code></td><td>' + _sets_words(p["sets"])
+                 + '</td><td>' + ld + '</td><td>'
+                 + ", ".join(PT.BUILD_SHORT[x] for x in p["builds"]) + '</td></tr>')
+    bt = PT.BATTERY
+    t.append('<tr><td>' + bt["name"] + ', inside the hub</td><td><code>' + bt["lego"]
+             + '</code></td><td class="mono">' + bt["design"] + '</td><td><code>' + bt["element"]
+             + '</code></td><td>' + _sets_words(bt["sets"]) + '</td><td><code>' + bt["ldraw"]
+             + '</code> <code>' + bt["ldname"] + '</code></td><td>Every build</td></tr>')
+    t.append('</table></div>')
+    t.append('<p>LEGO stopped selling SPIKE Prime on 30 June 2026 (<a href="' + robot.LEGO_UPDATE
+             + '">LEGO Education</a>). Keep a spare of every piece on this page that the class '
+             'robot uses.</p></details>')
+    body = "".join(b)
+    teacher = "".join(x for x in t if x)
+    out = ['<header class="top"><div class="wrap">',
+           '<p class="eyebrow">' + COURSE + ' &middot; Pieces</p>',
+           '<h1>The pieces of the builds</h1>',
+           '<p class="sub">Every LEGO piece the three builds use, with its picture and its '
+           'name.</p>', '</div></header><main><div class="wrap">',
+           body, teacher, '</div></main>',
+           '<nav class="pager noprint"><span></span><a href="' + link(HUB)
+           + '">Course home</a><span></span></nav>',
+           footer(), '<script>' + PIECES_JS + '</script>']
+    return page('The pieces of the builds | ' + COURSE, "".join(out))
+
+
 def main():
     files = {}
     for i, s in enumerate(SESSIONS):
@@ -1469,6 +1683,7 @@ def main():
     files[STDMAP + ".html"] = render_standards()
     files[LEDGER + ".html"] = render_ledger()
     files[BUILDSPAGE + ".html"] = render_builds()
+    files[PIECESPAGE + ".html"] = render_pieces()
     for name, text in files.items():
         with open(os.path.join(OUT, name), "w") as fh:
             fh.write(text)

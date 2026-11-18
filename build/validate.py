@@ -207,6 +207,16 @@ def check(name, text, all_names):
         if target not in all_names:
             fail.append("dead link: " + href)
 
+    # every picture says what it shows, and its file is in the site
+    for tag in re.findall(r'<img\b[^>]*>', text):
+        src = re.search(r'src="([^"]+)"', tag)
+        alt = re.search(r'alt="([^"]*)"', tag)
+        if not alt or not alt.group(1).strip():
+            fail.append("a picture has no alt text: " + tag[:70])
+        if src and not src.group(1).startswith("http"):
+            if not os.path.exists(os.path.join(SITE, src.group(1).split("?")[0])):
+                fail.append("missing picture file: " + src.group(1))
+
     if "<h1>" not in text:
         fail.append("no h1")
     if "<title>" not in text:
@@ -255,6 +265,25 @@ def main():
             if not cb.startswith('<div class="carm"></div><div class="cin">'):
                 FAILURES.append(n + ": a block inside a C block is drawn outside its arm")
     print("word block stacks: %d" % stacks)
+
+    # the pieces page: every piece in parts.py has one card, one drawing, and one row
+    # in the teacher's table, and nothing on the page is missing from parts.py
+    import parts
+    ptext = open(os.path.join(SITE, "pieces_of_the_builds.html")).read()
+    cards = re.findall(r'<article class="piece" id="([^"]+)" data-builds="([^"]+)">', ptext)
+    want = [(p["id"], " ".join(p["builds"])) for p in parts.PIECES]
+    if cards != want:
+        FAILURES.append("pieces page: its cards do not match build/parts.py")
+        print("      -> pieces page: its cards do not match build/parts.py")
+    for p in parts.PIECES:
+        if not os.path.exists(os.path.join(SITE, "parts", p["id"] + ".png")):
+            FAILURES.append("pieces page: no drawing for " + p["id"])
+            print("      -> pieces page: no drawing for " + p["id"])
+        if ptext.count("<code>" + p["design"] + "</code>") < 1 or \
+                ptext.count('<td class="mono">' + p["design"] + "</td>") != 1:
+            FAILURES.append("pieces page: part number missing or repeated for " + p["id"])
+            print("      -> pieces page: part number missing or repeated for " + p["id"])
+    print("piece cards: %d" % len(cards))
     if FAILURES:
         print("\n%d FAILURES" % len(FAILURES))
         sys.exit(1)
