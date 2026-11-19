@@ -94,6 +94,14 @@ The constraints page carries the full list. The ones that differ from the style 
 
 ## Release log
 
+### 19 November 2026, version pin 12: colourful space stations
+
+Each dock now has a space station drawn in colour: blue solar panels and an orange hub
+above the dock, and an orange hull with purple bands and windows just past it. The
+panels sit above the strip the colour sensor travels, and the hull is past the black
+line, so the sensor reaches colour only after the dock has already stopped the robot.
+Not yet read with a colour sensor.
+
 ### 19 November 2026, tenth printing (version pin 11): space mat
 
 What changed: the challenge mat has a space theme and one start in each lane.

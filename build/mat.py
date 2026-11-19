@@ -156,6 +156,45 @@ def _rocket(x, y, colour, tint):
             + '</g>')
 
 
+def _station(far, lane):
+    """A colourful space station around the dock. Its solar panels sit above the strip
+    the colour sensor travels, and its hull sits past the dock, where the sensor only
+    arrives after the black line has already stopped the robot."""
+    p = []
+    top = lane - 12.4
+    # keep the panels and hub inside the dock's own sheet
+    col0 = int(far // SHEET_W) * SHEET_W + SAFE + 0.2
+    fx = far + max(0.0, col0 - (far - 8.2))
+    # two solar panels on a yellow boom
+    p.append(_line(fx - 8.2, top + 1.6, fx + 6.6, top + 1.6, "#E0A800", 0.3))
+    for x0 in (fx - 8.2, fx + 2.0):
+        p.append('<rect x="%.2f" y="%.2f" width="4.6" height="3.2" rx="0.2" fill="#2F7FD1" stroke="#17406E" stroke-width="0.14"/>'
+                 % (x0, top))
+        for i in (1, 2, 3):
+            p.append(_line(x0 + i * 1.15, top, x0 + i * 1.15, top + 3.2, "#BFE0FF", 0.07))
+        p.append(_line(x0, top + 1.6, x0 + 4.6, top + 1.6, "#BFE0FF", 0.07))
+    # the hub between the panels, with a dish
+    p.append('<rect x="%.2f" y="%.2f" width="4.6" height="3.2" rx="0.9" fill="#F28C28" stroke="#9A4E0A" stroke-width="0.16"/>'
+             % (fx - 2.9, top))
+    for dx, c in ((-1.8, "#E5484D"), (-0.6, "#F4D35E"), (0.6, "#3FB56B")):
+        p.append('<circle cx="%.2f" cy="%.2f" r="0.42" fill="%s" stroke="#17181B" stroke-width="0.08"/>'
+                 % (fx + dx, top + 1.6, c))
+    p.append(_line(fx + 1.0, top, fx + 1.9, top - 1.0, "#7B3FA0", 0.16))
+    p.append('<path d="M%.2f,%.2f a0.9,0.9 0 0 1 1.5,1.0 Z" fill="#C9A6E4" stroke="#7B3FA0" stroke-width="0.12"/>'
+             % (fx + 1.2, top - 1.5))
+    p.append(_t(fx - 0.6, lane - 8.4, "SPACE STATION", 0.6, TEAL, 800, "middle"))
+    # the hull, past the dock: orange with purple bands and blue windows
+    hx, hy, hw, hh = far + 2.25, lane - 7.8, 3.0, 15.4
+    p.append('<rect x="%.2f" y="%.2f" width="%.2f" height="%.2f" rx="1.2" fill="#F9B66B" stroke="#9A4E0A" stroke-width="0.16"/>'
+             % (hx, hy, hw, hh))
+    for yy in (hy + 1.6, hy + hh - 2.4):
+        p.append('<rect x="%.2f" y="%.2f" width="%.2f" height="0.8" fill="#7B3FA0"/>' % (hx + 0.08, yy, hw - 0.16))
+    for i, c in enumerate(("#BDE3FF", "#FFE08A", "#BDE3FF", "#FFE08A", "#BDE3FF")):
+        p.append('<circle cx="%.2f" cy="%.2f" r="0.75" fill="%s" stroke="#17406E" stroke-width="0.14"/>'
+                 % (hx + hw / 2, hy + 3.9 + i * 1.9, c))
+    return "".join(p)
+
+
 def _planet(x, y, r, colour, tint):
     return ('<ellipse cx="%.2f" cy="%.2f" rx="%.2f" ry="%.2f" fill="none" stroke="%s" stroke-width="0.25" '
             'transform="rotate(-18 %.2f %.2f)"/>' % (x, y, r * 1.75, r * 0.42, colour, x, y)
@@ -207,10 +246,10 @@ def lane_features(k):
     p.append(_ticks(HOME[1], lane, SOFT, "home", "start"))
     # the dock, black, and the dashed limit
     p.append('<rect x="%.2f" y="%.2f" width="2" height="15.4" fill="%s"/>' % (far, lane - 7.8, INK))
-    p.append(_t(far + 2.9, lane + 0.5, "DOCK  %d cm" % DOCK_CM[k], 0.62, INK, anchor="middle", rot=90))
-    p.append(_t(far + 1, lane - 8.6, "SPACE STATION", 0.7, TEAL, 800, "middle"))
+    p.append(_station(far, lane))
+    p.append(_t(far + 1.22, lane - 0.2, "DOCK  %d cm" % DOCK_CM[k], 0.62, "#FFFFFF", anchor="middle", rot=90))
     p.append(_line(limit, lane - 7.8, limit, lane + 7.6, CLAY, 0.25, "1 0.7"))
-    p.append(_t(limit - 0.9, lane + 0.5, "DEEP SPACE", 0.62, CLAY, anchor="middle", rot=90))
+    p.append(_t(limit - 0.75, lane + 0.5, "DEEP SPACE", 0.55, CLAY, anchor="middle", rot=90))
     # the asteroid: a target for the middle of the crate, wholly inside one sheet
     ix, iy = ISLAND[0], oy + ISLAND[1]
     rock = [(-2.1, -0.4), (-1.2, -1.9), (0.5, -2.1), (1.9, -1.2), (2.2, 0.5), (1.1, 1.9), (-0.7, 2.1), (-1.9, 1.2)]

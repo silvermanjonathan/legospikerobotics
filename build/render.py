@@ -45,7 +45,7 @@ PART2 = [x for x in SESSIONS if x.get("part", 1) == 2]
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.environ.get("SPIKE_OUT", ROOT)
-VERSION = "11"
+VERSION = "12"
 COURSE = "SPIKE Prime with Python"
 HUB = "spike_course_hub"
 ROBOT = "robot_advanced_driving_base"
@@ -1852,6 +1852,8 @@ def render_mat():
              'edge is level with them at the start of every run.</td></tr>'
              '<tr><td>Home marks</td><td>Two grey marks, 5 cm behind the launch line and 5 cm '
              'past it.</td></tr>'
+             '<tr><td>Space station</td><td>A picture: blue solar panels and an orange hub above the '
+             'dock, and an orange hull just past it. The robot may stop on the hull.</td></tr>'
              '<tr><td>Dock</td><td>A black line 2 cm wide at the space station. It is the only '
              'dark mark the colour sensor passes over. It is ' + str(d1) + ', ' + str(d2) + ', or '
              + str(d3) + ' cm from the launch line.</td></tr>'
