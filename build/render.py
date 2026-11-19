@@ -45,7 +45,7 @@ PART2 = [x for x in SESSIONS if x.get("part", 1) == 2]
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.environ.get("SPIKE_OUT", ROOT)
-VERSION = "9"
+VERSION = "10"
 COURSE = "SPIKE Prime with Python"
 HUB = "spike_course_hub"
 ROBOT = "robot_advanced_driving_base"
@@ -438,25 +438,42 @@ td.mono,th.mono{font-family:'JetBrains Mono',monospace; font-weight:700}
 """
 CSS += B.css()
 
-# ------------------------------------------------ added for the Python / Word Blocks choice
+# ------------------------------------------------ the Word Blocks panel under each program
 CSS += """
-.lang-wb{display:none}
-body.wb .lang-wb{display:block}
-body.wb .code2 .lang-py{display:none}
-.langbar{
-  position:sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; align-items:center; gap:10px;
-  background:var(--paper); border-bottom:2px solid var(--rule); padding:10px 0; margin:0 0 18px;
+details.wbpanel{
+  margin:-6px 0 22px; background:#FFFDF7; border:2px solid var(--rule);
+  border-left:8px solid #B54094; border-radius:0 0 6px 6px;
 }
-.langlabel{font-weight:700; color:var(--teal-deep)}
-button.lang{
-  font-family:'DM Sans',sans-serif; font-size:17px; font-weight:700; cursor:pointer;
-  background:var(--card); color:var(--teal); border:2px solid var(--teal); border-radius:4px;
-  padding:9px 16px;
+details.wbpanel>summary{
+  cursor:pointer; list-style:none; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  padding:10px 16px; font-family:'DM Sans',sans-serif; font-size:17px; font-weight:700;
+  color:var(--ink); min-height:44px;
 }
-button.lang[aria-pressed="true"]{background:var(--teal); color:#FFFDF7}
-.wbnote{
+details.wbpanel>summary::-webkit-details-marker{display:none}
+details.wbpanel>summary::before{
+  content:"\\25B8"; color:#B54094; font-size:18px; width:14px; flex:none;
+}
+details.wbpanel[open]>summary::before{content:"\\25BE"}
+details.wbpanel>summary:hover{background:#F6EFE2}
+details.wbpanel>summary:focus-visible{outline:3px solid var(--ochre-line); outline-offset:2px}
+.wbsum{color:#8A2E70}
+.wbwhat{font-weight:600; color:var(--ink-soft)}
+.wbbody{padding:4px 16px 8px; border-top:2px solid var(--rule)}
+.wbbody figure.blocks{margin:10px 0 6px}
+.wbintro{
   background:var(--card); border:2px solid var(--rule); border-left:8px solid #B54094;
-  border-radius:6px; padding:16px 20px 4px; margin:0 0 20px;
+  border-radius:6px; padding:16px 20px 6px; margin:0 0 22px;
+}
+.wbintro .toolbar{margin:4px 0 12px}
+button.wball{
+  font-family:'DM Sans',sans-serif; font-size:17px; font-weight:700; cursor:pointer;
+  background:var(--card); color:#8A2E70; border:2px solid #B54094; border-radius:4px;
+  padding:10px 16px; min-height:44px;
+}
+button.wball[aria-pressed="true"]{background:#B54094; color:#FFFDF7}
+@media print{
+  details.wbpanel:not([open]){display:none}
+  .wbintro .toolbar{display:none}
 }
 """
 
@@ -523,57 +540,61 @@ def link(slug):
 
 
 def code_block(code, context=None):
-    """A block of Python, colored the way VS Code colors it.
+    """A block of Python, colored the way VS Code colors it, and on a session page the
+    Word Blocks panel under it.
 
     context is the whole program when code is only the part being added, so a name
     is colored by what it is in the whole program. Output boxes (out_block) and the
     expected/got sheets stay plain: they are not code.
     """
     py = '<pre class="py"><code>' + indent_guides(highlight(code, context)) + '</code></pre>'
-    if not DUAL["on"]:
+    if not PANELS["on"]:
         return py
-    try:
-        stack, whole = py2blocks.translate(code, context)
-    except py2blocks.Unsupported:
-        return py
-    DUAL["count"] += 1
-    note = ("The small numbers are the lines of the Python program. " if whole else "")
-    return ('<div class="code2"><div class="lang-py">' + py + '</div><div class="lang-wb">'
-            + B.stack(stack, label="The same program in Word Blocks", note=note) + '</div></div>')
+    stacks, whole, note = py2blocks.translate(code, context)
+    PANELS["count"] += 1
+    n_lines = len([ln for ln in code.split("\n") if ln.strip() and not ln.strip().startswith("#")])
+    what = ("the same program as blocks" if whole else
+            "the same line as blocks" if n_lines == 1 else "the same lines as blocks")
+    return (py + '<details class="wbpanel"><summary><span class="wbsum">Word Blocks</span>'
+            '<span class="wbwhat">' + what + '</span></summary><div class="wbbody">'
+            + B.stacks(stacks, label="The same program in Word Blocks", note=note)
+            + '</div></details>')
 
 
-# Session pages 1 to 4 show every program two ways. code_block draws both while this
-# is on, and the reader picks one with the buttons at the top of the page.
-DUAL = {"on": False, "count": 0}
+# Every program on a session page gets a Word Blocks panel under it while this is on.
+# The build stops if a program on a session page has no panel.
+PANELS = {"on": False, "count": 0}
 
-LANG_BAR = ('<div class="langbar noprint" role="group" aria-label="Show the programs as">'
-            '<span class="langlabel">Show the programs as</span>'
-            '<button class="lang" type="button" data-lang="py" aria-pressed="true">Python</button>'
-            '<button class="lang" type="button" data-lang="wb" aria-pressed="false">Word Blocks</button>'
-            '</div>'
-            '<div class="lang-wb wbnote"><p>You chose Word Blocks, the coloured blocks in the '
-            'SPIKE App. Every program on this page is drawn as blocks. The words on this page '
-            'still name the lines of the Python program, so each block shows the number of the '
-            'line it matches.</p><p>Three things differ. Blocks have no tool lines at the top '
-            'and no frame: the <b>when program starts</b> block takes their place. Blocks set '
-            'the speed once, near the top: 24 % means about a quarter of the motor\'s top '
-            'speed, which is about the speed the Python programs use. A name for a number, '
-            'such as FORWARD, is a variable in Word Blocks: make it in the Variables part of '
-            'the app before you build the stack.</p></div>')
+WB_INTRO = ('<div class="wbintro"><p><b>Building in Word Blocks?</b> Under every Python '
+            'program on this page is a panel marked <b>Word Blocks</b>. Open it to see the '
+            'same program as blocks, and follow the lesson with everyone else. Open a Word '
+            'Blocks project in the SPIKE App, not a Python one.</p>'
+            '<p>Each block shows the number of the Python line it matches, so when the page '
+            'says "line 12", find the block marked line 12. Blocks have no tool lines at the '
+            'top and no frame: the <b>when program starts</b> block takes their place. A name '
+            'for a number, such as FORWARD, is a variable in Word Blocks: make it in the '
+            'Variables part of the app before you build the stack. The speed block gives a '
+            'percent of the motor\'s top speed: Python\'s <code>velocity=250</code> is about '
+            '24 %.</p>'
+            '<div class="toolbar"><button class="wball" type="button" aria-pressed="false" '
+            'data-open="Open every Word Blocks panel" data-close="Close every Word Blocks panel">'
+            'Open every Word Blocks panel</button></div></div>')
 
-LANG_JS = """
+WB_JS = """
 (function(){
-  var btns = document.querySelectorAll('button.lang');
-  function set(lang){
-    document.body.classList.toggle('wb', lang === 'wb');
-    btns.forEach(function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false'); });
+  var btn = document.querySelector('button.wball');
+  if(!btn) return;
+  function set(open){
+    document.querySelectorAll('details.wbpanel').forEach(function(d){ d.open = open; });
+    btn.setAttribute('aria-pressed', open ? 'true' : 'false');
+    btn.textContent = btn.getAttribute(open ? 'data-close' : 'data-open');
     document.querySelectorAll('.pager a').forEach(function(a){
       var h = a.getAttribute('href').split('#')[0];
-      if(/session0[1-4]_/.test(h)) a.setAttribute('href', lang === 'wb' ? h + '#wb' : h);
+      if(/session0\\d_/.test(h)) a.setAttribute('href', open ? h + '#wb' : h);
     });
   }
-  btns.forEach(function(b){ b.addEventListener('click', function(){ set(b.getAttribute('data-lang')); }); });
-  if(location.hash === '#wb') set('wb');
+  btn.addEventListener('click', function(){ set(btn.getAttribute('aria-pressed') !== 'true'); });
+  if(location.hash === '#wb') set(true);
 })();
 """
 
@@ -856,8 +877,7 @@ def session_programs(s):
 def render_session(s, prev_s, next_s):
     n = s["num"]
     first_code = s["chunks"][0]["code"]
-    dual = s.get("part", 1) == 1
-    DUAL["on"], DUAL["count"] = dual, 0
+    PANELS["on"], PANELS["count"] = True, 0
     b = ['<header class="top"><div class="wrap">']
     part2 = s.get("part", 1) == 2
     b.append('<p class="eyebrow">' + COURSE + ' &middot; Grades 4 and 5 &middot; '
@@ -873,8 +893,7 @@ def render_session(s, prev_s, next_s):
                                                 else 'nothing new') + '</span>')
     b.append('</div></div></header>')
     b.append('<main><div class="wrap">')
-    if dual:
-        b.append(LANG_BAR)
+    b.append(WB_INTRO)
 
     b.append('<section><h2>What is new today</h2><p>' + s["new_text"] + '</p>')
     b.append('<p><b>Deliberately re-used:</b> ' + s["reuse"] + '</p>')
@@ -1067,12 +1086,12 @@ def render_session(s, prev_s, next_s):
              if next_s else '<span></span>')
     b.append('</nav>')
     b.append(footer())
-    DUAL["on"] = False
+    PANELS["on"] = False
     out = "".join(b)
-    if dual:
-        assert DUAL["count"] and out.count('<pre class="py">') == DUAL["count"], (
-            "session %d: %d programs, %d drawn as blocks" % (n, out.count('<pre class="py">'), DUAL["count"]))
-        out += '<script>' + LANG_JS + '</script>'
+    assert PANELS["count"] and out.count('<pre class="py">') == PANELS["count"] == out.count(
+        '<details class="wbpanel">'), ("session %d: %d programs, %d Word Blocks panels"
+                                        % (n, out.count('<pre class="py">'), PANELS["count"]))
+    out += '<script>' + WB_JS + '</script>'
     return page(s["title"] + " | " + COURSE, out)
 
 
@@ -1104,7 +1123,8 @@ def render_hub():
     b.append('<p class="eyebrow">LEGO SPIKE Prime &middot; Python &middot; Grades 4 and 5</p>')
     b.append('<h1>' + COURSE + '</h1>')
     b.append('<p class="sub">Sessions of ninety minutes. You read a robot program, say '
-             'what the robot will do, and then run it.</p>')
+             'what the robot will do, and then run it. Under every program is a Word Blocks '
+             'panel with the same program as blocks.</p>')
     b.append('<div class="dates"><a class="pill" href="#part1"><b>Part 1</b> sessions 1 to 4</a>'
              '<a class="pill" href="#part2"><b>Part 2</b> sessions 5 to 8</a>'
              '<a class="pill" href="#builds"><b>More builds</b> Word Blocks</a>'
@@ -1310,8 +1330,10 @@ NEVER_PART1 = [
 ]
 
 NEVER = [
-    "Word Blocks in sessions 1 to 8. Every session is written in Python. Only the page of "
-    "more builds uses Word Blocks: see section 7.",
+    "Word Blocks as the language a session teaches. Every session is taught in Python. "
+    "Under each program is a Word Blocks panel with the same program as blocks, for builders "
+    "who work in blocks: see section 8. The page of more builds is Word Blocks only: see "
+    "section 7.",
     "<code>while True</code> or any loop with no stop the student can name.",
     "<code>if</code> inside <code>if</code>. One <code>if</code> may sit inside one <code>while</code>, as in the line follower.",
     "Lists, and variables that change while the program runs.",
@@ -1386,6 +1408,31 @@ def render_constraints():
              + '</table><p>They never use forever, broadcast messages, lists, more than one '
              'stack, or the More Motors and More Movement extensions. Every loop is a repeat '
              'block with a number the student can read.</p></section>')
+    b.append('<section><h2>8. The Word Blocks panels on the session pages</h2><p>Every '
+             'Python program on a session page has a closed panel under it, marked Word '
+             'Blocks, that holds the same program as blocks. A builder who works in blocks '
+             'opens it and follows the same lesson. <code>build/py2blocks.py</code> writes '
+             'each panel from the Python, so the two cannot drift apart, and the build stops '
+             'if a program has no panel. Each block shows the number of the Python line it '
+             'matches. Where the two languages count differently, the panel says so under '
+             'its blocks:</p><ul>'
+             '<li>Speed: the block takes a percent of the large motor\'s top speed, 1050 '
+             'degrees of motor turn each second. 250 is 24 %, 150 is 14 %, 100 is 10 %. A '
+             'program with more than one speed sets it again before a move that needs a new '
+             'one.</li>'
+             '<li>The turn: Python counts the robot\'s turn in tenths and the yaw angle block '
+             'counts whole ones, so <code>QUARTER = 900</code> is set QUARTER to 90.</li>'
+             '<li>Waits and beeps: <code>sleep_ms</code> counts thousandths of a second and '
+             'the wait block counts seconds; the beep block takes a note number, so 440 is '
+             'note 69 and 880 is note 81.</li>'
+             '<li><code>while</code> becomes repeat until with its test inside a not block.</li>'
+             '<li><code>for count in range(...)</code>, where the loop uses '
+             '<code>count</code>, becomes set count to 0, then repeat, with change count by 1 '
+             'at the end of each repeat. This is the one variable a panel changes while the '
+             'program runs, because Python\'s loop changes <code>count</code> too.</li>'
+             '<li>A function is a My Block: a define stack beside the main stack.</li></ul>'
+             '<p>The panels were written from the Python, not built and run in the app.</p>'
+             '</section>')
     return simple_page(COURSE + ' &middot; Constraints', 'Course constraints',
                        'What the course uses, what it never uses, and what is locked.', "".join(b))
 

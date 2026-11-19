@@ -32,12 +32,13 @@ APP_HUE = {
     "sensors":   ("#1DCCF0", "a colour sensor block on the Game Master program"),
     "operators": ("#00B94D", "an '=' block on the Game Master program"),
     "variables": ("#FF693C", "a list block in the Variables category on the Game Master program"),
+    "myblocks":  ("#FF6680", "a 'define' block on LEGO's My Code, Our Program lesson, sampled 19 November 2026"),
 }
 
 NAMES = {
     "events": "Events", "movement": "Movement", "motors": "Motors", "light": "Light", "sound": "Sound",
     "control": "Control", "sensors": "Sensors", "operators": "Operators",
-    "variables": "Variables",
+    "variables": "Variables", "myblocks": "My Blocks",
 }
 
 
@@ -227,11 +228,15 @@ def _cats(blocks, found=None):
         if c not in found:
             found.append(c)
 
-    for b in blocks:
-        add(b["cat"])
-        for p in (b.get("parts") or ()) + tuple(b.get("head") or ()):
+    def parts(ps):
+        for p in ps:
             if isinstance(p, tuple) and p[0] in ("bool", "rep"):
                 add(p[1])
+                parts(p[2])
+
+    for b in blocks:
+        add(b["cat"])
+        parts((b.get("parts") or ()) + tuple(b.get("head") or ()))
         if b["kind"] == "c":
             _cats(b["body"], found)
             if b["else"]:
@@ -241,16 +246,32 @@ def _cats(blocks, found=None):
 
 def stack(blocks, label="", note=""):
     """One drawn stack, with a key that names its categories and any arrows."""
-    key = ['<p class="bkey">' + note]
+    return stacks([blocks], label, note)
+
+
+def stacks(lists, label="", note=""):
+    """Stacks drawn side by side, as the app's canvas holds them: one per My Block,
+    then the main stack. A key under them names their categories and any arrows."""
+    found = []
+    for bl in lists:
+        _cats(bl, found)
+    notes = [note] if isinstance(note, str) and note else list(note or [])
+    key = []
+    if len(notes) > 1:
+        key.append('<ul class="bnote">' + "".join('<li>' + n + '</li>' for n in notes) + '</ul>')
+        notes = []
+    key.append('<p class="bkey">' + (notes[0] + " " if notes else ""))
     key.append("Colours: " + ", ".join(
-        '<span class="chip cat-' + c + '">' + NAMES[c] + '</span>' for c in _cats(blocks)) + ".")
-    if _uses_dir(blocks):
+        '<span class="chip cat-' + c + '">' + NAMES[c] + '</span>' for c in found) + ".")
+    if any(_uses_dir(bl) for bl in lists):
         key.append(" <span class=\"dirkey\">↻</span> means clockwise and "
                    "<span class=\"dirkey\">↺</span> means counterclockwise.")
     key.append('</p>')
+    body = "".join('<div class="stack">' + "".join(_block(b) for b in bl) + '</div>' for bl in lists)
+    if len(lists) > 1:
+        body = '<div class="stacks">' + body + '</div>'
     return ('<figure class="blocks"' + (' aria-label="' + html.escape(label) + '"' if label else '')
-            + '><div class="stackwrap"><div class="stack">'
-            + "".join(_block(b) for b in blocks) + '</div></div>' + "".join(key) + '</figure>')
+            + '><div class="stackwrap">' + body + '</div>' + "".join(key) + '</figure>')
 
 
 def chip(cat, words):
@@ -265,6 +286,7 @@ def css():
 figure.blocks{margin:0 0 18px}
 .stackwrap{overflow-x:auto; padding:4px 2px 8px}
 .stack{display:inline-flex; flex-direction:column; align-items:flex-start; min-width:max-content}
+.stacks{display:flex; flex-wrap:wrap; align-items:flex-start; gap:22px 40px}
 .bk{position:relative; display:inline-flex; align-items:center; gap:7px; flex-wrap:nowrap;
   background:var(--f); border:2px solid var(--e); border-radius:7px;
   padding:6px 14px 6px 12px; min-height:46px; color:#17181B;
@@ -306,6 +328,8 @@ figure.blocks{margin:0 0 18px}
   padding:0 6px; font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:700;
   color:#17181B; white-space:nowrap; -webkit-print-color-adjust:exact; print-color-adjust:exact}
 .bkey{font-size:15.5px; color:var(--ink-soft); margin:4px 0 0}
+.bnote{font-size:15.5px; color:var(--ink-soft); margin:6px 0 4px; padding-left:22px}
+.bnote li{margin:0 0 4px; max-width:none}
 .chip{display:inline-block; background:var(--f); border-left:6px solid var(--e);
   padding:0 8px; border-radius:3px; color:#17181B; font-weight:600;
   -webkit-print-color-adjust:exact; print-color-adjust:exact}

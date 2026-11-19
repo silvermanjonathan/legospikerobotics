@@ -94,6 +94,42 @@ The constraints page carries the full list. The ones that differ from the style 
 
 ## Release log
 
+### 19 November 2026, ninth printing (version pin 10)
+
+What changed:
+
+- **A Word Blocks panel under every program.** Python stays on screen for everyone.
+  Under each Python program on all eight session pages is a closed panel marked Word
+  Blocks; opening it shows the same program as blocks, so a builder who works in blocks
+  follows the same lesson as the Python builders beside them. 55 panels in all. A box
+  at the top of each session page explains the panels and has a button that opens or
+  closes every panel at once; with them open, the pager carries the choice to the next
+  page (`#wb`). Closed panels do not print. This replaces the seventh printing's
+  Python / Word Blocks switch, which hid the Python.
+- **Sessions 5 to 8 now have blocks too.** `build/py2blocks.py` now draws beeps, the
+  light matrix, the motion sensor, waits in seconds, `if` and `else`, `while`, the
+  count in a `for` loop, more than one speed, and My Blocks for the students' own
+  functions. Each panel's note says where the two languages count differently (speed
+  as a percent, the turn in whole ones not tenths, seconds not thousandths, note
+  numbers not pitches). The build stops if a program on a session page has no panel.
+- **Fix:** a left turn is now drawn as `left: -100`, the way LEGO's own images show it,
+  not `left: 100`.
+- The constraints page has a new section 8 on the panels; the hub says they are there.
+
+Where the facts came from:
+
+- **Block words**: LEGO lesson images for Training Camp 3 (if then else, start moving
+  left: -50, reflected light), My Code, Our Program (define and call blocks, and the My
+  Blocks colour, #FF6680), and Mission Ready; LEGO coach slides and FLLCasts tutorials
+  for set yaw angle to 0 and the yaw angle reporter; FLLCasts for the beep blocks.
+- **Note numbers**: 440 Hz is note 69 and 880 Hz is note 81 (`py2blocks.midi`).
+
+What was checked: both guards pass. Every panel was read against its Python program.
+
+What is not done: the Part 2 stacks were written from the Python and have not been
+built and run in the SPIKE App. The beep and yaw block wordings come from tutorials, not
+from a LEGO lesson image. Build one Part 2 stack in the app before the class uses it.
+
 ### 18 November 2026, eighth printing (version pin 9)
 
 What changed: the challenge mat is now for three robots at once. It is 24 upright letter

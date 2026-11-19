@@ -318,10 +318,12 @@ td.mono,th.mono{font-family:'JetBrains Mono',monospace; font-weight:700}
 .cat-sensors{--f:#1DCCF0;--e:#1593AD;--fd:#99E8F8}
 .cat-operators{--f:#0ABC54;--e:#008537;--fd:#91E1B2}
 .cat-variables{--f:#FF7E57;--e:#B84C2B;--fd:#FFC5B3}
+.cat-myblocks{--f:#FF778E;--e:#B8495C;--fd:#FFC2CC}
 
 figure.blocks{margin:0 0 18px}
 .stackwrap{overflow-x:auto; padding:4px 2px 8px}
 .stack{display:inline-flex; flex-direction:column; align-items:flex-start; min-width:max-content}
+.stacks{display:flex; flex-wrap:wrap; align-items:flex-start; gap:22px 40px}
 .bk{position:relative; display:inline-flex; align-items:center; gap:7px; flex-wrap:nowrap;
   background:var(--f); border:2px solid var(--e); border-radius:7px;
   padding:6px 14px 6px 12px; min-height:46px; color:#17181B;
@@ -363,6 +365,8 @@ figure.blocks{margin:0 0 18px}
   padding:0 6px; font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:700;
   color:#17181B; white-space:nowrap; -webkit-print-color-adjust:exact; print-color-adjust:exact}
 .bkey{font-size:15.5px; color:var(--ink-soft); margin:4px 0 0}
+.bnote{font-size:15.5px; color:var(--ink-soft); margin:6px 0 4px; padding-left:22px}
+.bnote li{margin:0 0 4px; max-width:none}
 .chip{display:inline-block; background:var(--f); border-left:6px solid var(--e);
   padding:0 8px; border-radius:3px; color:#17181B; font-weight:600;
   -webkit-print-color-adjust:exact; print-color-adjust:exact}
@@ -380,23 +384,40 @@ figure.blocks{margin:0 0 18px}
   figure.blocks{break-inside:avoid}
 }
 
-.lang-wb{display:none}
-body.wb .lang-wb{display:block}
-body.wb .code2 .lang-py{display:none}
-.langbar{
-  position:sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; align-items:center; gap:10px;
-  background:var(--paper); border-bottom:2px solid var(--rule); padding:10px 0; margin:0 0 18px;
+details.wbpanel{
+  margin:-6px 0 22px; background:#FFFDF7; border:2px solid var(--rule);
+  border-left:8px solid #B54094; border-radius:0 0 6px 6px;
 }
-.langlabel{font-weight:700; color:var(--teal-deep)}
-button.lang{
-  font-family:'DM Sans',sans-serif; font-size:17px; font-weight:700; cursor:pointer;
-  background:var(--card); color:var(--teal); border:2px solid var(--teal); border-radius:4px;
-  padding:9px 16px;
+details.wbpanel>summary{
+  cursor:pointer; list-style:none; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  padding:10px 16px; font-family:'DM Sans',sans-serif; font-size:17px; font-weight:700;
+  color:var(--ink); min-height:44px;
 }
-button.lang[aria-pressed="true"]{background:var(--teal); color:#FFFDF7}
-.wbnote{
+details.wbpanel>summary::-webkit-details-marker{display:none}
+details.wbpanel>summary::before{
+  content:"\25B8"; color:#B54094; font-size:18px; width:14px; flex:none;
+}
+details.wbpanel[open]>summary::before{content:"\25BE"}
+details.wbpanel>summary:hover{background:#F6EFE2}
+details.wbpanel>summary:focus-visible{outline:3px solid var(--ochre-line); outline-offset:2px}
+.wbsum{color:#8A2E70}
+.wbwhat{font-weight:600; color:var(--ink-soft)}
+.wbbody{padding:4px 16px 8px; border-top:2px solid var(--rule)}
+.wbbody figure.blocks{margin:10px 0 6px}
+.wbintro{
   background:var(--card); border:2px solid var(--rule); border-left:8px solid #B54094;
-  border-radius:6px; padding:16px 20px 4px; margin:0 0 20px;
+  border-radius:6px; padding:16px 20px 6px; margin:0 0 22px;
+}
+.wbintro .toolbar{margin:4px 0 12px}
+button.wball{
+  font-family:'DM Sans',sans-serif; font-size:17px; font-weight:700; cursor:pointer;
+  background:var(--card); color:#8A2E70; border:2px solid #B54094; border-radius:4px;
+  padding:10px 16px; min-height:44px;
+}
+button.wball[aria-pressed="true"]{background:#B54094; color:#FFFDF7}
+@media print{
+  details.wbpanel:not([open]){display:none}
+  .wbintro .toolbar{display:none}
 }
 
 .pfilter{display:flex; gap:10px; flex-wrap:wrap; margin:0 0 6px}
@@ -443,7 +464,7 @@ table.ptable code{font-size:13px; white-space:normal; overflow-wrap:anywhere}
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap"><p class="eyebrow">SPIKE Prime with Python &middot; Standards</p><h1>Standards map</h1><p class="sub">Every code used, its full statement, and the sessions mapped to it.</p></div></header><main><div class="wrap"><section><h2>How to read this page</h2><p>Each session is mapped to at most three standards. Every code was retrieved through the Learning Commons Knowledge Graph (CASE Network) on 12 November 2026 and is printed with its CASE identifier, so it can be checked. A 3-5 science code has one identifier for each grade; this course is for grades 4 and 5, so both are printed.</p></section><section><h2>Codes used</h2><table class="std"><tr><th>Code</th><th>Framework</th><th>Grade</th><th>Statement, as retrieved</th><th>CASE identifier</th><th>Sessions mapped to it</th></tr><tr><td><code>3-5-ETS1-3</code></td><td>New York State P-12 Science Learning Standards</td><td>4 and 5</td><td>Plan and carry out fair tests in which variables are controlled and failure points are considered to identify aspects of a model or prototype that can be improved.</td><td>Grade 4: <code>f9f9243b-9eff-43a3-9c15-5036ca8df270</code><br>Grade 5: <code>3f6f1ba6-3b02-42b3-9525-08fe3f98f552</code></td><td>1, 2, 3, 4, 5, 6, 7, 8</td></tr><tr><td><code>NY-4.MD.5.a</code></td><td>New York Next Generation Mathematics Learning Standards</td><td>4</td><td>Recognize an angle is measured with reference to a circle with its center at the common endpoint of the rays, by considering the fraction of the circular arc between the points where the two rays intersect the circle. An angle that turns through 1/360 of a circle is called a “one-degree angle,” and can be used to measure angles.<br><i>The retrieved wording sets the fraction 1/360 in mathematical notation. This page writes it on one line.</i></td><td>Grade 4: <code>70d72574-d7cc-11e8-824f-0242ac160002</code></td><td>1</td></tr><tr><td><code>NY-4.MD.2</code></td><td>New York Next Generation Mathematics Learning Standards</td><td>4</td><td>Use the four operations to solve word problems involving distances, intervals of time, liquid volumes, masses of objects, and money.</td><td>Grade 4: <code>70d71641-d7cc-11e8-824f-0242ac160002</code></td><td>1, 2, 5</td></tr><tr><td><code>NY-4.MD.5.b</code></td><td>New York Next Generation Mathematics Learning Standards</td><td>4</td><td>Recognize an angle that turns through n one-degree angles is said to have an angle measure of n degrees.<br><i>The retrieved wording sets the letter n in italics. This page prints it plain.</i></td><td>Grade 4: <code>70d730ef-d7cc-11e8-824f-0242ac160002</code></td><td>2, 6</td></tr><tr><td><code>3-5-ETS1-1</code></td><td>New York State P-12 Science Learning Standards</td><td>4 and 5</td><td>Define a simple design problem reflecting a need or a want that includes specified criteria for success and constraints on materials, time, or cost.</td><td>Grade 4: <code>2fb0cfd6-caa2-4224-8c1b-12144f8dd898</code><br>Grade 5: <code>b7b9475e-16fc-49fc-9829-bc6ef6334d69</code></td><td>3, 4, 7, 8</td></tr><tr><td><code>3-5-ETS1-2</code></td><td>New York State P-12 Science Learning Standards</td><td>4 and 5</td><td>Generate and compare multiple possible solutions to a problem based on how well each is likely to meet the criteria and constraints of the problem.</td><td>Grade 4: <code>46281f20-643c-4093-a34d-cd41d7aa02be</code><br>Grade 5: <code>4a149369-456b-45f1-b494-3ca247cd88f7</code></td><td>4, 6, 8</td></tr></table></section><section><h2>By session</h2><table><tr><th>Session</th><th>Mapped to</th></tr><tr><td><a href="session01_advanced_driving_base.html?v=9">1. Build the Advanced Driving Base and move it with Python</a></td><td><code>3-5-ETS1-3</code>, <code>NY-4.MD.5.a</code>, <code>NY-4.MD.2</code></td></tr><tr><td><a href="session02_quarter_turn_and_square.html?v=9">2. Name the numbers, find the quarter turn, drive a square</a></td><td><code>3-5-ETS1-3</code>, <code>NY-4.MD.5.b</code>, <code>NY-4.MD.2</code></td></tr><tr><td><a href="session03_stop_at_the_line.html?v=9">3. Stop at the line with the colour sensor</a></td><td><code>3-5-ETS1-3</code>, <code>3-5-ETS1-1</code></td></tr><tr><td><a href="session04_delivery_run_and_demo.html?v=9">4. The delivery run, and demo day</a></td><td><code>3-5-ETS1-1</code>, <code>3-5-ETS1-2</code>, <code>3-5-ETS1-3</code></td></tr><tr><td><a href="session05_count_the_lines.html?v=9">5. Beep, show a number, and count the lines</a></td><td><code>3-5-ETS1-3</code>, <code>NY-4.MD.2</code></td></tr><tr><td><a href="session06_turns_that_measure_themselves.html?v=9">6. Turns that measure themselves</a></td><td><code>3-5-ETS1-2</code>, <code>3-5-ETS1-3</code>, <code>NY-4.MD.5.b</code></td></tr><tr><td><a href="session07_follow_the_line.html?v=9">7. Follow the line</a></td><td><code>3-5-ETS1-3</code>, <code>3-5-ETS1-1</code></td></tr><tr><td><a href="session08_your_own_functions_and_mission.html?v=9">8. Your own functions, your own mission</a></td><td><code>3-5-ETS1-1</code>, <code>3-5-ETS1-2</code>, <code>3-5-ETS1-3</code></td></tr></table><p class="note">No CSTA code and no New York Computer Science and Digital Fluency code appears anywhere on this site. The graph returned no New York computer science codes on 12 November 2026.</p></section></div></main><nav class="pager noprint"><span></span><a href="spike_course_hub.html?v=9">Course home</a><span></span></nav><footer><div class="wrap"><p>SPIKE Prime with Python, grades 4 and 5. Part 1 is sessions 1 to 4. Part 2 is sessions 5 to 8, for a class that continues. The class robot is LEGO's Advanced Driving Base. LEGO's building instructions are linked, not copied.</p><p>Mapped to the New York State P-12 Science Learning Standards and the New York Next Generation Mathematics Learning Standards. Codes retrieved through the Learning Commons Knowledge Graph (CASE Network) on 12 November 2026. <a href="standards_map.html?v=9">Full standards map</a> &middot; <a href="course_constraints.html?v=9">Course constraints, published 12 November 2026</a></p><p>LEGO and SPIKE are trademarks of the LEGO Group, which does not sponsor or endorse this course.</p></div></footer>
+<header class="top"><div class="wrap"><p class="eyebrow">SPIKE Prime with Python &middot; Standards</p><h1>Standards map</h1><p class="sub">Every code used, its full statement, and the sessions mapped to it.</p></div></header><main><div class="wrap"><section><h2>How to read this page</h2><p>Each session is mapped to at most three standards. Every code was retrieved through the Learning Commons Knowledge Graph (CASE Network) on 12 November 2026 and is printed with its CASE identifier, so it can be checked. A 3-5 science code has one identifier for each grade; this course is for grades 4 and 5, so both are printed.</p></section><section><h2>Codes used</h2><table class="std"><tr><th>Code</th><th>Framework</th><th>Grade</th><th>Statement, as retrieved</th><th>CASE identifier</th><th>Sessions mapped to it</th></tr><tr><td><code>3-5-ETS1-3</code></td><td>New York State P-12 Science Learning Standards</td><td>4 and 5</td><td>Plan and carry out fair tests in which variables are controlled and failure points are considered to identify aspects of a model or prototype that can be improved.</td><td>Grade 4: <code>f9f9243b-9eff-43a3-9c15-5036ca8df270</code><br>Grade 5: <code>3f6f1ba6-3b02-42b3-9525-08fe3f98f552</code></td><td>1, 2, 3, 4, 5, 6, 7, 8</td></tr><tr><td><code>NY-4.MD.5.a</code></td><td>New York Next Generation Mathematics Learning Standards</td><td>4</td><td>Recognize an angle is measured with reference to a circle with its center at the common endpoint of the rays, by considering the fraction of the circular arc between the points where the two rays intersect the circle. An angle that turns through 1/360 of a circle is called a “one-degree angle,” and can be used to measure angles.<br><i>The retrieved wording sets the fraction 1/360 in mathematical notation. This page writes it on one line.</i></td><td>Grade 4: <code>70d72574-d7cc-11e8-824f-0242ac160002</code></td><td>1</td></tr><tr><td><code>NY-4.MD.2</code></td><td>New York Next Generation Mathematics Learning Standards</td><td>4</td><td>Use the four operations to solve word problems involving distances, intervals of time, liquid volumes, masses of objects, and money.</td><td>Grade 4: <code>70d71641-d7cc-11e8-824f-0242ac160002</code></td><td>1, 2, 5</td></tr><tr><td><code>NY-4.MD.5.b</code></td><td>New York Next Generation Mathematics Learning Standards</td><td>4</td><td>Recognize an angle that turns through n one-degree angles is said to have an angle measure of n degrees.<br><i>The retrieved wording sets the letter n in italics. This page prints it plain.</i></td><td>Grade 4: <code>70d730ef-d7cc-11e8-824f-0242ac160002</code></td><td>2, 6</td></tr><tr><td><code>3-5-ETS1-1</code></td><td>New York State P-12 Science Learning Standards</td><td>4 and 5</td><td>Define a simple design problem reflecting a need or a want that includes specified criteria for success and constraints on materials, time, or cost.</td><td>Grade 4: <code>2fb0cfd6-caa2-4224-8c1b-12144f8dd898</code><br>Grade 5: <code>b7b9475e-16fc-49fc-9829-bc6ef6334d69</code></td><td>3, 4, 7, 8</td></tr><tr><td><code>3-5-ETS1-2</code></td><td>New York State P-12 Science Learning Standards</td><td>4 and 5</td><td>Generate and compare multiple possible solutions to a problem based on how well each is likely to meet the criteria and constraints of the problem.</td><td>Grade 4: <code>46281f20-643c-4093-a34d-cd41d7aa02be</code><br>Grade 5: <code>4a149369-456b-45f1-b494-3ca247cd88f7</code></td><td>4, 6, 8</td></tr></table></section><section><h2>By session</h2><table><tr><th>Session</th><th>Mapped to</th></tr><tr><td><a href="session01_advanced_driving_base.html?v=10">1. Build the Advanced Driving Base and move it with Python</a></td><td><code>3-5-ETS1-3</code>, <code>NY-4.MD.5.a</code>, <code>NY-4.MD.2</code></td></tr><tr><td><a href="session02_quarter_turn_and_square.html?v=10">2. Name the numbers, find the quarter turn, drive a square</a></td><td><code>3-5-ETS1-3</code>, <code>NY-4.MD.5.b</code>, <code>NY-4.MD.2</code></td></tr><tr><td><a href="session03_stop_at_the_line.html?v=10">3. Stop at the line with the colour sensor</a></td><td><code>3-5-ETS1-3</code>, <code>3-5-ETS1-1</code></td></tr><tr><td><a href="session04_delivery_run_and_demo.html?v=10">4. The delivery run, and demo day</a></td><td><code>3-5-ETS1-1</code>, <code>3-5-ETS1-2</code>, <code>3-5-ETS1-3</code></td></tr><tr><td><a href="session05_count_the_lines.html?v=10">5. Beep, show a number, and count the lines</a></td><td><code>3-5-ETS1-3</code>, <code>NY-4.MD.2</code></td></tr><tr><td><a href="session06_turns_that_measure_themselves.html?v=10">6. Turns that measure themselves</a></td><td><code>3-5-ETS1-2</code>, <code>3-5-ETS1-3</code>, <code>NY-4.MD.5.b</code></td></tr><tr><td><a href="session07_follow_the_line.html?v=10">7. Follow the line</a></td><td><code>3-5-ETS1-3</code>, <code>3-5-ETS1-1</code></td></tr><tr><td><a href="session08_your_own_functions_and_mission.html?v=10">8. Your own functions, your own mission</a></td><td><code>3-5-ETS1-1</code>, <code>3-5-ETS1-2</code>, <code>3-5-ETS1-3</code></td></tr></table><p class="note">No CSTA code and no New York Computer Science and Digital Fluency code appears anywhere on this site. The graph returned no New York computer science codes on 12 November 2026.</p></section></div></main><nav class="pager noprint"><span></span><a href="spike_course_hub.html?v=10">Course home</a><span></span></nav><footer><div class="wrap"><p>SPIKE Prime with Python, grades 4 and 5. Part 1 is sessions 1 to 4. Part 2 is sessions 5 to 8, for a class that continues. The class robot is LEGO's Advanced Driving Base. LEGO's building instructions are linked, not copied.</p><p>Mapped to the New York State P-12 Science Learning Standards and the New York Next Generation Mathematics Learning Standards. Codes retrieved through the Learning Commons Knowledge Graph (CASE Network) on 12 November 2026. <a href="standards_map.html?v=10">Full standards map</a> &middot; <a href="course_constraints.html?v=10">Course constraints, published 12 November 2026</a></p><p>LEGO and SPIKE are trademarks of the LEGO Group, which does not sponsor or endorse this course.</p></div></footer>
 <script>
 document.addEventListener('click', function(e){
   var b = e.target.closest('button.rev');
