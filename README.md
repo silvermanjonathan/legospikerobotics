@@ -94,6 +94,15 @@ The constraints page carries the full list. The ones that differ from the style 
 
 ## Release log
 
+### 19 November 2026, version pin 15: sheet notes no longer cover a mark
+
+On sheet B1 (and B3, B5) the notes "goes below" and "goes to the right" were printed over
+the lower launch line mark. The size bar and the notes now share one line along the
+bottom edge of every sheet, below every mark, and no star is drawn there. The MOON BASE
+label in lanes 2 and 3 was cut by the seam between columns C and D; it now sits wholly
+on one sheet. No line, dock, or mark that a mission uses moved. All 24 sheets were
+rendered and looked at side by side.
+
 ### 19 November 2026, version pin 14: a program for every mission, in the course and in the PDF
 
 What changed:

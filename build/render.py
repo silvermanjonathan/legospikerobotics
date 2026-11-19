@@ -45,7 +45,7 @@ PART2 = [x for x in SESSIONS if x.get("part", 1) == 2]
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.environ.get("SPIKE_OUT", ROOT)
-VERSION = "14"
+VERSION = "15"
 COURSE = "SPIKE Prime with Python"
 HUB = "spike_course_hub"
 ROBOT = "robot_advanced_driving_base"
@@ -2148,8 +2148,9 @@ def render_mat():
          '<h3>Every version of the robot</h3><ul>'
          '<li>Nothing printed on the mat is for one robot only. This printing changed the '
          'rules, the numbers, and the programs on this page. In the PDF it changed page 1 and '
-         'added the program pages after the sheets. The 24 sheets are the same as before, so a '
-         'mat that is already printed and taped is still right.</li>'
+         'added the program pages after the sheets. On the sheets only small things moved: the notes along each sheet\'s '
+         'bottom edge, and the moon base label in lanes 2 and 3. No line, dock, or mark that '
+         'a mission uses moved, so a mat that is already printed and taped is still right.</li>'
          '<li>The mat was laid out for the largest class robot, about 22 cm long and 20 cm '
          'wide. A smaller robot has more room in every mission.</li>'
          '<li>The three robots do not have to match. One run can have a robot with a colour '

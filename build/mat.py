@@ -288,6 +288,8 @@ def lane_features(k):
         x, y = rnd.uniform(1.5, W - 1.5), rnd.uniform(3.4, LANE_H - 1.2)
         if abs(y - LANE_Y) < 11.5 and x > 14:
             continue
+        if (oy + y) % SHEET_H > SHEET_H - 2.2:
+            continue                      # keep the notes along a sheet's bottom edge clear
         p.append(_star(x, oy + y, rnd.choice([0.28, 0.36, 0.5])))
     p.append(_t(2.0, oy + 3.3, "LANE %d" % (k + 1), 1.4, TEAL, 800))
     p.append(_t(2.0, oy + 4.5, "%s ROCKET" % crew, 0.75, colour, 800))
@@ -339,8 +341,15 @@ def lane_features(k):
                  % (cx + dx, cy + dy, r))
     p.append('<rect x="%.2f" y="%.2f" width="%.2f" height="%.2f" fill="none" stroke="%s" '
              'stroke-width="0.5"/>' % (x0, y0, x1 - x0, y1 - y0, TEAL))
-    p.append(_t(cx, y0 + 2.4, "MOON BASE", 1.2, TEAL, 800, "middle"))
-    p.append(_t(cx, y0 + 3.6, "land with both big wheels inside", 0.62, TEAL, 500, "middle"))
+    # the label sits wholly on one sheet: if a seam would cut it, it moves to the wider side
+    tx, half = cx, 5.6
+    seam = round(cx / SHEET_W) * SHEET_W
+    if abs(cx - seam) < half + SAFE:
+        left, right = (x0 + 0.6, seam - SAFE - 0.3), (seam + SAFE + 0.3, x1 - 0.6)
+        lo, hi = left if left[1] - left[0] >= right[1] - right[0] else right
+        tx = (lo + hi) / 2
+    p.append(_t(tx, y0 + 2.4, "MOON BASE", 1.2, TEAL, 800, "middle"))
+    p.append(_t(tx, y0 + 3.6, "land with both big wheels inside", 0.62, TEAL, 500, "middle"))
     # a planet in the lane's colour, in the empty corner
     p.append(_planet(10.5, oy + 43.5, 4.2, colour, tint))
     # where one lane ends and the next begins
@@ -377,15 +386,19 @@ def sheet_svg(col, row):
     # the sheet's own name, its neighbours, and a bar to check the print size
     bx, by = sx + SHEET_W - SAFE - 0.3, sy + SHEET_H - SAFE - 0.3
     p.append(_t(bx, by, name, 0.9, SOFT, 800, "end"))
-    nx, ny = sx + SAFE + 0.4, sy + SHEET_H - SAFE - 1.2
-    if col + 1 < COLS:
-        p.append(_t(nx, ny, "%s goes to the right" % sheet_name(col + 1, row), 0.42, SOFT, 500))
+    # one line along the bottom edge, below every mark of a lane: the size bar, then
+    # the neighbours. Nothing else is drawn this low, so the notes cover no mark.
+    cx, cy = sx + SAFE + 0.4, sy + SHEET_H - SAFE - 0.35
+    p.append(_line(cx, cy, cx + 5, cy, SOFT, 0.08) + _line(cx, cy - 0.25, cx, cy + 0.25, SOFT, 0.08)
+             + _line(cx + 5, cy - 0.25, cx + 5, cy + 0.25, SOFT, 0.08)
+             + _t(cx + 5.3, cy + 0.15, "this bar is 5 cm long", 0.42, SOFT, 500))
+    notes = []
     if row + 1 < ROWS:
-        p.append(_t(nx, ny - 0.6, "%s goes below" % sheet_name(col, row + 1), 0.42, SOFT, 500))
-    cx, cy = sx + SAFE + 0.4, sy + SHEET_H - SAFE - 0.4
-    p.append(_line(cx, cy, cx + 5, cy, SOFT, 0.08) + _line(cx, cy - 0.3, cx, cy + 0.3, SOFT, 0.08)
-             + _line(cx + 5, cy - 0.3, cx + 5, cy + 0.3, SOFT, 0.08)
-             + _t(cx + 5.4, cy + 0.17, "this bar is 5 cm long", 0.42, SOFT, 500))
+        notes.append("%s goes below" % sheet_name(col, row + 1))
+    if col + 1 < COLS:
+        notes.append("%s goes to the right" % sheet_name(col + 1, row))
+    if notes:
+        p.append(_t(cx + 10.2, cy + 0.15, ", ".join(notes), 0.42, SOFT, 500))
     p.append('</svg>')
     return "".join(p)
 
