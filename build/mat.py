@@ -411,51 +411,108 @@ def overview_svg(caption):
     return "".join(p)
 
 
-# ------------------------------------------------------------------ sensor programs
-# Session 3 teaches the colour sensor program. These two follow the same three lines,
-# start, wait, stop, for the two sensors the session pages do not use. Python's
-# distance_sensor.distance counts in tenths of a cm and gives -1 when nothing is in
-# range, so the test asks for more than 0 as well.
-DISTANCE_PY = '''from hub import port
-import distance_sensor
-import motor_pair
-import runloop
+# ------------------------------------------------------------------ the programs
+# One whole program for every mission and every kind of robot, in the course's own
+# shape: the tool lines, names in capitals for the numbers, the frame, one move per
+# line. The colour sensor lines are session 3's. The distance sensor and force sensor
+# lines follow LEGO's own Python lessons: distance_sensor.distance(port) counts in
+# tenths of a cm and gives -1 when nothing is measured, so the test asks for more than
+# 0 as well; force_sensor.pressed(port) is True while the button is pressed.
+#
+# Every number is a first try for the Advanced Driving Base in lane 1. runcheck.py runs
+# each program against the stand-in modules and checks the moves in EXPECT.
+_MOVE = "    await motor_pair.move_for_degrees(motor_pair.PAIR_1, %s, %s, velocity=250)"
+_START = "    motor_pair.move(motor_pair.PAIR_1, 0, velocity=250)"
+_STOP = "    motor_pair.stop(motor_pair.PAIR_1)"
+QUARTER_FIRST = 180                        # session 2's first try for the quarter turn
+BACK_FIRST = -90                           # a short move backward, off the wall
+DARK_FIRST = 50                            # session 3's first try
 
-WALL_SENSOR = port.F
-NEAR = %d
+# how each kind of robot gets to the dock: tool line, names, lines, moves
+_TO_DOCK = {
+    "none": (None, ["TO_DOCK = %d" % degrees_for(DOCK_CM[0])],
+             ["    # Move to the dock. TO_DOCK is the number for your lane and your wheels.",
+              _MOVE % ("TO_DOCK", 0)],
+             [("move", degrees_for(DOCK_CM[0]), 0, 250)]),
+    "colour": ("color_sensor", ["LINE_SENSOR = port.B", "DARK = %d" % DARK_FIRST],
+               ["    # Start the wheels. Wait until the sensor is over the dock. Stop the wheels.",
+                _START,
+                "    await runloop.until(lambda: color_sensor.reflection(LINE_SENSOR) < DARK)",
+                _STOP],
+               [("start", 0, 250), ("stop",)]),
+    "distance": ("distance_sensor", ["WALL_SENSOR = port.F", "NEAR = %d" % (WALL_FIRST_TRY * 10)],
+                 ["    # Start the wheels. Wait until the wall is near. Stop the wheels.",
+                  _START,
+                  "    await runloop.until(lambda: 0 < distance_sensor.distance(WALL_SENSOR) < NEAR)",
+                  _STOP],
+                 [("start", 0, 250), ("stop",)]),
+    "force": ("force_sensor", ["BUMPER = port.F"],
+              ["    # Start the wheels. Wait until the wall presses the bumper. Stop the wheels.",
+               _START,
+               "    await runloop.until(lambda: force_sensor.pressed(BUMPER))",
+               _STOP],
+              [("start", 0, 250), ("stop",)]),
+}
+_LAND = ["    # Turn a quarter turn to the right, then land on the moon base.",
+         _MOVE % ("QUARTER_TURN", 100), _MOVE % ("FORWARD", 0)]
+_LAND_X = [("move", QUARTER_FIRST, 100, 250), ("move", 360, 0, 250)]
+_BACK = ["    # Move backward a little, off the wall. The number has a minus sign.",
+         _MOVE % ("BACK", 0)]
+_DANCE = ["    # Moon dance: four quarter turns make one full spin.",
+          "    for count in range(4):",
+          "    " + _MOVE % ("QUARTER_TURN", 100)]
 
 
-async def main():
-    # The left drive motor is in port A. The right drive motor is in port E.
-    motor_pair.pair(motor_pair.PAIR_1, port.A, port.E)
-
-    # Start the wheels. Wait until the wall is near. Stop the wheels.
-    motor_pair.move(motor_pair.PAIR_1, 0, velocity=250)
-    await runloop.until(lambda: 0 < distance_sensor.distance(WALL_SENSOR) < NEAR)
-    motor_pair.stop(motor_pair.PAIR_1)
-
-
-runloop.run(main())''' % (WALL_FIRST_TRY * 10)
-
-FORCE_PY = '''from hub import port
-import force_sensor
-import motor_pair
-import runloop
-
-BUMPER = port.F
+def _program(tool, names, body):
+    tools = sorted(t for t in (tool, "motor_pair", "runloop") if t)
+    lines = ["from hub import port"] + ["import " + t for t in tools]
+    if names:
+        lines += [""] + names
+    lines += ["", "", "async def main():",
+              "    # The left drive motor is in port A. The right drive motor is in port E.",
+              "    motor_pair.pair(motor_pair.PAIR_1, port.A, port.E)", ""]
+    return "\n".join(lines + body + ["", "", "runloop.run(main())"])
 
 
-async def main():
-    # The left drive motor is in port A. The right drive motor is in port E.
-    motor_pair.pair(motor_pair.PAIR_1, port.A, port.E)
-
-    # Start the wheels. Wait until the bumper is pressed. Stop the wheels.
-    motor_pair.move(motor_pair.PAIR_1, 0, velocity=250)
-    await runloop.until(lambda: force_sensor.pressed(BUMPER))
-    motor_pair.stop(motor_pair.PAIR_1)
+KIND = {"none": "A robot with no sensor", "colour": "A robot with a colour sensor",
+        "distance": "A robot with a distance sensor", "force": "A robot with a force sensor",
+        "any": "Every robot"}
+_READINGS = [90, 90, 10]                   # white paper, white paper, the dock
+_PAIRED = [("pair", "A", "E")]
+PROGRAMS = []                              # dicts: key, mission, kind, code, expect, script
 
 
-runloop.run(main())'''
+def _add(key, mission, kind, tool, names, body, expect):
+    code = _program(tool, names, body)
+    compile(code, key, "exec")
+    PROGRAMS.append(dict(key=key, mission=mission, kind=kind, code=code,
+                         expect=_PAIRED + expect, script=_READINGS if tool == "color_sensor" else None))
 
-for _name, _code in (("DISTANCE_PY", DISTANCE_PY), ("FORCE_PY", FORCE_PY)):
-    compile(_code, _name, "exec")
+
+_tool, _nm, _bd, _ex = _TO_DOCK["none"]
+_add("m1", 1, "any", _tool, _nm, _bd, _ex)
+_add("m2", 2, "any", None, ["FORWARD = 360", "QUARTER_TURN = %d" % QUARTER_FIRST],
+     ["    # One side of the square and one quarter turn, four times.",
+      "    for count in range(4):", "    " + _MOVE % ("FORWARD", 0),
+      "    " + _MOVE % ("QUARTER_TURN", 100)],
+     [("move", 360, 0, 250), ("move", QUARTER_FIRST, 100, 250)] * 4)
+for _k in ("colour", "distance", "force"):
+    _tool, _nm, _bd, _ex = _TO_DOCK[_k]
+    _add("m3-" + _k, 3, _k, _tool, _nm, _bd, _ex)
+for _k in ("colour", "distance", "force", "none"):
+    _tool, _nm, _bd, _ex = _TO_DOCK[_k]
+    _names = _nm + ["FORWARD = 360", "QUARTER_TURN = %d" % QUARTER_FIRST]
+    if _k == "force":
+        _names.append("BACK = %d" % BACK_FIRST)
+        _add("m4-" + _k, 4, _k, _tool, _names, _bd + [""] + _BACK + [""] + _LAND,
+             _ex + [("move", BACK_FIRST, 0, 250)] + _LAND_X)
+    else:
+        _add("m4-" + _k, 4, _k, _tool, _names, _bd + [""] + _LAND, _ex + _LAND_X)
+_tool, _nm, _bd, _ex = _TO_DOCK["colour"]
+_add("m5", 5, "colour", _tool, _nm + ["FORWARD = 360", "QUARTER_TURN = %d" % QUARTER_FIRST],
+     _bd + [""] + _LAND + [""] + _DANCE,
+     _ex + _LAND_X + [("move", QUARTER_FIRST, 100, 250)] * 4)
+
+
+def program(key):
+    return [p for p in PROGRAMS if p["key"] == key][0]

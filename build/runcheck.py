@@ -124,6 +124,10 @@ def main():
                      render.RUNS_NEEDED,
                      ("  (%d older runs no longer count)" % len(stale)) if stale else ""))
 
+    print("challenge mat programs:")
+    for pr in render.MAT.PROGRAMS:
+        check_program("mat-" + pr["key"], pr["code"], pr["expect"], pr["script"])
+
     # the port map is the same wherever it is printed
     for name in (render.ROBOT, render.LEDGER, render.CONSTRAINTS):
         text = open(os.path.join(render.OUT, name + ".html")).read()

@@ -104,6 +104,9 @@ MOVE = re.compile(r"await motor_pair\.move_for_degrees\(motor_pair\.PAIR_1, ([^,
 START = re.compile(r"motor_pair\.move\(motor_pair\.PAIR_1, ([^,]+), velocity=(\d+)\)$")
 PAIR = re.compile(r"motor_pair\.pair\(motor_pair\.PAIR_1, port\.([A-F]), port\.([A-F])\)$")
 UNTIL = re.compile(r"await runloop\.until\(lambda: (.+)\)$")
+# the challenge mat's two extra sensors: a wall that is near, and a pressed bumper
+NEAR = re.compile(r"await runloop\.until\(lambda: 0 < distance_sensor\.distance\((\w+)\) < ([A-Z_]+)\)$")
+PRESSED = re.compile(r"await runloop\.until\(lambda: force_sensor\.pressed\((\w+)\)\)$")
 SLEEP = re.compile(r"await runloop\.sleep_ms\((\d+)\)$")
 FOR = re.compile(r"for count in range\(([A-Z_]+|\d+|____)\):$")
 WHILE = re.compile(r"while (.+):$")
@@ -127,6 +130,7 @@ class Program:
     def __init__(self, code, context):
         full = context or code
         self.consts, self.ports, self.yaw_names = set(), {}, set()
+        self.near_names = set()    # names that hold a distance in tenths of a cm
         for src in (context or "", code):
             for ln in src.split("\n"):
                 t = ln.strip()
@@ -136,6 +140,9 @@ class Program:
                 m = SENSOR.match(t)
                 if m:
                     self.ports[m.group(1)] = m.group(2)
+                m = NEAR.match(t)
+                if m:
+                    self.near_names.add(m.group(2))
                 m = re.search(r"abs\(motion_sensor\.tilt_angles\(\)\[0\]\) [<>] ([A-Z_]+)", t)
                 if m:
                     self.yaw_names.add(m.group(1))
@@ -254,6 +261,9 @@ def translate(code, context=None):
                 if name in P.yaw_names and v != "____":
                     P.used.add("yaw")
                     v = _yaw_num(v)
+                if name in P.near_names and v != "____":
+                    P.used.add("near")
+                    v = _yaw_num(v)
                 out.append(at(node, B.blk("variables", "set", B.dd(name), "to", B.num(v))))
                 continue
             m = PAIR.match(t)
@@ -279,6 +289,18 @@ def translate(code, context=None):
                 continue
             if t == "motor_pair.stop(motor_pair.PAIR_1)":
                 out.append(at(node, B.blk("movement", "stop moving")))
+                continue
+            m = NEAR.match(t)
+            if m:
+                P.used.add("near")
+                out.append(at(node, B.blk("control", "wait until", B.boolean(
+                    "sensors", B.port(P.ports[m.group(1)]), "is", B.dd("closer than"),
+                    B.var(m.group(2)), B.dd("cm"), "?"))))
+                continue
+            m = PRESSED.match(t)
+            if m:
+                out.append(at(node, B.blk("control", "wait until", B.boolean(
+                    "sensors", B.port(P.ports[m.group(1)]), "is", B.dd("pressed"), "?"))))
                 continue
             m = UNTIL.match(t)
             if m:
@@ -441,6 +463,9 @@ def _note(P, whole):
     if "yaw" in P.used:
         out.append("Python counts the robot's turn in tenths. The yaw angle block counts "
                    "whole ones, so 900 in Python is 90 in the blocks.")
+    if "near" in P.used:
+        out.append("Python counts the distance to the wall in tenths of a cm. The closer "
+                   "than block counts whole cm, so 150 in Python is 15 in the blocks.")
     if "sleep" in P.used:
         ms = P.sleeps[0]
         out.append("The wait block counts seconds. Python's sleep_ms counts thousandths of "

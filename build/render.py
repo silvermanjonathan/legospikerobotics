@@ -45,7 +45,7 @@ PART2 = [x for x in SESSIONS if x.get("part", 1) == 2]
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.environ.get("SPIKE_OUT", ROOT)
-VERSION = "13"
+VERSION = "14"
 COURSE = "SPIKE Prime with Python"
 HUB = "spike_course_hub"
 ROBOT = "robot_advanced_driving_base"
@@ -1836,23 +1836,71 @@ MAT_VERSIONS = [
 ]
 
 
-def _mat_blocks(wait):
-    """The start, wait, stop stack with one sensor test in the wait block."""
-    return [B.hat("events", "when program starts"),
-            B.blk("movement", "set movement motors to", B.dd("A+E")),
-            B.blk("movement", "set movement speed to", B.num(str(py2blocks.percent(250))), "%"),
-            B.blk("movement", "start moving", B.dd("straight: 0")),
-            B.blk("control", "wait until", wait),
-            B.blk("movement", "stop moving")]
-
-
-def _mat_program(py, stacks, note):
-    """A Python program and the same program as blocks in a closed panel."""
-    return ('<pre class="py"><code>' + indent_guides(highlight(py)) + '</code></pre>'
-            '<details class="wbpanel"><summary><span class="wbsum">Word Blocks</span>'
+def mat_program_html(key, panel=True):
+    """One of the mat's programs in Python, and the same program as blocks: in a closed
+    panel on the page, in the open in the PDF. py2blocks writes the blocks from the
+    Python, so the two cannot drift apart."""
+    code = MAT.program(key)["code"]
+    stacks, _whole, note = py2blocks.translate(code)
+    py = '<pre class="py"><code>' + indent_guides(highlight(code)) + '</code></pre>'
+    drawn = B.stacks(stacks, label="The same program in Word Blocks", note=note)
+    if not panel:
+        return py + '<div class="wbbody">' + drawn + '</div>'
+    return (py + '<details class="wbpanel"><summary><span class="wbsum">Word Blocks</span>'
             '<span class="wbwhat">the same program as blocks</span></summary><div class="wbbody">'
-            + B.stacks(stacks, label="The same program in Word Blocks", note=note)
-            + '</div></details>')
+            + drawn + '</div></details>')
+
+
+def mat_program_groups():
+    """The mat's programs in mission order, for the page and for the PDF: a list of
+    (mission number, mission name, [(heading, lead sentence, program key), ...])."""
+    lane1 = str(MAT.DOCK_CM[0])
+    lead = {
+        "m1": "<code>TO_DOCK = " + str(MAT.degrees_for(MAT.DOCK_CM[0])) + "</code> is a first "
+              "try for big wheels in lane 1, where the dock is " + lane1 + " cm away. Take "
+              "the number for your wheels and your lane from the table in Find your robot's "
+              "numbers.",
+        "m2": "<code>FORWARD = 360</code> is one full turn of the wheels. On small wheels "
+              "start from " + str(MAT.degrees_for(MAT.WHEEL_CM, MAT.SMALL_WHEEL_CM)) + ". "
+              "<code>QUARTER_TURN = " + str(MAT.QUARTER_FIRST) + "</code> is a first try "
+              "that every crew replaces.",
+        "m3-colour": "<code>DARK = " + str(MAT.DARK_FIRST) + "</code> and <code>port.B</code> "
+                     "are first tries. Measure the white paper and the black dock, and choose "
+                     "a number between the two readings.",
+        "m3-distance": "<code>NEAR = " + str(MAT.WALL_FIRST_TRY * 10) + "</code> is "
+                       + str(MAT.WALL_FIRST_TRY) + " cm, because Python counts this distance "
+                       "in tenths of a cm. It and <code>port.F</code> are first tries.",
+        "m3-force": "<code>port.F</code> is a first try. Read the letter on the hub beside "
+                    "the sensor's cable.",
+        "m4-colour": "The first part is the mission 3 program. Then come the quarter turn and "
+                     "the move onto the moon base.",
+        "m4-distance": "The first part is the mission 3 program. Then come the quarter turn "
+                       "and the move onto the moon base.",
+        "m4-force": "The robot is touching the wall when it stops, so it moves backward a "
+                    "little before it turns. <code>BACK = " + str(MAT.BACK_FIRST) + "</code> "
+                    "is a first try.",
+        "m4-none": "The first move is the mission 1 program. After a lane swap, change "
+                   "<code>TO_DOCK</code> and nothing else.",
+        "m5": "This is the mission 4 program for a colour sensor with three lines added at "
+              "the end. A crew with another robot adds the same three lines to the end of "
+              "its own mission 4 program.",
+    }
+    names = dict((m["n"], m["name"]) for m in MAT.MISSIONS)
+    out = []
+    for n in sorted(names):
+        items = [(MAT.KIND[p["kind"]], lead[p["key"]], p["key"])
+                 for p in MAT.PROGRAMS if p["mission"] == n]
+        out.append((n, names[n], items))
+    return out
+
+
+MAT_PROGRAM_INTRO = (
+    'Each program is whole. Copy it, then change the numbers in capitals for your robot '
+    'and your lane. Every number is a first try for the Advanced Driving Base in lane 1. '
+    'If your drive motors are not in ports A and E, change those two letters, left motor '
+    'first. Each program is in Python, with the same program in Word Blocks. In Word '
+    'Blocks a name in capitals is a variable: make it in the Variables part of the app '
+    'before you build the stack.')
 
 
 def _edge_words(cm):
@@ -1889,14 +1937,15 @@ def render_mat():
                                 "lines are the edges of the sheets. Each robot starts on its "
                                 "launch pad on the left and moves forward to the right.")
              + '<div class="toolbar noprint"><a class="btn" href="' + MATPDF + '?v=' + VERSION
-             + '">Download the mat to print (PDF, ' + str(n_sheets + 1) + ' pages)</a></div></section>')
+             + '">Download the mat and the programs to print (PDF)</a></div></section>')
     b.append('<section><h2>Make the mat</h2><ol>'
              '<li>Print the file in colour at 100 % size on letter paper, with the paper '
              'upright. In the print window choose Actual size, not Fit to page.</li>'
              '<li>Check one sheet with a ruler. The bar in its bottom left corner is 5 cm long.</li>'
              '<li>Page 1 is a picture of the finished mat. The other ' + str(n_sheets) + ' pages '
              'are the sheets. Each sheet has its name in its bottom right corner: a letter for '
-             'its column and a number for its row.</li>'
+             'its column and a number for its row. After the sheets come the programs for every '
+             'mission, in Python and in Word Blocks, to hand to each crew.</li>'
              '<li>Each team tapes one lane. Lane 1 is rows 1 and 2, lane 2 is rows 3 and 4, and '
              'lane 3 is rows 5 and 6. Lay the 8 sheets out face up, edge to edge, like the '
              'picture. Do not cut anything off and do not overlap the sheets. The white strip '
@@ -1998,38 +2047,33 @@ def render_mat():
     for m in MAT.MISSIONS:
         label = "Bonus mission" if m["n"] == 5 else "Mission " + str(m["n"])
         how = ('<h3>How each robot stops at the dock</h3><table><tr><th>Your robot has</th>'
-               '<th>What its program does</th></tr>' + way_rows + '</table><p>The programs are '
-               'under <a href="#sensors">Stop at the dock with a sensor</a>.</p>'
+               '<th>What its program does</th></tr>' + way_rows + '</table><p>How to set up a '
+               'wall is under <a href="#sensors">Stop at the dock with a sensor</a>.</p>'
                if m.get("ways") else "")
         b.append('<section class="brief" id="mission' + str(m["n"]) + '"><p class="chunk-no">'
                  + label + ' &middot; ' + str(m["points"]) + ' points &middot; uses session '
                  + str(m["session"]) + '</p><h2>' + m["name"] + '</h2>'
                  '<table><tr><th>Start</th><td>' + m["start"] + '</td></tr>'
                  '<tr><th>Goal</th><td>' + m["goal"] + '</td></tr>'
-                 '<tr><th>Rule</th><td>' + m["rule"] + '</td></tr></table>' + how
+                 '<tr><th>Rule</th><td>' + m["rule"] + '</td></tr>'
+                 '<tr><th>Program</th><td><a href="#prog' + str(m["n"]) + '">The program for '
+                 'this mission</a>, in Python and in Word Blocks.</td></tr></table>' + how
                  + '<h3>Points</h3><table><tr><th>What happens</th><th>Points</th></tr>'
                  '<tr><td>Each robot that ' + m["does"] + '</td><td class="mono">' + str(m["each"])
                  + ' each, up to ' + str(MAT.LANES * m["each"]) + '</td></tr>'
                  '<tr><td>All three robots do it on the same run</td><td class="mono">'
                  + str(m["bonus"]) + ' more</td></tr></table></section>')
     # ---- the sensor programs
-    colour_py = SESSION03["chunks"][1]["code"]
-    c_stacks, _whole, c_note = py2blocks.translate(colour_py)
     near = MAT.WALL_FIRST_TRY
-    dist_stack = _mat_blocks(B.boolean("sensors", B.port("F"), "is", B.dd("closer than"),
-                                       B.num(str(near)), B.dd("cm"), "?"))
-    force_stack = _mat_blocks(B.boolean("sensors", B.port("F"), "is", B.dd("pressed"), "?"))
-    speed_note = ("The speed block gives a percent of the motor's top speed: Python's "
-                  "<code>velocity=250</code> is about " + str(py2blocks.percent(250)) + " %.")
     b.append('<section id="sensors"><h2>Stop at the dock with a sensor</h2><p>Every program '
              'here has the same three steps: start the wheels, wait for the sensor, stop the '
-             'wheels. Only the wait changes from one sensor to the next. Missions 3 and 4 use '
-             'these programs.</p>'
+             'wheels. Only the wait changes from one sensor to the next. These are the '
+             'programs for mission 3, and the first part of every mission 4 program.</p>'
              '<h3>A colour sensor</h3><p>' + ways["colour"][3] + ' '
              '<a href="' + link(SESSION03["slug"]) + '">Session 3</a> teaches this program. '
              '<code>DARK</code> is a number between the sensor\'s reading over the white paper '
              'and its reading over the black dock. Each crew measures both on its own robot.</p>'
-             + _mat_program(colour_py, c_stacks, c_note)
+             + mat_program_html("m3-colour")
              + '<h3>A distance sensor</h3><p>The distance sensor measures how far away the '
              'thing in front of it is. The mat is flat, so the crew gives the sensor a wall to '
              'measure.</p><ul>'
@@ -2040,10 +2084,7 @@ def render_mat():
              + _edge_words(MAT.wall_from_edge(0)) + ', in lane 2 it is '
              + _edge_words(MAT.wall_from_edge(1)) + ', and in lane 3 it is '
              + _edge_words(MAT.wall_from_edge(2)) + '.</li></ul>'
-             + _mat_program(MAT.DISTANCE_PY, [dist_stack],
-                            [speed_note, "Python counts this distance in tenths of a cm and the "
-                             "block counts whole cm, so <code>NEAR = " + str(near * 10)
-                             + "</code> is closer than " + str(near) + " cm."])
+             + mat_program_html("m3-distance")
              + '<ul><li><code>NEAR = ' + str(near * 10) + '</code> is a first try. Python counts '
              'this distance in tenths of a cm, so ' + str(near * 10) + ' is ' + str(near)
              + ' cm. A bigger number stops the robot sooner. A smaller number stops it later.</li>'
@@ -2057,7 +2098,7 @@ def render_mat():
              'heavy, so the robot does not push it: a box with books inside works.</li>'
              '<li>The force sensor is the part of the robot that is farthest forward, so that '
              'it reaches the wall first.</li></ul>'
-             + _mat_program(MAT.FORCE_PY, [force_stack], speed_note)
+             + mat_program_html("m3-force")
              + '<ul><li><code>port.F</code> is a first try. Read the letter on the hub beside '
              'the sensor\'s cable.</li>'
              '<li>In mission 4 the robot is touching the wall when it stops. Move backward a '
@@ -2065,6 +2106,21 @@ def render_mat():
              '<h3>No sensor</h3><p>' + ways["none"][3] + ' Start from the number in '
              '<a href="#numbers">Find your robot\'s numbers</a>. After a lane swap, read the '
              'ruler of the new lane and change that one number.</p></section>')
+    progs = ['<section id="programs"><h2>A program for every mission</h2><p>'
+             + MAT_PROGRAM_INTRO + '</p>']
+    for n, name, items in mat_program_groups():
+        progs.append('<h3 id="prog' + str(n) + '">' + ("Bonus mission" if n == 5 else "Mission " + str(n))
+                     + ': ' + name + '</h3>')
+        if n == 3:
+            progs.append('<p>A robot with a sensor uses its program from <a href="#sensors">Stop '
+                         'at the dock with a sensor</a>, and changes nothing after the swap. A '
+                         'robot with no sensor uses the mission 1 program and changes '
+                         '<code>TO_DOCK</code> to the number for its new lane.</p>')
+            continue
+        for kind, lead, key in items:
+            progs.append('<p><b>' + kind + '.</b> ' + lead + '</p>' + mat_program_html(key))
+    progs.append('</section>')
+    b.append("".join(progs))
     b.append('<section><h2>The match</h2><p>In the last session the class flies the whole '
              'space mission. A match is 3 minutes long, and all three robots are on the mat for '
              'all of it.</p><ul>'
@@ -2091,9 +2147,9 @@ def render_mat():
          'then the match</td><td>The stop at the dock, then a quarter turn and a move.</td></tr></table>'
          '<h3>Every version of the robot</h3><ul>'
          '<li>Nothing printed on the mat is for one robot only. This printing changed the '
-         'rules, the numbers, and the programs on this page, and page 1 of the PDF. The 24 '
-         'sheets are the same as before, so a mat that is already printed and taped is still '
-         'right.</li>'
+         'rules, the numbers, and the programs on this page. In the PDF it changed page 1 and '
+         'added the program pages after the sheets. The 24 sheets are the same as before, so a '
+         'mat that is already printed and taped is still right.</li>'
          '<li>The mat was laid out for the largest class robot, about 22 cm long and 20 cm '
          'wide. A smaller robot has more room in every mission.</li>'
          '<li>The three robots do not have to match. One run can have a robot with a colour '
@@ -2152,9 +2208,11 @@ def render_mat():
          'Printed black can read higher than tape. If the readings are close, lay black tape '
          'over the printed dock. No picture is printed between the launch line and the dock '
          'where the middle of the robot passes.</li>'
-         '<li>The distance sensor program and the force sensor program were written for this '
-         'page and have not been run on a hub. Their block stacks were not built in the SPIKE '
-         'App. Build and run each one once before a crew uses it, and check that '
+         '<li>Every program on this page runs to the end against the build\'s stand-in for '
+         'the hub, and asks for the moves its mission needs, in order. None has been run on a '
+         'real hub, and no block stack was built in the SPIKE App. The distance sensor and '
+         'force sensor lines follow LEGO\'s own Python lessons. Build and run each program '
+         'once before a crew uses it, and check that '
          + str(MAT.WALL_FIRST_TRY) + ' cm stops the robot between the dock and the dashed red '
          'line on your wall.</li>'
          '<li>This page does not name the ports of LEGO\'s Driving Base, because they were not '

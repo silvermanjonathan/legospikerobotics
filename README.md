@@ -94,6 +94,32 @@ The constraints page carries the full list. The ones that differ from the style 
 
 ## Release log
 
+### 19 November 2026, version pin 14: a program for every mission, in the course and in the PDF
+
+What changed:
+
+- The mat page has a new section, A program for every mission: ten whole programs, each
+  in Python with the same program in Word Blocks under it. Missions 1 and 2 have one
+  program for every robot. Mission 3 has one for a colour sensor, a distance sensor, and
+  a force sensor. Mission 4 has those three and one for a robot with no sensor. The
+  bonus adds three lines to mission 4.
+- `challenge_mat.pdf` now ends with the same ten programs, one to a page, after the 24
+  sheets. The sheets did not change.
+- `build/mat.py` builds each program from shared lines, `build/py2blocks.py` draws its
+  blocks from the Python (it now knows the closer than and pressed sensor blocks), and
+  `build/runcheck.py` runs all ten against the stand-in hub, with new stand-ins for
+  `distance_sensor` and `force_sensor`.
+
+Where the facts came from: `distance_sensor.distance(port)` (tenths of a cm, -1 when
+nothing is measured) and `force_sensor.pressed(port)` inside `runloop.until` are as
+LEGO's own SPIKE Prime with Python lessons use them.
+
+What was checked: both guards pass; every program runs to the end on the stand-in hub
+and asks for the moves its mission needs. Each PDF program page was looked at.
+
+What is not done: no program has run on a real hub and no stack was built in the SPIKE
+App. Every number is a first try for the Advanced Driving Base in lane 1.
+
 ### 19 November 2026, version pin 13: the mat is for every version of the robot
 
 What changed: the challenge mat's missions, numbers, and programs now fit every driving
