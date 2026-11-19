@@ -94,6 +94,28 @@ The constraints page carries the full list. The ones that differ from the style 
 
 ## Release log
 
+### 19 November 2026, tenth printing (version pin 11): space mat
+
+What changed: the challenge mat has a space theme and one start in each lane.
+
+- Each lane is a rocket (red, blue, green) with a launch pad, a space station with a
+  black dock line, an asteroid, and a moon base, plus stars and a planet as decoration.
+- Start B is gone. The docks are 55, 50, and 45 cm from the launch line instead, so a
+  set distance works in one lane only. Mission 3, Swap ships, moves every team one lane
+  down with no change to the program, which only a program that waits for the colour
+  sensor passes.
+- A bonus mission, Moon dance: after landing, spin all the way around with four quarter
+  turns. 190 points in all.
+- The mat page's teacher panel has the computed degrees of motor turn for each lane.
+
+What was checked: both guards pass. The 24 sheets were rendered and laid side by side.
+No picture is printed where the middle of the robot passes between the launch line and
+the dock, and each dock sits inside one sheet.
+
+What is not done: nobody has run a robot on the mat, and no colour sensor has been read
+over the printed dock or the tinted launch pad.
+
+
 ### 19 November 2026, ninth printing (version pin 10)
 
 What changed:

@@ -14,7 +14,7 @@ OUT = os.path.join(os.path.dirname(HERE), "challenge_mat.pdf")
 
 rows = "".join('<tr><td>%d. %s</td><td>%d for each robot that %s</td><td>%d more if all three do it on the same run</td></tr>'
                % (m["n"], m["name"], m["each"], m["does"], m["bonus"]) for m in mat.MISSIONS)
-cover = ('<div class="page cover"><h1>Challenge mat for three robots</h1>'
+cover = ('<div class="page cover"><h1>Space challenge mat for three robots</h1>'
          '<p><b>Print this file at 100 % size, on letter paper, upright.</b> In the print '
          'window choose Actual size. Do not choose Fit to page. Check one sheet before you '
          'print the rest: the bar in its bottom left corner must be 5 cm long.</p>'
