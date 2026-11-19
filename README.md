@@ -24,7 +24,7 @@ The site is served by GitHub Pages from the root of the `main` branch.
 | `session07_follow_the_line.html` | Session 7. `if`, `else`, `while`, and a line follower with a stop bar, then timed runs. |
 | `session08_your_own_functions_and_mission.html` | Session 8. The students' own functions; each team writes and runs its own mission; second demo. |
 | `builds_word_blocks.html` | More builds, in Word Blocks: the Game Master and the Grabbers, five block snippets each, with a prediction on each and a sheet to fill in. |
-| `challenge_mat.html`, `challenge_mat.pdf` | The challenge mat for three robots: 24 sheets of letter paper to print and tape, three lanes, four missions, and the match. |
+| `challenge_mat.html`, `challenge_mat.pdf` | The challenge mat for three robots: 24 sheets of letter paper to print and tape, three lanes, four missions, and the match. For every driving robot the class builds, with a colour, distance, or force sensor or with none. |
 | `pieces_of_the_builds.html` | Every LEGO piece the three builds use, 61 of them: a drawing, a plain name, LEGO's own name and part number, and the builds that use it. Buttons show the pieces of one build. |
 | `robot_advanced_driving_base.html` | The class robot: links to LEGO's five building books, the port map, the wheel table. |
 | `field_test_field.html` | The test field for every session, drawn to scale. |
@@ -93,6 +93,38 @@ The constraints page carries the full list. The ones that differ from the style 
    only, retrieved through the Learning Commons Knowledge Graph on 12 November 2026.
 
 ## Release log
+
+### 19 November 2026, version pin 13: the mat is for every version of the robot
+
+What changed: the challenge mat's missions, numbers, and programs now fit every driving
+robot the class builds, not only the Advanced Driving Base. The 24 sheets did not
+change, only page 1 of the PDF, so a printed mat is still right.
+
+- **Which robot is yours?** A table on the mat page: a robot with a colour sensor stops
+  at the black dock; a robot with a distance sensor or a force sensor stops at a wall (a
+  box, not a printed mark); a robot with no sensor stops by a number. It also lists
+  LEGO's versions: Driving Base, Driving Base with the distance sensor, Driving Base
+  with the colour sensor, Advanced Driving Base.
+- **Find your robot's numbers.** One full turn measured on the lane's ruler, and first
+  tries in degrees of motor turn for big wheels (27.63 cm) and small wheels (17.5 cm).
+- **Stop at the dock with a sensor.** Session 3's colour sensor program, and two new
+  programs, each in Python and Word Blocks: `distance_sensor.distance` and
+  `force_sensor.pressed` in the same start, wait, stop shape.
+- **Missions 3 and 4.** After a lane swap a crew with a sensor changes nothing and a
+  crew with no sensor changes one number. A wall moves with its robot. Points are the
+  same for every kind of robot, 190 in all.
+- The constraints page has a new section 9 for these exceptions.
+
+Where the facts came from: LEGO's lesson pages name the three Driving Base versions (no
+sensors, with the Distance Sensor, with the Color Sensor). The small wheel figure is
+arithmetic from a wheel 5.6 cm across.
+
+What was checked: both guards pass. Three sheets of the new PDF were compared with the
+old one and are identical.
+
+What is not done: the distance and force sensor programs and their block stacks have
+not been run on a hub or built in the SPIKE App. The Driving Base's ports are not named
+because they were not read from a robot. No robot of any version has run on the mat.
 
 ### 19 November 2026, version pin 12: colourful space stations
 

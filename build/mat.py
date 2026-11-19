@@ -23,6 +23,15 @@ Where the numbers come from:
   - The moon base, the asteroid, and the home marks are placed from the wheel arithmetic
     (wheel.py) and a robot about 22 cm long and 20 cm wide whose wheels are about 11 cm
     behind its front edge. They have NOT been checked on a built robot.
+
+The mat is for every driving robot the class builds, not only the Advanced Driving
+Base: LEGO's Driving Base with no sensor, with the distance sensor, or with the colour
+sensor, and a robot with a force sensor. Nothing printed on a sheet names one robot.
+What differs from robot to robot is on the mat's page, not on the mat:
+  - the number that moves a robot a given distance (ROBOT_WHEELS, degrees_for);
+  - how a robot stops at the dock (DOCK_WAYS): by a number, by the colour sensor over
+    the black dock, or by a wall that the distance sensor measures or the force sensor
+    presses. The wall is a box, not a printed mark.
 """
 import html
 import math
@@ -48,9 +57,40 @@ ZONE_Y = (30.0, 52.5)                     # the moon base, top and bottom, in a 
 ZONE_W, ZONE_H = 27, int(ZONE_Y[1] - ZONE_Y[0])
 
 
+# One full turn of the wheel, for each wheel a class robot can have. The big wheel is
+# LEGO's own figure for the Advanced Driving Base (wheel.py). The small wheel, on LEGO's
+# Driving Base, is 5.6 cm across, which is 17.6 cm around; 17.5 is the number the SPIKE
+# App's own "set 1 motor rotation to ... cm moved" block starts with. Each crew still
+# measures its own on the lane's ruler.
+SMALL_WHEEL_CM = 17.5
+ROBOT_WHEELS = [
+    ("Big wheels", "the Advanced Driving Base", WHEEL_CM),
+    ("Small wheels", "LEGO's Driving Base, every version", SMALL_WHEEL_CM),
+]
+SQUARE_CM = whole_cm(360)                 # one side of the orbit in mission 2
+
+# The wall for a robot that stops by a distance sensor or a force sensor: a box or a
+# thick book, not a printed mark. Its face is the same distance from the dock in every
+# lane, so one program still works after a lane swap.
+WALL_PAST = 10                            # distance sensor: the face is this far past the dashed red line
+WALL_FIRST_TRY = 15                       # cm, a first try for "closer than"
+
+
+def degrees_for(cm, wheel_cm=WHEEL_CM):
+    """Degrees of motor turn that move a robot this many cm, for a wheel that moves
+    wheel_cm in one full turn."""
+    return int(round(cm / wheel_cm * 360))
+
+
 def motor_degrees(cm):
-    """Degrees of motor turn that move the robot this many cm."""
-    return int(round(cm / WHEEL_CM * 360))
+    """Degrees of motor turn that move the Advanced Driving Base this many cm."""
+    return degrees_for(cm)
+
+
+def wall_from_edge(k):
+    """Where the distance sensor's wall stands in lane k, in cm from the mat's right
+    edge: more than 0 is off the mat, less than 0 is on it."""
+    return dock_x(k) + PAST + WALL_PAST - W
 
 
 def dock_x(k):
@@ -68,20 +108,43 @@ CREW = [("RED", "#B5362A", "#F6D8D2"), ("BLUE", "#1F5FA8", "#D6E5F6"), ("GREEN",
 
 # Each mission scores for every robot that does it, and scores a team bonus when all
 # three robots do it on the same run.
+# How a robot stops at the dock, by what it has. The first three are sensors; the last
+# is a robot with none. Each is (key, name, what the crew sets up, what the program does).
+DOCK_WAYS = [
+    ("colour", "A colour sensor that points down",
+     "Nothing. The black dock is printed on the mat.",
+     "Start the wheels, wait until the colour sensor is over the black dock, stop the wheels."),
+    ("distance", "A distance sensor that points forward",
+     "A wall, with its face %d cm past the dashed red line." % WALL_PAST,
+     "Start the wheels, wait until the wall is closer than the crew's number, stop the wheels."),
+    ("force", "A force sensor on the front",
+     "A wall, with its face on the dashed red line.",
+     "Start the wheels, wait until the force sensor is pressed, stop the wheels."),
+    ("none", "No sensor",
+     "Nothing.",
+     "Move forward by a number. The crew reads the lane's ruler and works the number out."),
+]
+
+SWAP_RULE = ("A crew whose robot has a sensor changes nothing after the swap. A crew whose "
+             "robot has no sensor reads the ruler of its new lane and changes one number. A "
+             "wall moves with its robot to the new lane.")
+
 MISSIONS = [
     dict(n=1, name="Fly to the space station", session=2, each=10, bonus=10,
          start="The launch line, each team in its own lane",
          goal="Each robot flies to its space station and stops with its front edge between "
               "the dock and the dashed red line.",
-         rule="Use a number for the distance. Do not use the colour sensor yet. The three "
-              "stations are %d, %d, and %d cm away, so each team reads its own ruler and "
-              "works out its own number." % tuple(DOCK_CM),
+         rule="Use a number for the distance. Do not use a sensor yet, even if your robot has "
+              "one. The three stations are %d, %d, and %d cm away, and robots with different "
+              "wheels need different numbers, so each team reads its own ruler and works out "
+              "its own number." % tuple(DOCK_CM),
          does="stops with its front edge between the dock and the dashed red line"),
     dict(n=2, name="Orbit the asteroid", session=2, each=10, bonus=10,
          start="The launch line, with a crate on each asteroid. The crate is the space rock.",
          goal="Each robot drives a square around its asteroid and comes back to the launch line.",
-         rule="Each side of the square is one full turn of the wheel, about %d cm. A robot "
-              "that touches the space rock does not score." % whole_cm(360),
+         rule="Each side of the square is about %d cm. That is one full turn of big wheels and "
+              "more than one full turn of small wheels. A robot that touches the space rock "
+              "does not score." % SQUARE_CM,
          does="goes around its asteroid without touching the space rock and ends with its "
               "front edge between the home marks"),
     dict(n=3, name="Swap ships", session=3, each=10, bonus=10,
@@ -89,15 +152,21 @@ MISSIONS = [
                "team in lane 3 moves to lane 1.",
          goal="Each robot stops at the dock of its new lane, with its front edge between the "
               "dock and the dashed red line.",
-         rule="Nobody changes a program after the swap. The docks are at different distances, "
-              "so only a program that waits for the colour sensor works in every lane.",
-         does="stops with its front edge between the dock and the dashed red line"),
+         rule=SWAP_RULE + " The docks are at different distances, so a number that worked in "
+              "one lane does not work in the next. A program that waits for a sensor works in "
+              "every lane.",
+         does="stops with its front edge between the dock and the dashed red line",
+         ways=True),
     dict(n=4, name="Moon landing", session=4, each=10, bonus=20,
          start="The launch line of any lane. The teacher may call a swap just before the run.",
-         goal="Each robot finds the dock, makes a quarter turn to the right, and lands on the "
-              "moon base.",
-         rule="A robot has landed when both big wheels are inside the moon base.",
-         does="lands with both big wheels inside the moon base"),
+         goal="Each robot stops at the dock, makes a quarter turn to the right, and lands on "
+              "the moon base.",
+         rule="A robot has landed when both big wheels are inside the moon base. The big "
+              "wheels are the two wheels the motors turn. After a swap, the rule of mission 3 "
+              "holds: a crew whose robot has a sensor changes nothing, and a crew whose robot "
+              "has no sensor changes one number.",
+         does="lands with both big wheels inside the moon base",
+         ways=True),
     dict(n=5, name="Moon dance", session=4, each=5, bonus=5,
          start="This is a bonus. It is added to the end of the moon landing program.",
          goal="After it lands, each robot spins all the way around once, and ends with both "
@@ -340,3 +409,53 @@ def overview_svg(caption):
                         "#8C836C", 800, "end"))
     p.append('</svg></div><p class="figcap">' + caption + '</p>')
     return "".join(p)
+
+
+# ------------------------------------------------------------------ sensor programs
+# Session 3 teaches the colour sensor program. These two follow the same three lines,
+# start, wait, stop, for the two sensors the session pages do not use. Python's
+# distance_sensor.distance counts in tenths of a cm and gives -1 when nothing is in
+# range, so the test asks for more than 0 as well.
+DISTANCE_PY = '''from hub import port
+import distance_sensor
+import motor_pair
+import runloop
+
+WALL_SENSOR = port.F
+NEAR = %d
+
+
+async def main():
+    # The left drive motor is in port A. The right drive motor is in port E.
+    motor_pair.pair(motor_pair.PAIR_1, port.A, port.E)
+
+    # Start the wheels. Wait until the wall is near. Stop the wheels.
+    motor_pair.move(motor_pair.PAIR_1, 0, velocity=250)
+    await runloop.until(lambda: 0 < distance_sensor.distance(WALL_SENSOR) < NEAR)
+    motor_pair.stop(motor_pair.PAIR_1)
+
+
+runloop.run(main())''' % (WALL_FIRST_TRY * 10)
+
+FORCE_PY = '''from hub import port
+import force_sensor
+import motor_pair
+import runloop
+
+BUMPER = port.F
+
+
+async def main():
+    # The left drive motor is in port A. The right drive motor is in port E.
+    motor_pair.pair(motor_pair.PAIR_1, port.A, port.E)
+
+    # Start the wheels. Wait until the bumper is pressed. Stop the wheels.
+    motor_pair.move(motor_pair.PAIR_1, 0, velocity=250)
+    await runloop.until(lambda: force_sensor.pressed(BUMPER))
+    motor_pair.stop(motor_pair.PAIR_1)
+
+
+runloop.run(main())'''
+
+for _name, _code in (("DISTANCE_PY", DISTANCE_PY), ("FORCE_PY", FORCE_PY)):
+    compile(_code, _name, "exec")

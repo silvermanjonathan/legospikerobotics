@@ -45,7 +45,7 @@ PART2 = [x for x in SESSIONS if x.get("part", 1) == 2]
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.environ.get("SPIKE_OUT", ROOT)
-VERSION = "12"
+VERSION = "13"
 COURSE = "SPIKE Prime with Python"
 HUB = "spike_course_hub"
 ROBOT = "robot_advanced_driving_base"
@@ -1340,7 +1340,9 @@ NEVER = [
     "A second task running at the same time.",
     "Seconds as the unit of a move. Moves are counted in degrees of motor turn or ended by a sensor.",
     "Any distance unit other than cm.",
-    "The medium motors and any part not on the port map.",
+    "The medium motors and any part not on the port map. The one exception is the "
+    "challenge mat page, which has a program for a distance sensor and one for a force "
+    "sensor: see section 9.",
 ]
 
 
@@ -1433,6 +1435,21 @@ def render_constraints():
              '<li>A function is a My Block: a define stack beside the main stack.</li></ul>'
              '<p>The panels were written from the Python, not built and run in the app.</p>'
              '</section>')
+    b.append('<section><h2>9. The challenge mat is for every driving robot</h2><p>Added on '
+             '19 November 2026. The sessions are written for one robot, the Advanced Driving '
+             'Base. The challenge mat is not: its missions are written so that every driving '
+             'robot the class builds can do them, with small wheels or big wheels, and with a '
+             'colour sensor, a distance sensor, a force sensor, or no sensor.</p><ul>'
+             '<li>The mat page is the only page that uses <code>distance_sensor.distance</code> '
+             'and <code>force_sensor.pressed</code>. Each sits in the wait line of the one way '
+             'to move until a sensor says stop, from section 3.</li>'
+             '<li>The distance sensor test is <code>0 &lt; ... &lt; NEAR</code>, two '
+             'comparisons in one line, because the sensor gives -1 when it measures nothing. '
+             'It is handed over and explained in one sentence.</li>'
+             '<li>Python counts that distance in tenths of a cm. The page says tenths of a cm '
+             'and never names another unit.</li>'
+             '<li>A robot with no sensor does every mission by numbers. After a lane swap its '
+             'crew may change one number.</li></ul></section>')
     return simple_page(COURSE + ' &middot; Constraints', 'Course constraints',
                        'What the course uses, what it never uses, and what is locked.', "".join(b))
 
@@ -1807,17 +1824,60 @@ def render_pieces():
 
 # ------------------------------------------------------------- challenge mat page
 
+# the LEGO versions of the driving robot: name, wheels, sensor, LEGO's lesson
+_LEGO_LESSONS = "https://education.lego.com/en-us/lessons/prime-competition-ready/"
+MAT_VERSIONS = [
+    ("Driving Base", "Small", "None", _LEGO_LESSONS + "training-camp-1-driving-around/"),
+    ("Driving Base with the distance sensor", "Small", "A distance sensor that points forward",
+     _LEGO_LESSONS + "training-camp-2-playing-with-objects/"),
+    ("Driving Base with the colour sensor", "Small", "A colour sensor that points down",
+     _LEGO_LESSONS + "training-camp-3-react-to-lines/"),
+    ("Advanced Driving Base", "Big", "Two colour sensors that point down", robot.LEGO_LESSON),
+]
+
+
+def _mat_blocks(wait):
+    """The start, wait, stop stack with one sensor test in the wait block."""
+    return [B.hat("events", "when program starts"),
+            B.blk("movement", "set movement motors to", B.dd("A+E")),
+            B.blk("movement", "set movement speed to", B.num(str(py2blocks.percent(250))), "%"),
+            B.blk("movement", "start moving", B.dd("straight: 0")),
+            B.blk("control", "wait until", wait),
+            B.blk("movement", "stop moving")]
+
+
+def _mat_program(py, stacks, note):
+    """A Python program and the same program as blocks in a closed panel."""
+    return ('<pre class="py"><code>' + indent_guides(highlight(py)) + '</code></pre>'
+            '<details class="wbpanel"><summary><span class="wbsum">Word Blocks</span>'
+            '<span class="wbwhat">the same program as blocks</span></summary><div class="wbbody">'
+            + B.stacks(stacks, label="The same program in Word Blocks", note=note)
+            + '</div></details>')
+
+
+def _edge_words(cm):
+    """Where a wall stands, from the mat's right edge, in whole cm."""
+    n = int(round(abs(cm)))
+    return ("about %d cm past the mat's right edge" % n if cm > 0
+            else "about %d cm inside the mat's right edge" % n)
+
+
 def render_mat():
     one = MAT.whole_cm(360)
     wcm, hcm = int(round(MAT.W)), int(round(MAT.H))
     n_sheets = MAT.COLS * MAT.ROWS
     d1, d2, d3 = MAT.DOCK_CM
+    ways = dict((w[0], w) for w in MAT.DOCK_WAYS)
     b = []
     b.append('<section><h2>The mat</h2>'
              '<p>The challenge mat is a space field for three robots at once. Each robot is a '
              'rocket. It is made of ' + str(n_sheets) + ' sheets of letter paper taped '
              'together, ' + str(MAT.COLS) + ' sheets across and ' + str(MAT.ROWS) + ' sheets '
              'down. It is about ' + str(wcm) + ' cm wide and ' + str(hcm) + ' cm tall.</p>'
+             '<p>The mat is for every driving robot the class builds: a robot with small '
+             'wheels or big wheels, and a robot with a colour sensor, a distance sensor, a '
+             'force sensor, or no sensor. Every robot can do every mission. '
+             '<a href="#robots">Find your robot</a> to see how.</p>'
              '<p>The mat has three lanes: the red rocket, the blue rocket, and the green rocket. '
              'Each lane has a launch pad, a space station, an asteroid, and a moon base. The '
              'space stations are at different distances: ' + str(d1) + ' cm in lane 1, '
@@ -1849,13 +1909,14 @@ def render_mat():
              '<tr><td>Launch pad</td><td>A dashed box in the lane\'s colour. The robot sits on it '
              'with the middle of the robot over the dashed line.</td></tr>'
              '<tr><td>Launch line</td><td>Two short marks in the lane\'s colour. The robot\'s front '
-             'edge is level with them at the start of every run.</td></tr>'
+             'edge is level with them at the start of every run. The front edge is the part of '
+             'the robot that is farthest forward, even when that part is a tool or a sensor.</td></tr>'
              '<tr><td>Home marks</td><td>Two grey marks, 5 cm behind the launch line and 5 cm '
              'past it.</td></tr>'
              '<tr><td>Space station</td><td>A picture: blue solar panels and an orange hub above the '
              'dock, and an orange hull just past it. The robot may stop on the hull.</td></tr>'
              '<tr><td>Dock</td><td>A black line 2 cm wide at the space station. It is the only '
-             'dark mark the colour sensor passes over. It is ' + str(d1) + ', ' + str(d2) + ', or '
+             'dark mark a colour sensor passes over. It is ' + str(d1) + ', ' + str(d2) + ', or '
              + str(d3) + ' cm from the launch line.</td></tr>'
              '<tr><td>Dashed red line</td><td>' + str(MAT.PAST) + ' cm past the dock. A robot '
              'whose front edge passes it is lost in deep space.</td></tr>'
@@ -1863,11 +1924,64 @@ def render_mat():
              'cross and is the space rock. The crate is no more than ' + str(MAT.CRATE_CM)
              + ' cm across.</td></tr>'
              '<tr><td>Moon base</td><td>A teal rectangle around a moon, ' + str(MAT.ZONE_W)
-             + ' cm wide and ' + str(MAT.ZONE_H) + ' cm long.</td></tr>'
+             + ' cm wide and ' + str(MAT.ZONE_H) + ' cm long. The big wheels it names are the two '
+             'wheels the motors turn, on any robot.</td></tr>'
              '<tr><td>Ruler</td><td>Along the top of the lane. It counts cm from the launch '
-             'line, so you can read how far the front edge moved.</td></tr>'
+             'line, so you can read how far the front edge moved. It works for every robot.</td></tr>'
+             '<tr><td>Wall</td><td>Not printed. A box or a thick book that stands up by itself, '
+             'for a robot with a distance sensor or a force sensor. See '
+             '<a href="#sensors">Stop at the dock with a sensor</a>.</td></tr>'
              '<tr><td>Stars and planet</td><td>Pictures only. The robot may drive over them.</td></tr>'
              '</table></section>')
+    # ---- which robot
+    b.append('<section id="robots"><h2>Which robot is yours?</h2><p>Look at your robot and find '
+             'its row. Each kind of robot stops at the dock in its own way, and every way '
+             'scores the same points.</p>'
+             '<table><tr><th>Your robot has</th><th>How it stops at the dock</th>'
+             '<th>What to set up before the run</th></tr>'
+             + "".join('<tr><td>' + w[1] + '</td><td>' + w[3] + '</td><td>' + w[2] + '</td></tr>'
+                       for w in MAT.DOCK_WAYS)
+             + '</table>'
+             '<p>A robot with two sensors uses one of them in each program. Every hub has a '
+             'motion sensor inside it, so any robot can use it for a turn. '
+             '<a href="' + link(SESSION06["slug"]) + '">Session 6</a> teaches that.</p>'
+             '<h3>LEGO\'s versions of the driving robot</h3>'
+             '<table><tr><th>Version</th><th>Wheels</th><th>Sensor</th></tr>'
+             + "".join('<tr><td><a href="' + u + '">' + n + '</a></td><td>' + w + '</td><td>'
+                       + s + '</td></tr>' for n, w, s, u in MAT_VERSIONS)
+             + '</table><p>Each name opens LEGO\'s lesson for that version. A robot of your own '
+             'design fits the mat too: find the row above for the sensor it has.</p></section>')
+    # ---- the numbers
+    b.append('<section id="numbers"><h2>Find your robot\'s numbers</h2><p>Two robots with '
+             'different wheels need different numbers to move the same distance. The ruler '
+             'along the lane works for every robot.</p><ol>'
+             '<li>Put the robot on the launch pad with its front edge level with the launch line.</li>'
+             '<li>Run a program that moves forward 360 degrees of motor turn. That is one full '
+             'turn of the wheels.</li>'
+             '<li>Read the ruler at the robot\'s front edge. That is how many cm one full turn '
+             'moves your robot.</li>'
+             '<li>Find your wheels in the table and start from its number. Change the number, '
+             'one change for each run, until the front edge stops where the mission says.</li></ol>'
+             '<table><tr><th>Wheels</th><th>One full turn moves the robot about</th>'
+             + "".join('<th>Lane ' + str(k + 1) + ' dock, ' + str(MAT.DOCK_CM[k]) + ' cm</th>'
+                       for k in range(MAT.LANES))
+             + '<th>One side of the orbit, about ' + str(MAT.SQUARE_CM) + ' cm</th></tr>'
+             + "".join('<tr><td>' + name + ', as on ' + who + '</td><td class="mono">'
+                       + ("%g" % round(cm, 1)) + ' cm</td>'
+                       + "".join('<td class="mono">' + str(MAT.degrees_for(d, cm)) + '</td>'
+                                 for d in MAT.DOCK_CM)
+                       + '<td class="mono">' + str(MAT.degrees_for(MAT.WHEEL_CM, cm)) + '</td></tr>'
+                       for name, who, cm in MAT.ROBOT_WHEELS)
+             + '</table><p>The numbers in the table are degrees of motor turn. They are '
+             'computed, not measured, so they are first tries.</p><ul>'
+             '<li>The quarter turn is different for each robot too. Find it by testing, as in '
+             '<a href="' + link(SESSION02["slug"]) + '">session 2</a>.</li>'
+             '<li>The programs on the session pages say <code>port.A</code> and '
+             '<code>port.E</code>. Those are the drive motors of the Advanced Driving Base. If '
+             'your robot\'s drive motors are in other ports, change the two letters, left '
+             'motor first. Read each letter on the hub beside the motor\'s cable.</li>'
+             '<li>If the robot then moves backward when the program says forward, swap the two '
+             'letters.</li></ul></section>')
     b.append('<section><h2>Three crews, one score</h2><p>The three teams are crews of the same '
              'space mission. They are not playing against each other. The class has one score, '
              'and the biggest points come only when all three rockets do a mission on the same '
@@ -1878,20 +1992,79 @@ def render_mat():
              'their run, and say what you saw.</li>'
              '<li>Crews may share numbers such as <code>QUARTER_TURN</code>, but each crew '
              'tests a shared number on its own robot before a scored run. Two robots built from '
-             'the same book can still need different numbers.</li></ul></section>')
+             'the same book can still need different numbers, and two robots with different '
+             'wheels always do.</li></ul></section>')
+    way_rows = "".join('<tr><td>' + w[1] + '</td><td>' + w[3] + '</td></tr>' for w in MAT.DOCK_WAYS)
     for m in MAT.MISSIONS:
         label = "Bonus mission" if m["n"] == 5 else "Mission " + str(m["n"])
+        how = ('<h3>How each robot stops at the dock</h3><table><tr><th>Your robot has</th>'
+               '<th>What its program does</th></tr>' + way_rows + '</table><p>The programs are '
+               'under <a href="#sensors">Stop at the dock with a sensor</a>.</p>'
+               if m.get("ways") else "")
         b.append('<section class="brief" id="mission' + str(m["n"]) + '"><p class="chunk-no">'
                  + label + ' &middot; ' + str(m["points"]) + ' points &middot; uses session '
                  + str(m["session"]) + '</p><h2>' + m["name"] + '</h2>'
                  '<table><tr><th>Start</th><td>' + m["start"] + '</td></tr>'
                  '<tr><th>Goal</th><td>' + m["goal"] + '</td></tr>'
-                 '<tr><th>Rule</th><td>' + m["rule"] + '</td></tr></table>'
-                 '<h3>Points</h3><table><tr><th>What happens</th><th>Points</th></tr>'
+                 '<tr><th>Rule</th><td>' + m["rule"] + '</td></tr></table>' + how
+                 + '<h3>Points</h3><table><tr><th>What happens</th><th>Points</th></tr>'
                  '<tr><td>Each robot that ' + m["does"] + '</td><td class="mono">' + str(m["each"])
                  + ' each, up to ' + str(MAT.LANES * m["each"]) + '</td></tr>'
                  '<tr><td>All three robots do it on the same run</td><td class="mono">'
                  + str(m["bonus"]) + ' more</td></tr></table></section>')
+    # ---- the sensor programs
+    colour_py = SESSION03["chunks"][1]["code"]
+    c_stacks, _whole, c_note = py2blocks.translate(colour_py)
+    near = MAT.WALL_FIRST_TRY
+    dist_stack = _mat_blocks(B.boolean("sensors", B.port("F"), "is", B.dd("closer than"),
+                                       B.num(str(near)), B.dd("cm"), "?"))
+    force_stack = _mat_blocks(B.boolean("sensors", B.port("F"), "is", B.dd("pressed"), "?"))
+    speed_note = ("The speed block gives a percent of the motor's top speed: Python's "
+                  "<code>velocity=250</code> is about " + str(py2blocks.percent(250)) + " %.")
+    b.append('<section id="sensors"><h2>Stop at the dock with a sensor</h2><p>Every program '
+             'here has the same three steps: start the wheels, wait for the sensor, stop the '
+             'wheels. Only the wait changes from one sensor to the next. Missions 3 and 4 use '
+             'these programs.</p>'
+             '<h3>A colour sensor</h3><p>' + ways["colour"][3] + ' '
+             '<a href="' + link(SESSION03["slug"]) + '">Session 3</a> teaches this program. '
+             '<code>DARK</code> is a number between the sensor\'s reading over the white paper '
+             'and its reading over the black dock. Each crew measures both on its own robot.</p>'
+             + _mat_program(colour_py, c_stacks, c_note)
+             + '<h3>A distance sensor</h3><p>The distance sensor measures how far away the '
+             'thing in front of it is. The mat is flat, so the crew gives the sensor a wall to '
+             'measure.</p><ul>'
+             '<li>The wall is a box or a thick book that stands up by itself. It is at least '
+             '15 cm tall and 20 cm wide.</li>'
+             '<li>Stand the wall across the lane, facing the robot, with its face '
+             + str(MAT.WALL_PAST) + ' cm past the dashed red line. Use a ruler. In lane 1 that is '
+             + _edge_words(MAT.wall_from_edge(0)) + ', in lane 2 it is '
+             + _edge_words(MAT.wall_from_edge(1)) + ', and in lane 3 it is '
+             + _edge_words(MAT.wall_from_edge(2)) + '.</li></ul>'
+             + _mat_program(MAT.DISTANCE_PY, [dist_stack],
+                            [speed_note, "Python counts this distance in tenths of a cm and the "
+                             "block counts whole cm, so <code>NEAR = " + str(near * 10)
+                             + "</code> is closer than " + str(near) + " cm."])
+             + '<ul><li><code>NEAR = ' + str(near * 10) + '</code> is a first try. Python counts '
+             'this distance in tenths of a cm, so ' + str(near * 10) + ' is ' + str(near)
+             + ' cm. A bigger number stops the robot sooner. A smaller number stops it later.</li>'
+             '<li>The sensor gives -1 when it measures nothing. That is why the test also asks '
+             'for more than 0.</li>'
+             '<li><code>port.F</code> is a first try. Read the letter on the hub beside the '
+             'sensor\'s cable.</li></ul>'
+             '<h3>A force sensor</h3><p>The force sensor has a button on its front. The wall '
+             'presses the button when the robot reaches it.</p><ul>'
+             '<li>Stand the wall with its face on the dashed red line. The wall has to be '
+             'heavy, so the robot does not push it: a box with books inside works.</li>'
+             '<li>The force sensor is the part of the robot that is farthest forward, so that '
+             'it reaches the wall first.</li></ul>'
+             + _mat_program(MAT.FORCE_PY, [force_stack], speed_note)
+             + '<ul><li><code>port.F</code> is a first try. Read the letter on the hub beside '
+             'the sensor\'s cable.</li>'
+             '<li>In mission 4 the robot is touching the wall when it stops. Move backward a '
+             'little before the quarter turn, so the robot does not push the wall as it turns.</li></ul>'
+             '<h3>No sensor</h3><p>' + ways["none"][3] + ' Start from the number in '
+             '<a href="#numbers">Find your robot\'s numbers</a>. After a lane swap, read the '
+             'ruler of the new lane and change that one number.</p></section>')
     b.append('<section><h2>The match</h2><p>In the last session the class flies the whole '
              'space mission. A match is 3 minutes long, and all three robots are on the mat for '
              'all of it.</p><ul>'
@@ -1901,7 +2074,9 @@ def render_mat():
              '<li>Once a run starts, nobody touches a robot until all three have stopped.</li>'
              '<li>A mission can be run again. Its best run counts.</li>'
              '<li>One builder from each crew keeps the score for another crew\'s lane and reads '
-             'its ruler.</li></ul></section>')
+             'its ruler. If a robot moves a wall, that builder puts the wall back before the '
+             'next run.</li></ul></section>')
+    small = MAT.SMALL_WHEEL_CM
     t = ('<details class="teacher"><summary>Teacher panel</summary>'
          '<h3>Three sessions</h3><table><tr><th>Session</th><th>Missions</th><th>What the session '
          'teaches that the mission needs</th></tr>'
@@ -1909,25 +2084,42 @@ def render_mat():
          '<td>A name for a number, the quarter turn, and repeating two moves four times. Allow '
          'about 15 minutes for each team to tape its lane.</td></tr>'
          '<tr><td><a href="' + link(SESSION03["slug"]) + '">Session 3</a></td><td>3</td>'
-         '<td>Start the wheels, wait for the colour sensor to pass the black line, stop.</td></tr>'
+         '<td>Start the wheels, wait for the colour sensor to pass the black line, stop. A crew '
+         'with a distance sensor or a force sensor changes only the wait, using the program on '
+         'this page.</td></tr>'
          '<tr><td><a href="' + link(SESSION04["slug"]) + '">Session 4</a></td><td>4, the bonus, '
-         'then the match</td><td>The stop at the line, then a quarter turn and a move.</td></tr></table>'
-         '<h3>The numbers for mission 1</h3><p>One full turn of the wheel moves the robot '
-         + ("%.2f" % MAT.WHEEL_CM) + ' cm, so each lane needs its own number. These are computed, '
-         'not measured. A team finds its own by trying, as in session 1.</p>'
-         '<table><tr><th>Lane</th><th>Launch line to dock</th><th>Degrees of motor turn to reach '
-         'the dock</th><th>To reach the dashed red line</th></tr>'
-         + "".join('<tr><td>' + str(k + 1) + ', ' + MAT.CREW[k][0].lower() + '</td><td class="mono">'
-                   + str(MAT.DOCK_CM[k]) + ' cm</td><td class="mono">'
-                   + str(MAT.motor_degrees(MAT.DOCK_CM[k])) + '</td><td class="mono">'
-                   + str(MAT.motor_degrees(MAT.DOCK_CM[k] + MAT.PAST)) + '</td></tr>'
-                   for k in range(MAT.LANES))
-         + '</table>'
+         'then the match</td><td>The stop at the dock, then a quarter turn and a move.</td></tr></table>'
+         '<h3>Every version of the robot</h3><ul>'
+         '<li>Nothing printed on the mat is for one robot only. This printing changed the '
+         'rules, the numbers, and the programs on this page, and page 1 of the PDF. The 24 '
+         'sheets are the same as before, so a mat that is already printed and taped is still '
+         'right.</li>'
+         '<li>The mat was laid out for the largest class robot, about 22 cm long and 20 cm '
+         'wide. A smaller robot has more room in every mission.</li>'
+         '<li>The three robots do not have to match. One run can have a robot with a colour '
+         'sensor, a robot with a distance sensor, and a robot with no sensor. Only a lane '
+         'whose robot needs a wall gets one.</li>'
+         '<li>A wall belongs to its robot, not to its lane. After a swap, stand it in the '
+         'robot\'s new lane, the same distance past the dashed red line.</li>'
+         '<li>A robot with no sensor may change one number after a swap, and a robot with a '
+         'sensor may change nothing. Both score the same, so no crew loses points for the '
+         'robot it was given. What the sensor crews gain is time in the match.</li>'
+         '<li>The session pages are written for the Advanced Driving Base: ports A and E, and '
+         'about ' + str(one) + ' cm for one full turn. A crew with another version keeps the '
+         'programs and changes the port letters and the numbers, as '
+         '<a href="#numbers">Find your robot\'s numbers</a> says.</li></ul>'
+         '<h3>Where the numbers come from</h3><p>One full turn of a big wheel moves the robot '
+         + ("%.2f" % MAT.WHEEL_CM) + ' cm, LEGO\'s own figure for the Advanced Driving Base. The '
+         'small wheel of LEGO\'s Driving Base is 5.6 cm across, which is about '
+         + ("%g" % small) + ' cm around. The table in Find your robot\'s numbers is computed from '
+         'those two figures, not measured. A team finds its own number by trying, as in '
+         'session 1.</p>'
          '<h3>Why the docks are at different distances</h3><p>Session 3 moves the far line '
          'between runs to show that a set distance stops working. A printed line cannot move, '
          'so the crews move instead. After the swap in mission 3, a program that drives a set '
-         'distance stops 5 or 10 cm from where it should, and a program that waits for the '
-         'colour sensor still stops at the dock.</p>'
+         'distance stops 5 or 10 cm from where it should. A program that waits for a sensor '
+         'still stops at the dock, because the black dock and the wall are each the same '
+         'distance from the dashed red line in every lane.</p>'
          '<h3>Room for three robots</h3><ul>'
          '<li>The robots\' paths are ' + ("%.0f" % MAT.LANE_H) + ' cm apart. In mission 2 a robot '
          'reaches about 38 cm below its start, and in mission 4 its front edge reaches the '
@@ -1939,16 +2131,18 @@ def render_mat():
          '<h3>How the mat differs from the session pages</h3><ul>'
          '<li>Session 2\'s mission square has sides of about 55 cm. That square does not fit a '
          'lane. On the mat the square has sides of about ' + str(one) + ' cm, which is '
-         '<code>FORWARD = 360</code>.</li>'
+         '<code>FORWARD = 360</code> on big wheels.</li>'
          '<li>Session 4\'s drop zone is a square of tape 40 cm on a side. A moon base is '
          + str(MAT.ZONE_W) + ' cm by ' + str(MAT.ZONE_H) + ' cm.</li>'
          '<li>The session pages say far line, crate, and drop zone. On the mat these are the '
-         'dock, the space rock, and the moon base.</li></ul>'
+         'dock, the space rock, and the moon base.</li>'
+         '<li>The session pages use no distance sensor and no force sensor. The two programs '
+         'for them are on this page only.</li></ul>'
          '<h3>Not yet checked on a robot</h3><ul>'
          '<li>The mat was drawn from the wheel arithmetic. The places of the moon base, the '
          'asteroid, and the home marks also assume a robot about 22 cm long and 20 cm wide '
-         'whose wheels are about 11 cm behind its front edge. Nobody has run a robot on this '
-         'mat.</li>'
+         'whose wheels are about 11 cm behind its front edge. Nobody has run a robot of any '
+         'version on this mat.</li>'
          '<li>Print and tape one lane first. Run session 2\'s chunk 3 program and session 4\'s '
          'chunk 1 program on it. If the robot touches a crate on the asteroid, or its big '
          'wheels do not end inside the moon base, change <code>FORWARD</code> and tell the '
@@ -1958,6 +2152,15 @@ def render_mat():
          'Printed black can read higher than tape. If the readings are close, lay black tape '
          'over the printed dock. No picture is printed between the launch line and the dock '
          'where the middle of the robot passes.</li>'
+         '<li>The distance sensor program and the force sensor program were written for this '
+         'page and have not been run on a hub. Their block stacks were not built in the SPIKE '
+         'App. Build and run each one once before a crew uses it, and check that '
+         + str(MAT.WALL_FIRST_TRY) + ' cm stops the robot between the dock and the dashed red '
+         'line on your wall.</li>'
+         '<li>This page does not name the ports of LEGO\'s Driving Base, because they were not '
+         'read from a built robot. Read them on the hub. The line about swapping the two port '
+         'letters when a robot moves backward comes from how a motor pair works, not from a '
+         'test.</li>'
          '<li>Each sheet keeps a blank strip about 1 cm wide at its edges, because most '
          'printers cannot print there. No mark that a mission depends on crosses a seam, '
          'except the top and bottom of a moon base, where a gap does no harm.</li>'
@@ -1966,8 +2169,8 @@ def render_mat():
          '<h3>Files</h3><p>The mat is drawn by <code>build/mat.py</code>. '
          '<code>build/mat_pdf.py</code> writes the PDF.</p></details>')
     return simple_page(COURSE + ' &middot; Challenge mat', 'The space challenge mat',
-                       'Three rockets, three lanes, ' + str(MAT.TOTAL) + ' points.',
-                       "".join(b), t)
+                       'Three rockets, three lanes, ' + str(MAT.TOTAL) + ' points, for every '
+                       'robot the class builds.', "".join(b), t)
 
 
 def main():
